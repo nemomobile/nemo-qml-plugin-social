@@ -1,6 +1,17 @@
 TARGET = nemosocial
 PLUGIN_IMPORT_PATH = org/nemomobile/social
 
+TEMPLATE = lib
+CONFIG += qt plugin hide_symbols
+QT += declarative
+
+target.path = $$[QT_INSTALL_IMPORTS]/$$PLUGIN_IMPORT_PATH
+INSTALLS += target
+
+qmldir.files += $$_PRO_FILE_PWD_/qmldir
+qmldir.path +=  $$[QT_INSTALL_IMPORTS]/$$$$PLUGIN_IMPORT_PATH
+INSTALLS += qmldir
+
 QT += declarative network
 
 lessThan(QT_MAJOR_VERSION, 5) {
@@ -33,5 +44,3 @@ OTHER_FILES += qmldir social.qdoc social.qdocconf
 
 MOC_DIR = $$PWD/../.moc
 OBJECTS_DIR = $$PWD/../.obj
-
-include(../../plugin.pri)
