@@ -27,31 +27,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 
-import json
 
-class FacebookObject:
-    identifiable = None
-    name = ""
-    properties = []
-    types = {}
-    docs = {}
 
-def extract(file):
-    try:
-        f = open(file)
-    except:
-        print "Failed to open " + file
-        return
+def include(type):
+    if type in ["int", "float", "double"]:
+        return None
+    if type in ["QString", "QVariant", "QUrl"]:
+        return "<QtCore/" + type + ">"
+    if type.endswith("*"):
+        subtype = type[:-1].strip()
+        return "\"" + subtype.lower() + ".h\""
 
-    data = json.load(f)
-
-    object = FacebookObject()
-    object.name = data["name"]
-    object.identifiable = data["identifiable"]
-    for propertyAttributes in data["properties"]:
-        object.properties.append(propertyAttributes["name"])
-        object.types[propertyAttributes["name"]] = propertyAttributes["type"]
-        object.docs[propertyAttributes["name"]] = propertyAttributes["doc"]
-
-    f.close()
-    return object
+def convert(type):
+    if type in ["int", "float", "double"]:
+        return "to" + type[0].upper() + type[1:] + "()"
+    if type in ["QString", "QUrl"]:
+        return "to" + type[1].upper() + type[2:] + "()"
+    return ""

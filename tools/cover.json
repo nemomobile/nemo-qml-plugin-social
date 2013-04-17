@@ -4,15 +4,18 @@
     "properties": [
         {
             "name": "id",
-            "type": "QString"
+            "type": "QString",
+            "doc": "Holds the identifier of the cover photo"
         },
         {
             "name": "source",
-            "type": "QString"
+            "type": "QString",
+            "doc": "Holds an URL to the photo"
         },
         {
             "name": "offset_y",
-            "type": "int"
+            "type": "int",
+            "doc": "Holds the vertical offset for the cover"
         }
     ]
 }

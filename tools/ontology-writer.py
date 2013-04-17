@@ -33,7 +33,7 @@ import minipatcher
 import structure
 import formattingtools
 
-header = """/*
+license = """/*
  * Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -83,7 +83,7 @@ def generate(ontology_file, structure_file):
     entry = "\n".join(keys)
 
     # Write the new file
-    ontology = header
+    ontology = license
     ontology += "#ifndef FACEBOOKONTOLOGY_P_H\n"
     ontology += "#define FACEBOOKONTOLOGY_P_H\n"
     ontology += "\n"
