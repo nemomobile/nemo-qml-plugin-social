@@ -189,7 +189,6 @@ private:
     QList<CacheEntry*> internalData() const;       // this is the model data, which is set via updateInternalData().
     friend class ContentItemInterface;
     friend class ContentItemInterfacePrivate;
-    friend class ArbitraryRequestHandler;
     Q_DECLARE_PRIVATE(SocialNetworkInterface)
 };
 

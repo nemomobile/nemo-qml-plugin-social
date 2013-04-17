@@ -74,8 +74,9 @@ CacheEntry::~CacheEntry()
         delete item;
 }
 
-ArbitraryRequestHandler::ArbitraryRequestHandler(SocialNetworkInterface *parent)
-    : QObject(parent), q(parent), reply(0), isError(false)
+ArbitraryRequestHandler::ArbitraryRequestHandler(QNetworkAccessManager *networkAccessManager,
+                                                 SocialNetworkInterface *parent)
+    : QObject(parent), networkAccessManager(networkAccessManager), reply(0), isError(false)
 {
 }
 
@@ -107,14 +108,14 @@ bool ArbitraryRequestHandler::request(int requestType, const QString &requestUri
     QNetworkReply *reply = 0;
     switch (requestType) {
     case SocialNetworkInterface::Get:
-        reply = q->d_func()->networkAccessManager->get(QNetworkRequest(url));
+        reply = networkAccessManager->get(QNetworkRequest(url));
         break;
     case SocialNetworkInterface::Post:
-        reply = q->d_func()->networkAccessManager->post(QNetworkRequest(url),
-                                                        QByteArray::fromBase64(postData.toLatin1()));
+        reply = networkAccessManager->post(QNetworkRequest(url),
+                                           QByteArray::fromBase64(postData.toLatin1()));
         break;
     default:
-        reply = q->d_func()->networkAccessManager->deleteResource(QNetworkRequest(url));
+        reply = networkAccessManager->deleteResource(QNetworkRequest(url));
         break;
     }
 
@@ -159,7 +160,7 @@ void ArbitraryRequestHandler::finishedHandler()
         }
     }
 
-    emit q->arbitraryRequestResponseReceived(errorOccurred, responseData);
+    emit arbitraryRequestResponseReceived(errorOccurred, responseData);
 }
 
 void ArbitraryRequestHandler::errorHandler(QNetworkReply::NetworkError networkError)
@@ -1142,8 +1143,13 @@ QVariant SocialNetworkInterface::headerData(int section, Qt::Orientation orienta
 bool SocialNetworkInterface::arbitraryRequest(int requestType, const QString &requestUri, const QVariantMap &queryItems, const QString &postData)
 {
     Q_D(SocialNetworkInterface);
-    if (!d->arbitraryRequestHandler)
-        d->arbitraryRequestHandler = new ArbitraryRequestHandler(this);
+    if (!d->arbitraryRequestHandler) {
+        d->arbitraryRequestHandler = new ArbitraryRequestHandler(d->networkAccessManager, this);
+        connect(d->arbitraryRequestHandler,
+                SIGNAL(arbitraryRequestResponseReceived(bool,QVariantMap)),
+                this,
+                SIGNAL(arbitraryRequestResponseReceived(bool,QVariantMap)));
+    }
     return d->arbitraryRequestHandler->request(requestType, requestUri, queryItems, postData);
 }
 

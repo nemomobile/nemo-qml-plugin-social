@@ -68,17 +68,19 @@ class ArbitraryRequestHandler : public QObject
 {
     Q_OBJECT
 public:
-    explicit ArbitraryRequestHandler(SocialNetworkInterface *parent);
+    explicit ArbitraryRequestHandler(QNetworkAccessManager *networkAccessManager,
+                                     SocialNetworkInterface *parent);
     virtual ~ArbitraryRequestHandler();
     bool request(int requestType, const QString &requestUri,
                  const QVariantMap &queryItems = QVariantMap(),
                  const QString &postData = QString());
 
-    SocialNetworkInterface *q;
+    QNetworkAccessManager *networkAccessManager;
     QNetworkReply *reply;
     QString errorMessage;
     bool isError;
-
+signals:
+    void arbitraryRequestResponseReceived(bool isError, const QVariantMap &data);
 
 public Q_SLOTS:
     void finishedHandler();
