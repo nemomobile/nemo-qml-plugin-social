@@ -29,26 +29,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebookalbuminterface.h"
 #include "facebookalbuminterface_p.h"
-
 #include "facebookontology_p.h"
-#include "facebookobjectreferenceinterface.h"
-#include "identifiablecontentiteminterface_p.h"
-#include "contentiteminterface_p.h"
-
-#include <QtDebug>
+#include "facebookinterface.h"
+// <<< include
+#include <QtCore/QDebug>
+// >>> include
 
 FacebookAlbumInterfacePrivate::FacebookAlbumInterfacePrivate(FacebookAlbumInterface *q)
     : IdentifiableContentItemInterfacePrivate(q)
-    , from(0)
     , action(FacebookInterfacePrivate::NoAction)
+// <<< custom
+    , from(0)
+    , albumType(FacebookAlbumInterface::Normal)
     , liked(false)
+// >>> custom
 {
 }
 
 void FacebookAlbumInterfacePrivate::finishedHandler()
 {
+// <<< finishedHandler
     Q_Q(FacebookAlbumInterface);
     if (!reply()) {
         // if an error occurred, it might have been deleted by the error handler.
@@ -124,151 +125,170 @@ void FacebookAlbumInterfacePrivate::finishedHandler()
         }
         break;
     }
+// >>> finishedHandler
 }
-
-/*! \reimp */
-void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData)
+void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                              const QVariantMap &newData)
 {
     Q_Q(FacebookAlbumInterface);
-    QVariantMap fromMap = newData.value(FACEBOOK_ONTOLOGY_ALBUM_FROM).toMap();
-    QString fromIdStr = fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-    QString fromNameStr = fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
-    QString anStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_NAME).toString();
-    QString descStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION).toString();
-    QString linkStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString();
-    QString cpStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString();
-    QString prvStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).toString();
-    QString countStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toString();
-    QString typeStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_TYPE).toString();
-    QString ctStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
-    QString utStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
-    QString cuStr = newData.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString();
+    QString oldName = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_NAME).toString();
+    QString newName = newData.value(FACEBOOK_ONTOLOGY_ALBUM_NAME).toString();
+    QString oldDescription = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION).toString();
+    QString newDescription = newData.value(FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION).toString();
+    QUrl oldLink = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toUrl();
+    QUrl newLink = newData.value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toUrl();
+    QUrl oldCoverPhoto = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toUrl();
+    QUrl newCoverPhoto = newData.value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toUrl();
+    QString oldPrivacy = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).toString();
+    QString newPrivacy = newData.value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).toString();
+    int oldCount = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toInt();
+    int newCount = newData.value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toInt();
+    QString oldCreatedTime = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
+    QString newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
+    QString oldUpdatedTime = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
+    QString newUpdatedTime = newData.value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
+    bool oldCanUpload = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toBool();
+    bool newCanUpload = newData.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toBool();
 
-    QVariantMap oldFromMap = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_FROM).toMap();
-    QString oldFromIdStr = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-    QString oldFromNameStr = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
-    QString oldAnStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_NAME).toString();
-    QString oldDescStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION).toString();
-    QString oldLinkStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString();
-    QString oldCpStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString();
-    QString oldPrvStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).toString();
-    QString oldCountStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toString();
-    QString oldTypeStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_TYPE).toString();
-    QString oldCtStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
-    QString oldUtStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
-    QString oldCuStr = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString();
-
-    if (anStr != oldAnStr)
+    if (newName != oldName)
         emit q->nameChanged();
-    if (descStr != oldDescStr)
+    if (newDescription != oldDescription)
         emit q->descriptionChanged();
-    if (linkStr != oldLinkStr)
+    if (newLink != oldLink)
         emit q->linkChanged();
-    if (cpStr != oldCpStr)
+    if (newCoverPhoto != oldCoverPhoto)
         emit q->coverPhotoChanged();
-    if (prvStr != oldPrvStr)
+    if (newPrivacy != oldPrivacy)
         emit q->privacyChanged();
-    if (countStr != oldCountStr)
+    if (newCount != oldCount)
         emit q->countChanged();
-    if (typeStr != oldTypeStr)
-        emit q->albumTypeChanged();
-    if (ctStr != oldCtStr)
+    if (newCreatedTime != oldCreatedTime)
         emit q->createdTimeChanged();
-    if (utStr != oldUtStr)
+    if (newUpdatedTime != oldUpdatedTime)
         emit q->updatedTimeChanged();
-    if (cuStr != oldCuStr)
+    if (newCanUpload != oldCanUpload)
         emit q->canUploadChanged();
 
+// <<< emitPropertyChangeSignals
+    QVariantMap oldFromMap = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_FROM).toMap();
+    QString oldFromId = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString oldFromName = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    QVariantMap newFromMap = newData.value(FACEBOOK_ONTOLOGY_ALBUM_FROM).toMap();
+    QString newFromId = newFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString newFromName = newFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+
     // update the from object if required
-    if (fromIdStr != oldFromIdStr || fromNameStr != oldFromNameStr) {
+    if (newFromId != oldFromId || newFromName != oldFromName) {
         QVariantMap newFromData;
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
-        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, fromIdStr);
-        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, fromNameStr);
+        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
+        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
         qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
         emit q->fromChanged();
     }
 
-    // call the super class implementation
-    QVariantMap oldDataWithId = oldData; oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, oldData.value(FACEBOOK_ONTOLOGY_ALBUM_ID));
-    QVariantMap newDataWithId = newData; newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, newData.value(FACEBOOK_ONTOLOGY_ALBUM_ID));
+    QString oldType = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_ALBUMTYPE).toString().toLower();
+    QString newType = newData.value(FACEBOOK_ONTOLOGY_ALBUM_ALBUMTYPE).toString().toLower();
+
+    if (newType != oldType) {
+        if (newType == QLatin1String("normal"))
+            albumType = FacebookAlbumInterface::Normal;
+        else if (newType == QLatin1String("wall"))
+            albumType = FacebookAlbumInterface::Wall;
+        else if (newType == QLatin1String("profile"))
+            albumType = FacebookAlbumInterface::Profile;
+        else if (newType == QLatin1String("mobile"))
+            albumType = FacebookAlbumInterface::Mobile;
+        else
+            albumType = FacebookAlbumInterface::Album;
+        emit q->albumTypeChanged();
+    }
+// >>> emitPropertyChangeSignals
+
+    // Call super class implementation
+    QVariantMap oldDataWithId = oldData;
+    oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,
+                         oldData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
+    QVariantMap newDataWithId = newData;
+    newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,
+                         newData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
     IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(oldDataWithId, newDataWithId);
 }
 
-//----------------------------------
+//-------------------------------
 
 /*!
     \qmltype FacebookAlbum
     \instantiates FacebookAlbumInterface
     \inqmlmodule org.nemomobile.social 1
     \brief A FacebookAlbum represents an Album object from the Facebook OpenGraph API
-
+    
     Every album has a unique identifier, and thus an album may be
     set as the \c node (or central content item) in the Facebook
     adapter.  The content items related to an album include various
     photos or videos, likes and comments.
-
+    
     An example of usage of a FacebookAlbum as the node in a Facebook
     model is as follows:
-
+    
     \qml
     import QtQuick 1.1
     import org.nemomobile.social 1.0
-
+    
     Item {
         id: root
         width: 400
         height: 800
-
+    
         Flickable {
             anchors.top: parent.verticalCenter
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
-
+    
             ListView {
                 model: fb
                 anchors.fill: parent
                 delegate: Label { text: "id: " + contentItemIdentifier } // Photo ids
             }
         }
-
+    
         Facebook {
             id: fb
             accessToken: "your access token"    // you must supply a valid access token
             nodeIdentifier: "10150146071791729" // some valid Facebook album id.
             filters: [ ContentItemTypeFilter { type: Facebook.Photo } ]
         }
-
+    
         Component.onCompleted: {
             fb.populate()
         }
     }
     \endqml
-
+    
     A FacebookAlbum may also be used "directly" by clients, in order to
     upload photos or comments, or like the album.  An example of direct
     usage of the FacebookAlbum type is as follows:
-
+    
     \qml
     import QtQuick 1.1
     import org.nemomobile.social 1.0
-
+    
     Item {
         id: root
         width: 400
         height: 800
-
+    
         Facebook {
             id: fb
             accessToken: "your access token"    // you must supply a valid access token
         }
-
+    
         FacebookAlbum {
             id: fba
             socialNetwork: fb
             identifier: "10150146071791729"     // some valid Facebook Album fbid
-
+    
             onStatusChanged: {
                 if (status == SocialNetwork.Idle) {
                     // could comment on the album
@@ -285,43 +305,49 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     }
     \endqml
 */
-
 FacebookAlbumInterface::FacebookAlbumInterface(QObject *parent)
     : IdentifiableContentItemInterface(*(new FacebookAlbumInterfacePrivate(this)), parent)
 {
+// <<< constructor
     Q_D(FacebookAlbumInterface);
     d->from = new FacebookObjectReferenceInterface(this);
+// >>> constructor
 }
 
-/*! \reimp */
+/*! eimp */
 int FacebookAlbumInterface::type() const
 {
     return FacebookInterface::Album;
 }
 
-/*! \reimp */
+/*! eimp */
 bool FacebookAlbumInterface::remove()
 {
+// <<< remove
     return IdentifiableContentItemInterface::remove();
+// >>> remove
 }
 
-/*! \reimp */
+/*! eimp */
 bool FacebookAlbumInterface::reload(const QStringList &whichFields)
 {
+// <<< reload
     return IdentifiableContentItemInterface::reload(whichFields);
+// >>> reload
 }
 
 /*!
-    \qmlmethod bool FacebookAlbum::like()
+    \qmlmethod bool FacebookAlbumInterface::like()
     Initiates a "like" operation on the album.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the album will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookAlbumInterface::like()
 {
+// <<< like
     Q_D(FacebookAlbumInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
                                   identifier(), QLatin1String("likes"));
@@ -332,19 +358,20 @@ bool FacebookAlbumInterface::like()
     d->action = FacebookInterfacePrivate::LikeAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> like
 }
-
 /*!
-    \qmlmethod bool FacebookAlbum::unlike()
+    \qmlmethod bool FacebookAlbumInterface::unlike()
     Initiates a "delete like" operation on the album.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the album will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookAlbumInterface::unlike()
 {
+// <<< unlike
     Q_D(FacebookAlbumInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
                                   identifier(), QLatin1String("likes"));
@@ -355,24 +382,25 @@ bool FacebookAlbumInterface::unlike()
     d->action = FacebookInterfacePrivate::DeleteLikeAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> unlike
 }
-
 /*!
-    \qmlmethod bool FacebookAlbum::uploadComment(const QString &message)
+    \qmlmethod bool FacebookAlbumInterface::uploadComment(const QString &message)
     Initiates a "post comment" operation on the album.  The comment
     will contain the specified \a message.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the album will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
     false.
-
+    
     Once the network request completes, the \c responseReceived()
     signal will be emitted.  The \c data parameter of the signal
-    will contain the \c id of the newly uploaded comment.
-*/
+    will contain the \c id of the newly uploaded comment.*/
+
 bool FacebookAlbumInterface::uploadComment(const QString &message)
 {
+// <<< uploadComment
     Q_D(FacebookAlbumInterface);
     QVariantMap postData;
     postData.insert("message", message);
@@ -387,20 +415,21 @@ bool FacebookAlbumInterface::uploadComment(const QString &message)
     d->action = FacebookInterfacePrivate::UploadCommentAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> uploadComment
 }
-
 /*!
-    \qmlmethod bool FacebookAlbum::removeComment(const QString &identifier)
+    \qmlmethod bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
     Initiates a "delete comment" operation on the comment specified by
     the given \a identifier.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the album will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
 {
+// <<< removeComment
     Q_D(FacebookAlbumInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
                                   commentIdentifier);
@@ -411,25 +440,27 @@ bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
     d->action = FacebookInterfacePrivate::DeleteCommentAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> removeComment
 }
-
 /*!
-    \qmlmethod bool FacebookAlbum::uploadPhoto(const QUrl &source, const QString &message)
+    \qmlmethod bool FacebookAlbumInterface::uploadPhoto(const QUrl &source, const QString &message)
     Initiates a "post photo" operation on the album.  The photo will
     be loaded from the local filesystem and uploaded to Facebook with
     its caption set to the given \a message.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the album will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
     false.
-
+    
     Once the network request completes, the \c responseReceived()
     signal will be emitted.  The \c data parameter of the signal
     will contain the \c id of the newly uploaded photo.
-*/
+    */
+
 bool FacebookAlbumInterface::uploadPhoto(const QUrl &source, const QString &message)
 {
+// <<< uploadPhoto
     Q_D(FacebookAlbumInterface);
     // XXX TODO: privacy parameter?
 
@@ -451,20 +482,21 @@ bool FacebookAlbumInterface::uploadPhoto(const QUrl &source, const QString &mess
     d->action = FacebookInterfacePrivate::UploadPhotoAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> uploadPhoto
 }
-
 /*!
-    \qmlmethod bool FacebookAlbum::removePhoto(const QString &identifier)
+    \qmlmethod bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
     Initiates a "delete photo" operation on the photo specified by
     the given \a identifier.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the album will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
 {
+// <<< removePhoto
     Q_D(FacebookAlbumInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete, photoIdentifier);
 
@@ -474,21 +506,22 @@ bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
     d->action = FacebookInterfacePrivate::DeletePhotoAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> removePhoto
 }
 
 /*!
-    \qmlproperty FacebookObjectReference *FacebookAlbum::from
+    \qmlproperty FacebookObjectReferenceInterface * FacebookAlbumInterface::from
     Holds a reference to the user or profile which created the album.
 */
-FacebookObjectReferenceInterface *FacebookAlbumInterface::from() const
+FacebookObjectReferenceInterface * FacebookAlbumInterface::from() const
 {
     Q_D(const FacebookAlbumInterface);
     return d->from;
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::name
-    Holds the name of the album
+    \qmlproperty QString FacebookAlbumInterface::name
+    Holds the name of the album.
 */
 QString FacebookAlbumInterface::name() const
 {
@@ -497,8 +530,8 @@ QString FacebookAlbumInterface::name() const
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::description
-    Holds the description of the album
+    \qmlproperty QString FacebookAlbumInterface::description
+    Holds the description of the album.
 */
 QString FacebookAlbumInterface::description() const
 {
@@ -507,28 +540,28 @@ QString FacebookAlbumInterface::description() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookAlbum::link
-    Holds a link to the album
+    \qmlproperty QUrl FacebookAlbumInterface::link
+    Holds a link to the album.
 */
 QUrl FacebookAlbumInterface::link() const
 {
     Q_D(const FacebookAlbumInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString());
+    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toUrl();
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::coverPhoto
-    Holds a link to the cover photo of an album
+    \qmlproperty QUrl FacebookAlbumInterface::coverPhoto
+    Holds a link to the cover photo of an album.
 */
-QString FacebookAlbumInterface::coverPhoto() const
+QUrl FacebookAlbumInterface::coverPhoto() const
 {
     Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString();
+    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toUrl();
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::privacy
-    Holds the privacy setting of the album
+    \qmlproperty QString FacebookAlbumInterface::privacy
+    Holds the privacy setting of the album.
 */
 QString FacebookAlbumInterface::privacy() const
 {
@@ -537,22 +570,17 @@ QString FacebookAlbumInterface::privacy() const
 }
 
 /*!
-    \qmlproperty int FacebookAlbum::count
-    Holds the count of the number of photos in the album
+    \qmlproperty int FacebookAlbumInterface::count
+    Holds the count of the number of photos in the album.
 */
 int FacebookAlbumInterface::count() const
 {
     Q_D(const FacebookAlbumInterface);
-    QString countStr = d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toString();
-    bool ok = false;
-    int retn = countStr.toInt(&ok);
-    if (ok)
-        return retn;
-    return -1;
+    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toInt();
 }
 
 /*!
-    \qmlproperty FacebookAlbum::AlbumType FacebookAlbum::albumType
+    \qmlproperty FacebookAlbumInterface::AlbumType FacebookAlbumInterface::albumType
     Holds the type of the album.  Valid values are:
     \list
     \li FacebookAlbum.Album
@@ -560,26 +588,17 @@ int FacebookAlbumInterface::count() const
     \li FacebookAlbum.Wall
     \li FacebookAlbum.Profile
     \li FacebookAlbum.Mobile
-    \endlist
+    \endlist.
 */
 FacebookAlbumInterface::AlbumType FacebookAlbumInterface::albumType() const
 {
     Q_D(const FacebookAlbumInterface);
-    QString atStr = d->data().value(FACEBOOK_ONTOLOGY_ALBUM_TYPE).toString().toLower();
-    if (atStr == QLatin1String("normal"))
-        return FacebookAlbumInterface::Normal;
-    else if (atStr == QLatin1String("wall"))
-        return FacebookAlbumInterface::Wall;
-    else if (atStr == QLatin1String("profile"))
-        return FacebookAlbumInterface::Profile;
-    else if (atStr == QLatin1String("mobile"))
-        return FacebookAlbumInterface::Mobile;
-    return FacebookAlbumInterface::Album;
+    return d->albumType;
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::createdTime
-    Holds the creation time of the album in an ISO8601-formatted string
+    \qmlproperty QString FacebookAlbumInterface::createdTime
+    Holds the creation time of the album in an ISO8601-formatted string.
 */
 QString FacebookAlbumInterface::createdTime() const
 {
@@ -588,8 +607,8 @@ QString FacebookAlbumInterface::createdTime() const
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::updatedTime
-    Holds the last-update time of the album in an ISO8601-formatted string
+    \qmlproperty QString FacebookAlbumInterface::updatedTime
+    Holds the last-update time of the album in an ISO8601-formatted string.
 */
 QString FacebookAlbumInterface::updatedTime() const
 {
@@ -598,21 +617,22 @@ QString FacebookAlbumInterface::updatedTime() const
 }
 
 /*!
-    \qmlproperty bool FacebookAlbum::canUpload
-    Whether the current user can upload photos to the album
+    \qmlproperty bool FacebookAlbumInterface::canUpload
+    Whether the current user can upload photos to the album.
 */
 bool FacebookAlbumInterface::canUpload() const
 {
     Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString() == QLatin1String("true");
+    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toBool();
 }
 
 /*!
-    \qmlproperty bool FacebookAlbum::liked
-    Whether the album has been liked by the current user
+    \qmlproperty bool FacebookAlbumInterface::liked
+    Whether the album has been liked by the current user.
 */
 bool FacebookAlbumInterface::liked() const
 {
     Q_D(const FacebookAlbumInterface);
     return d->liked;
 }
+

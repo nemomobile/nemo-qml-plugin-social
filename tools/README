@@ -1,0 +1,235 @@
+= Social QML plugin Facebook tools =
+
+This set of tools, written in Python, are used to make generation of C++ interfaces easier.
+Instead of writing boilerplate code, a set of scripts parse a JSON formatted file that describes
+a Facebook interface, and write C++ code accordingly.
+
+== JSON description file format ==
+
+All JSON description files follow that scheme:
+
+{
+    "name": "my_interface",
+    "doc": "Some documentation",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "id",
+            "type": "QString",
+            "doc": "Some documentation for the id"
+        },
+        {
+            "name": "specific_object",
+            "is_pointer": true,
+            "type": "MySpecificObject",
+            "doc": "Some documentation for the specific object"
+        },
+        {
+            "name": "property_outside_of_fb_api",
+            "type": "int",
+            "custom": true
+            "doc": "Some documentation for that property that is not described in Facebook API"
+        }
+    ],
+    "methods": [
+        {
+            "name": "simpleMethod",
+            "parameters": [],
+            "doc": "Some documentation"
+        },
+        {
+            "name": "complexMethod",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "message",
+                    "is_const": true,
+                    "is_reference": true,
+                    "default": "QString::number(23)"
+                }
+            ],
+            "doc": "A very complex method call"
+        }
+    ]
+}
+
+The structure is basically splitted into three main categories:
+* Description of the interface
+* Description of the properties
+* Description of the methods
+
+Please note that all names that comes from Facebook API, that includes the
+name of the interface and the name of the properties should be _ separated.
+The name of methods should be written camelcased, since they are only used in
+a Qt context.
+
+=== Interface description ===
+
+The interface is described with the top-level fields, and the properties and
+methods are passed as lists for the "properties" and "methods" field.
+
+==== Mandatory fields ====
+
+* name (string)
+    This field will be the name of the interface, and will be converted to camelcased.
+* doc (string)
+    This field should provide the documentation of the generated class.
+    The \qmltype and \instantiates lines are automatically generated.
+* identifiable (boolean)
+    This field tells if the generated interface is an identifiable interface,
+    meaning that if it derives from IdentifiableContentItemInterface or simply from 
+    ContentItemInterface.
+
+    Identifiable interfaces represents the main Facebook entities, that are described
+    in the Graph API, whereas non-identifiable ones are structures that carry information
+    (like the Cover for a Facebook user) but that do not have connections.
+
+==== Optionnal fields ====
+
+* extra_public (string)
+    This field contains code that should be added in the header, with a public scope.
+    Additionnal enumerations and methods can be declared in that field.
+
+* extra_protected (string)
+    This field contains code that should be added in the header, with a protected scope.
+    
+* extra_private (string)
+    This field contains code that should be added in the header, with a private scope.
+    
+* extra_source (string)
+    This field contains code that should be added in the source code. It often contains
+    implementation of methods declared with extra_public, extra_protected or extra_private.
+    
+=== Properties description ===
+
+The properties description is a list of objects that should be passed to the "properties"
+field. Each of these objects describes one property, that should be exposed by the graph API,
+and be available in the QML context.
+
+==== Mandatory fields ====
+
+* name (string)
+    This field will be the name of the property, and will be converted to camelcased.
+* type (string)
+    This field contains the type of the property. If the type is a reference, a pointer
+    or is constant, do not mention it in this field. Instead, set the optionnal fields
+    that corresponds to true.
+* doc (string)
+    This field should provide the documentation of the property.
+    The \qmlproperty line is automatically generated.
+
+==== Optionnal fields ====
+
+* is_const (boolean)
+    Tells that the property is a constant. 
+* is_pointer (boolean)
+    Tells that the property is a pointer. 
+* is_reference (boolean)
+    Tells that the property is a reference. 
+* custom (boolean)
+    Tells that this property should be handled specifically. The default properties are
+    read directly from the data retrived from the Facebook graph API. However, some specific 
+    properties, for example properties that are, in fact, enumerations, should be handled 
+    specifically. By setting this field to true, a private attribute is created, and can be set 
+    in emitPropertyChangeSignals.
+    
+    The accessor will always return that attribute instead of reading it from data from the Facebook
+    graph API.
+    
+    Note that if is_pointer is set to true, custom is automatically set to true as well.
+* is_ontology (boolean)
+    Ontology keys are macros that corresponds to the name of the property in the Facebook graph
+    API. If you define a property that do not exist in the Facebook graph API, you should disable
+    the key that is automatically generated and associated to it, by setting this field to false.
+    
+=== Methods description ===
+
+The properties description is a list of objects that should be passed to the "methods"
+field. Each of these objects describes one method, that is a Q_INVOKABLE C++ method, that
+returns a boolean, that indicates the state of the call.
+
+==== Mandatory fields ====
+
+* name (string)
+    This field will be the name of the method. It is not camelcased.
+* doc (string)
+    This field should provide the documentation of the method.
+    The \qmlmethod line is automatically generated.
+* parameters (list of objects)
+    This field contains the parmeters that the method takes. Each parameter have these fields:
+    * name, that is the name of the parameter.
+    * type, that is the type of the parameter. Like with property, there are modifiers to set it
+      as a constant, a pointer or a reference.
+    * is_const, is_pointer, is_reference, the type modifiers. (optionnal)
+    * default, the default value of the parameter. (optionnal)
+    
+== Using the generators ==
+
+=== The minipatcher system ===
+
+All the generators use a small python library, called minipatcher. Minipatcher is heavily inspired
+from the patching system using in spectacle to generate spec files. In order to allow completion of
+information without loosing other information, minipatcher uses a set of flags to set regions where
+the code should be kept.
+
+The flags have this format
+
+// <<< sometag
+Code
+More code
+// >>> sometag
+
+Inside the flags, the code will be kept, even if the tools are regenerated, but outside the flags,
+any modification will be overwritten.
+
+=== Generating ontologies ===
+
+The ontologies file, facebookontology_p.h, can be completed with ontology-writer.py. This tool takes
+in input the ontology file as well as a JSON description file, and extracts all the properties 
+(except those flagged as not in the ontologies), and write a new section inside the ontology file
+containing all the ontology keys for the new class.
+
+If the section containing the keys for the class described in the JSON file already exists, it will
+be overwritten. Other sections are not affected.
+
+Usage: ontology-writer.py [-h] ontology_file structure_file
+Example: ontology-writer.py facebookontology_p.h cover.json
+
+=== Generating interfaces ===
+
+interface-writer.py can write a the header and source file of an interface, when provided a
+description file. If the description file describes only a non-identifiable interface, without
+any custom property then the generated files should be complete. 
+
+If custom propeties are involved, or if the interface is identifiable, then the generated
+class should be completed, by how the custom properties should be modified, and how the methods
+should be implemented.
+
+You should write your implementation inside the minipatcher flags. A rerun of ontology-writer.py, 
+with a modified JSON description file, should keep the implementation you already wrote inside
+the existing flags.
+
+interface-writer.py may write only one header and a source file or two headers (public and private)
+and the source file depending on if the interface is identifiable or not. 
+
+Usage: interface-writer.py [-h] structure_file
+Example: interface-writer.py album.json
+
+=== Doc to JSON ===
+
+It is often tedious to convert a fully formatted texte (with backspaces and backslashes) to 
+a JSON string. doctojson.py makes that conversion easier. It can be used to convert a qdoc
+documentation to JSON strings. 
+
+You should write the documentation inside a plain text file. Running doctojson.py on it
+will return it in a one line JSON formatted string.
+
+Usage: doctojson.py [-h] doc_file
+Example: doctojson.py album.doc
+
+(Remark: this is a quick hack, and there might be way better methods out there)
+
+== Future work ==
+
+* Add static methods to be implemented for identifiable interface, in order to migrate
+  methods from FacebookInterface to each interface.

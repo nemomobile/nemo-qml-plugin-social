@@ -32,25 +32,19 @@
 #ifndef FACEBOOKALBUMINTERFACE_P_H
 #define FACEBOOKALBUMINTERFACE_P_H
 
-#include <QtCore/QObject>
-#include <QtCore/QList>
-#include <QtNetwork/QNetworkReply>
-
+#include "facebookalbuminterface.h"
 #include "facebookinterface_p.h"
 #include "identifiablecontentiteminterface_p.h"
 
-class IdentifiableContentItemInterfacePrivate;
-class FacebookObjectReferenceInterface;
-class FacebookAlbumInterface;
-
-class FacebookAlbumInterfacePrivate : public IdentifiableContentItemInterfacePrivate
+class FacebookAlbumInterfacePrivate: public IdentifiableContentItemInterfacePrivate
 {
 public:
-    explicit FacebookAlbumInterfacePrivate(FacebookAlbumInterface *parent);
+    explicit FacebookAlbumInterfacePrivate(FacebookAlbumInterface *q);
     void finishedHandler();
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-    FacebookObjectReferenceInterface *from;
     FacebookInterfacePrivate::FacebookAction action;
+    FacebookObjectReferenceInterface * from;
+    FacebookAlbumInterface::AlbumType albumType;
     bool liked;
 private:
     Q_DECLARE_PUBLIC(FacebookAlbumInterface)
