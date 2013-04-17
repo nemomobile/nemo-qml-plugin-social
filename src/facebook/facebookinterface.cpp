@@ -684,6 +684,10 @@ void FacebookInterface::updateInternalData(QList<CacheEntry*> data)
 
     // XXX TODO: sort the filtered data
     QList<CacheEntry*> sortedData = filteredData;
+    foreach (SorterInterface *sorter, d->sorters) {
+        SorterFunctor functor (sorter);
+        qStableSort(sortedData.begin(), sortedData.end(), functor);
+    }
 
     // clear the internal data
     QModelIndex parent;

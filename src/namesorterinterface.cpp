@@ -29,30 +29,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "sorterinterface.h"
-#include "sorterinterface_p.h"
-
+#include "namesorterinterface.h"
 #include "contentiteminterface.h"
+#include <QtCore/QMetaProperty>
+#include <QtCore/QMetaObject>
+#include "facebook/facebookontology_p.h"
 
-SorterInterfacePrivate::SorterInterfacePrivate()
-    : ownedBySocialNetworkInterface(false)
+NameSorterInterface::NameSorterInterface(QObject *parent):
+    SorterInterface(parent)
 {
 }
 
-// ------------------------------ SorterInterface
-
-
-SorterInterface::SorterInterface(QObject *parent)
-    : QObject(parent), d_ptr(new SorterInterfacePrivate)
-{
-}
-
-SorterInterface::~SorterInterface()
-{
-}
-
-// The default sorting algorithm is to sort by type. TODO (SfietKonstantin): not the case anymore
-bool SorterInterface::firstLessThanSecond(const QVariantMap &first, const QVariantMap &second) const
+bool NameSorterInterface::firstLessThanSecond(const QVariantMap &first,
+                                              const QVariantMap &second) const
 {
     if (first.empty() && !second.empty())
         return true;
@@ -60,6 +49,33 @@ bool SorterInterface::firstLessThanSecond(const QVariantMap &first, const QVaria
     if (second.empty())
         return false;
 
-    // Preserve order
-    return true;
+//    // We first order by type
+//    if (first->type() < second->type())
+//        return true;
+//    if (first->type() > second->type())
+//        return false;
+
+//    // Checks
+//    int firstPropertyIndex = first->metaObject()->indexOfProperty("name");
+//    int secondPropertyIndex = second->metaObject()->indexOfProperty("name");
+
+//    if (firstPropertyIndex == -1 || secondPropertyIndex == -1) {
+//        return SorterInterface::firstLessThanSecond(first, second);
+//    }
+
+//    QMetaProperty firstProperty = first->metaObject()->property(firstPropertyIndex);
+//    QMetaProperty secondProperty = first->metaObject()->property(secondPropertyIndex);
+
+//    if (firstProperty.type() != QVariant::String || secondProperty.type() != QVariant::String) {
+//        return SorterInterface::firstLessThanSecond(first, second);
+//    }
+
+//    QString firstName = firstProperty.read(first).toString();
+//    QString secondName = firstProperty.read(first).toString();
+
+//    return firstName < secondName;
+
+    return first.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString()
+           < second.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+
 }

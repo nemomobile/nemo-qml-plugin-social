@@ -29,29 +29,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef SORTERINTERFACE_H
-#define SORTERINTERFACE_H
+#ifndef NAMESORTERINTERFACE_H
+#define NAMESORTERINTERFACE_H
 
-#include <QtCore/QObject>
-#include <QtCore/QVariantMap>
+#include "sorterinterface.h"
 
-class SocialNetworkInterfacePrivate;
-class SorterInterfacePrivate;
-
-class SorterInterface : public QObject
+class NameSorterInterface: public SorterInterface
 {
     Q_OBJECT
-
 public:
-    explicit SorterInterface(QObject *parent = 0);
-    virtual ~SorterInterface();
-    Q_INVOKABLE virtual bool firstLessThanSecond(const QVariantMap &first,
-                                                 const QVariantMap &second) const;
-protected:
-    QScopedPointer<SorterInterfacePrivate> d_ptr;
-private:
-    Q_DECLARE_PRIVATE(SorterInterface)
-    friend class SocialNetworkInterfacePrivate;
+    explicit NameSorterInterface(QObject *parent = 0);
+    Q_INVOKABLE bool firstLessThanSecond(const QVariantMap &first,
+                                         const QVariantMap &second) const;
 };
 
-#endif // SORTERINTERFACE_H
+#endif // NAMESORTERINTERFACE_H
