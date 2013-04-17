@@ -60,7 +60,7 @@ public:
     ContentItemInterface *item;
 
 private:
-    int refcount;
+    int refcount; // TODO: This can be made public (SfietKonstantin)
     friend class SocialNetworkInterfacePrivate;
 };
 

@@ -41,7 +41,8 @@ HEADERS += \
     $$PWD/socialnetworkinterface.h \
     $$PWD/socialnetworkinterface_p.h \
     $$PWD/sorterinterface.h \
-    $$PWD/sorterinterface_p.h
+    $$PWD/sorterinterface_p.h \
+    $$PWD/util_p.h
 
 OTHER_FILES += qmldir social.qdoc social.qdocconf
 
