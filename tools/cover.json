@@ -1,0 +1,18 @@
+{
+    "name": "cover",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "id",
+            "type": "QString"
+        },
+        {
+            "name": "source",
+            "type": "QString"
+        },
+        {
+            "name": "offset_y",
+            "type": "int"
+        }
+    ]
+}
