@@ -590,10 +590,8 @@ void FacebookInterface::updateInternalData(QList<CacheEntry*> data)
     qWarning() << Q_FUNC_INFO << "filtering/sorting not implemented.  TODO!";
 
     // XXX TODO: filter the data in a better manner than linear searches...
-    QList<CacheEntry*> filteredData = data;
+    QList<CacheEntry*> filteredData;
     for (int i = 0; i < d->filters.size(); ++i) {
-        QList<CacheEntry*> temp = filteredData;
-        filteredData.clear();
         FilterInterface *currFilter = d->filters.at(i);
         for (int j = 0; j < data.size(); ++j) {
             CacheEntry *currEntry = data.at(j);

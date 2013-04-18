@@ -68,7 +68,7 @@ class ArbitraryRequestHandler : public QObject
 {
     Q_OBJECT
 public:
-    explicit ArbitraryRequestHandler(QNetworkAccessManager *networkAccessManager,
+    explicit ArbitraryRequestHandler(QNetworkAccessManager *network,
                                      SocialNetworkInterface *parent);
     virtual ~ArbitraryRequestHandler();
     bool request(int requestType, const QString &requestUri,

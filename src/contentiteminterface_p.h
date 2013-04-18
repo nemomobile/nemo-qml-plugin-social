@@ -41,13 +41,17 @@ class ContentItemInterfacePrivate
 public:
     explicit ContentItemInterfacePrivate(ContentItemInterface *q);
     virtual ~ContentItemInterfacePrivate();
+
     QVariantMap data() const;
     void setData(const QVariantMap &data);
+
     virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     virtual void initializationComplete();
+
     // helper api - parse network reply data into QVariantMap
     // TODO: This method should be put in a header containing useful functions, and maybe inlined
     static QVariantMap parseReplyData(const QByteArray &replyData, bool *ok);
+
     SocialNetworkInterface *socialNetworkInterface;
     bool isInitialized;
 protected:

@@ -201,9 +201,10 @@ void ContentItemInterface::setSocialNetwork(SocialNetworkInterface *socialNetwor
     if (d->socialNetworkInterface != socialNetwork) {
         if (d->socialNetworkInterface)
             disconnect(d->socialNetworkInterface);
-        if (socialNetwork && !socialNetwork->isInitialized())
+        if (socialNetwork && !socialNetwork->isInitialized()) {
             connect(socialNetwork, SIGNAL(statusChanged()),
                     this, SLOT(socialNetworkStatusChangedHandler()));
+        }
         d->socialNetworkInterface = socialNetwork;
         emit socialNetworkChanged();
     }

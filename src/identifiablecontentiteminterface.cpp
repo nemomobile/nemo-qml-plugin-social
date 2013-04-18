@@ -231,8 +231,6 @@ void IdentifiableContentItemInterfacePrivate::reloadHandler()
 void IdentifiableContentItemInterfacePrivate::errorHandler(QNetworkReply::NetworkError networkError)
 {
     Q_Q(IdentifiableContentItemInterface);
-    deleteReply();
-
     // TODO: This huge switch should be better, with QMetaEnum for example.
     // It should also be exported, in order to be used elsewhere
     errorMessage = networkErrorString(networkError);

@@ -167,7 +167,6 @@ void ArbitraryRequestHandler::finishedHandler()
 
 void ArbitraryRequestHandler::errorHandler(QNetworkReply::NetworkError networkError)
 {
-
     errorMessage = networkErrorString(networkError);
     isError = true;
 }
