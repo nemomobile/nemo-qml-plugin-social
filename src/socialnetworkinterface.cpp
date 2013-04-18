@@ -397,7 +397,7 @@ void SocialNetworkInterfacePrivate::maybePurgeDoomedNodes(int count, int directi
             // so we have to delete it and purge our cache of content items for the node.
             purgeDoomedNode(doomedNode);
         } else {
-            qWarning() << Q_FUNC_INFO << "XXXX Node found from the stack!" << doomedNode->identifier();
+            qWarning() << Q_FUNC_INFO << "Node found from the stack. Could not purge the data." << doomedNode->identifier();
         }
     }
 
