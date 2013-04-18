@@ -396,6 +396,8 @@ void SocialNetworkInterfacePrivate::maybePurgeDoomedNodes(int count, int directi
             // the node doesn't appear anywhere else in the navigation breadcrumb trail.
             // so we have to delete it and purge our cache of content items for the node.
             purgeDoomedNode(doomedNode);
+        } else {
+            qWarning() << Q_FUNC_INFO << "XXXX Node found from the stack!" << doomedNode->identifier();
         }
     }
 
@@ -438,9 +440,14 @@ void SocialNetworkInterfacePrivate::pushNode(IdentifiableContentItemInterface *n
             qWarning() << Q_FUNC_INFO << "Error: placeholder node not the ToS!";
         } else {
             nodeStack.removeLast();
-            nodeStack.append(n);
+            nodeStack.append(n);            
         }
         return;
+    }    
+
+    if (nodeStack.contains(n)) {
+        nodeStack.removeAt(nodeStack.indexOf(n));
+        currentNodePosition--;
     }
 
     // Otherwise, we're pushing a new navigable node to the nodeStack.
@@ -923,8 +930,13 @@ QString SocialNetworkInterface::nodeIdentifier() const
 }
 
 void SocialNetworkInterface::setNodeIdentifier(const QString &contentItemIdentifier)
-{
+{       
     Q_D(SocialNetworkInterface);
+    if (d->pendingCurrentNodeIdentifier == contentItemIdentifier) {
+        qWarning() << Q_FUNC_INFO << "Pending data already requested for the node " << contentItemIdentifier;
+        return;
+    }
+
     IdentifiableContentItemInterface *cachedNode = d->findCachedNode(contentItemIdentifier);
     if (d->currentNode() && contentItemIdentifier == d->currentNode()->identifier()) {
         // resetting the current node.  This tells us to reload the node, clear its cache and repopulate.
@@ -952,7 +964,10 @@ void SocialNetworkInterface::setNodeIdentifier(const QString &contentItemIdentif
             d->pushNode(cachedNode);
             updateInternalData(data);
         } else {
-            qWarning() << Q_FUNC_INFO << "Error: cached node has no cached content!";
+            qWarning() << Q_FUNC_INFO << "Error: cached node has no cached content!" << contentItemIdentifier;
+            // Remove corrupted data & update currentNodePosition
+            d->currentNodePosition = d->nodeStack.size() - d->nodeStack.removeAll(cachedNode);
+            d->purgeDoomedNode(cachedNode);
         }
     }
 }
