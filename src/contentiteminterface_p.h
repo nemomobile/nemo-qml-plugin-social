@@ -32,44 +32,35 @@
 #ifndef CONTENTITEMINTERFACE_P_H
 #define CONTENTITEMINTERFACE_P_H
 
-#include "contentiteminterface.h"
-
 #include <QtCore/QVariantMap>
 
 class SocialNetworkInterface;
-
+class ContentItemInterface;
 class ContentItemInterfacePrivate
 {
 public:
-    explicit ContentItemInterfacePrivate(ContentItemInterface *q)
-        : s(0), isInitialized(false), q_ptr(q) {}
-    virtual ~ContentItemInterfacePrivate() {}
+    explicit ContentItemInterfacePrivate(ContentItemInterface *q);
+    virtual ~ContentItemInterfacePrivate();
 
-    SocialNetworkInterface *s;
+    QVariantMap data() const;
+    void setData(const QVariantMap &data);
+
+    virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+    virtual void initializationComplete();
+
+    // helper api - parse network reply data into QVariantMap
+    // TODO: This method should be put in a header containing useful functions, and maybe inlined
+    static QVariantMap parseReplyData(const QByteArray &replyData, bool *ok);
+
+    SocialNetworkInterface *socialNetworkInterface;
     bool isInitialized;
-
 protected:
     ContentItemInterface * const q_ptr;
 private:
+    // Slots
+    void socialNetworkStatusChangedHandler();
     Q_DECLARE_PUBLIC(ContentItemInterface)
-    QVariantMap _data;
-
-public:
-    QVariantMap data() const
-    {
-        return _data;
-    }
-
-    void setData(const QVariantMap &newData)
-    {
-        Q_Q(ContentItemInterface);
-        if (_data != newData) {
-            QVariantMap oldData = _data;
-            _data = newData;
-            q->emitPropertyChangeSignals(oldData, newData);
-            emit q->dataChanged();
-        }
-    }
+    QVariantMap m_data;
 };
 
 #endif // CONTENTITEMINTERFACE_P_H

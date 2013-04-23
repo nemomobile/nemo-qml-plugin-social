@@ -29,29 +29,20 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "sorterinterface.h"
 
-#include "contentiteminterface.h"
+#ifndef FACEBOOKTAGINTERFACE_P_H
+#define FACEBOOKTAGINTERFACE_P_H
 
-// ------------------------------ SorterInterface
+#include "contentiteminterface_p.h"
 
-SorterInterface::SorterInterface(QObject *parent)
-    : QObject(parent), m_ownedBySni(false)
+class FacebookTagInterface;
+class FacebookTagInterfacePrivate : public ContentItemInterfacePrivate
 {
-}
+public:
+    explicit FacebookTagInterfacePrivate(FacebookTagInterface *q);
+    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+private:
+    Q_DECLARE_PUBLIC(FacebookTagInterface)
+};
 
-SorterInterface::~SorterInterface()
-{
-}
-
-// The default sorting algorithm is to sort by type.
-bool SorterInterface::firstLessThanSecond(ContentItemInterface *first, ContentItemInterface *second) const
-{
-    if (!first && second)
-        return true;
-
-    if (!second)
-        return false;
-
-    return first->type() < second->type();
-}
+#endif // FACEBOOKTAGINTERFACE_P_H

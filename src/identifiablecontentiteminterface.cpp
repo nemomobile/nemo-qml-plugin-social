@@ -31,13 +31,14 @@
 
 #include "identifiablecontentiteminterface.h"
 #include "identifiablecontentiteminterface_p.h"
-#include "contentiteminterface_p.h"
 
 #include "socialnetworkinterface.h"
+#include "util_p.h"
 
 #include <QtDebug>
 
-IdentifiableContentItemInterfacePrivate::IdentifiableContentItemInterfacePrivate(IdentifiableContentItemInterface *q)
+IdentifiableContentItemInterfacePrivate
+    ::IdentifiableContentItemInterfacePrivate(IdentifiableContentItemInterface *q)
     : ContentItemInterfacePrivate(q)
     , status(SocialNetworkInterface::Initializing)
     , error(SocialNetworkInterface::NoError)
@@ -64,6 +65,78 @@ void IdentifiableContentItemInterfacePrivate::deleteReply()
     }
 }
 
+/*! \reimp */
+void IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                                        const QVariantMap &newData)
+{
+    Q_Q(IdentifiableContentItemInterface);
+    // most derived types will do:
+    // {
+    //     foreach (key, propKeys) {
+    //         if (newData.value(key) != oldData.value(key)) {
+    //             emit thatPropertyChanged();
+    //         }
+    //     }
+    //     SuperClass::emitPropertyChangeSignals(oldData, newData);
+    // }
+    // But this one is a bit special, since if the id changed, it's a terrible error.
+
+    // check identifier - NOTE: derived types MUST fill out this field before calling this
+    // class' implementation of emitPropertyChangeSignals.
+    QString oldId = oldData.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
+    QString newId = newData.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
+    if (newId.isEmpty() && oldId.isEmpty()) {
+        // this will fall through to being reported as an error due to identifier change
+        // (to empty) below.
+        qWarning() << Q_FUNC_INFO
+                   << "ERROR: derived types MUST set the NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID field appropriately prior to calling the superclass emitPropertyChangeSignals() function!";
+    }
+
+    // Might have been set directly by client via
+    // IdentifiableContentItemInterface::setIdentifier() which sets d->identifier.
+    if (oldId.isEmpty())
+        oldId = identifier;
+
+    if (oldId.isEmpty() && !newId.isEmpty()) {
+        // This must be a new object created by the model.
+        // We now have an identifier; set it and update.
+        identifier = newId;
+        emit q->identifierChanged();
+    } else if (newId.isEmpty() || oldId != newId) {
+        // The identifier changed.
+        // This shouldn't happen in real life.  Must be an error.
+        status = SocialNetworkInterface::Invalid;
+        error = SocialNetworkInterface::DataUpdateError;
+        errorMessage = QString(QLatin1String("identifier changed during data update from %1 to %2")).arg(oldId).arg(newId);
+        socialNetworkInterface = 0;
+        emit q->statusChanged();
+        emit q->errorChanged();
+        emit q->errorMessageChanged();
+        emit q->socialNetworkChanged();
+    }
+
+    // finally, as all derived classes must do, call super class implementation.
+    ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
+}
+
+/*! \reimp */
+void IdentifiableContentItemInterfacePrivate::initializationComplete()
+{
+    Q_Q(IdentifiableContentItemInterface);
+    // reload content if required.
+    if (needsReload) {
+        needsReload = false;
+        status = SocialNetworkInterface::Idle; // but DON'T emit, otherwise reload() will fail.
+        q->reload(); // XXX TODO: allow specifying whichFields for first time initialization reload()?
+    } else {
+        status = SocialNetworkInterface::Idle;
+        emit q->statusChanged();
+    }
+
+    // Finally, as all derived classes must do, call super class implementation.
+    ContentItemInterfacePrivate::initializationComplete();
+}
+
 void IdentifiableContentItemInterfacePrivate::connectFinishedAndErrors()
 {
     Q_Q(IdentifiableContentItemInterface);
@@ -74,8 +147,10 @@ void IdentifiableContentItemInterfacePrivate::connectFinishedAndErrors()
 void IdentifiableContentItemInterfacePrivate::connectErrors()
 {
     Q_Q(IdentifiableContentItemInterface);
-    QObject::connect(reply(), SIGNAL(error(QNetworkReply::NetworkError)), q, SLOT(errorHandler(QNetworkReply::NetworkError)));
-    QObject::connect(reply(), SIGNAL(sslErrors(QList<QSslError>)), q, SLOT(sslErrorsHandler(QList<QSslError>)));
+    QObject::connect(reply(), SIGNAL(error(QNetworkReply::NetworkError)),
+                     q, SLOT(errorHandler(QNetworkReply::NetworkError)));
+    QObject::connect(reply(), SIGNAL(sslErrors(QList<QSslError>)),
+                     q, SLOT(sslErrorsHandler(QList<QSslError>)));
 }
 
 void IdentifiableContentItemInterfacePrivate::finishedHandler()
@@ -98,11 +173,11 @@ void IdentifiableContentItemInterfacePrivate::removeHandler()
     QByteArray replyData = reply()->readAll();
     deleteReply();
     bool ok = false;
-    QVariantMap responseData = ContentItemInterface::parseReplyData(replyData, &ok);
+    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok)
         responseData.insert("response", replyData);
     if (replyData == QString(QLatin1String("true"))) {
-        status = SocialNetworkInterface::Invalid; // we have been removed, so we are now invalid.
+        status = SocialNetworkInterface::Invalid; // We have been removed, so we are now invalid.
         emit q->statusChanged();
         emit q->responseReceived(responseData);
     } else {
@@ -120,8 +195,8 @@ void IdentifiableContentItemInterfacePrivate::reloadHandler()
 {
     Q_Q(IdentifiableContentItemInterface);
     if (!reply()) {
-        // if an error occurred, it might have been deleted by the error handler.
-        qWarning() << Q_FUNC_INFO << "network request finished but no reply";
+        // If an error occurred, it might have been deleted by the error handler.
+        qWarning() << Q_FUNC_INFO << "Network request finished but no reply";
         return;
     }
 
@@ -133,7 +208,7 @@ void IdentifiableContentItemInterfacePrivate::reloadHandler()
     QByteArray replyData = reply()->readAll();
     deleteReply();
     bool ok = false;
-    QVariantMap responseData = ContentItemInterface::parseReplyData(replyData, &ok);
+    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok)
         responseData.insert("response", replyData);
     if (ok && !responseData.value("id").toString().isEmpty()) {
@@ -153,39 +228,12 @@ void IdentifiableContentItemInterfacePrivate::reloadHandler()
     }
 }
 
-void IdentifiableContentItemInterfacePrivate::errorHandler(QNetworkReply::NetworkError err)
+void IdentifiableContentItemInterfacePrivate::errorHandler(QNetworkReply::NetworkError networkError)
 {
     Q_Q(IdentifiableContentItemInterface);
-    deleteReply();
-
-    switch (err) {
-        case QNetworkReply::NoError: errorMessage = QLatin1String("QNetworkReply::NoError"); break;
-        case QNetworkReply::ConnectionRefusedError: errorMessage = QLatin1String("QNetworkReply::ConnectionRefusedError"); break;
-        case QNetworkReply::RemoteHostClosedError: errorMessage = QLatin1String("QNetworkReply::RemoteHostClosedError"); break;
-        case QNetworkReply::HostNotFoundError: errorMessage = QLatin1String("QNetworkReply::HostNotFoundError"); break;
-        case QNetworkReply::TimeoutError: errorMessage = QLatin1String("QNetworkReply::TimeoutError"); break;
-        case QNetworkReply::OperationCanceledError: errorMessage = QLatin1String("QNetworkReply::OperationCanceledError"); break;
-        case QNetworkReply::SslHandshakeFailedError: errorMessage = QLatin1String("QNetworkReply::SslHandshakeFailedError"); break;
-        case QNetworkReply::TemporaryNetworkFailureError: errorMessage = QLatin1String("QNetworkReply::TemporaryNetworkFailureError"); break;
-        case QNetworkReply::ProxyConnectionRefusedError: errorMessage = QLatin1String("QNetworkReply::ProxyConnectionRefusedError"); break;
-        case QNetworkReply::ProxyConnectionClosedError: errorMessage = QLatin1String("QNetworkReply::ProxyConnectionClosedError"); break;
-        case QNetworkReply::ProxyNotFoundError: errorMessage = QLatin1String("QNetworkReply::ProxyNotFoundError"); break;
-        case QNetworkReply::ProxyTimeoutError: errorMessage = QLatin1String("QNetworkReply::ProxyTimeoutError"); break;
-        case QNetworkReply::ProxyAuthenticationRequiredError: errorMessage = QLatin1String("QNetworkReply::ProxyAuthenticationRequiredError"); break;
-        case QNetworkReply::ContentAccessDenied: errorMessage = QLatin1String("QNetworkReply::ContentAccessDenied"); break;
-        case QNetworkReply::ContentOperationNotPermittedError: errorMessage = QLatin1String("QNetworkReply::ContentOperationNotPermittedError"); break;
-        case QNetworkReply::ContentNotFoundError: errorMessage = QLatin1String("QNetworkReply::ContentNotFoundError"); break;
-        case QNetworkReply::AuthenticationRequiredError: errorMessage = QLatin1String("QNetworkReply::AuthenticationRequiredError"); break;
-        case QNetworkReply::ContentReSendError: errorMessage = QLatin1String("QNetworkReply::ContentReSendError"); break;
-        case QNetworkReply::ProtocolUnknownError: errorMessage = QLatin1String("QNetworkReply::ProtocolUnknownError"); break;
-        case QNetworkReply::ProtocolInvalidOperationError: errorMessage = QLatin1String("QNetworkReply::ProtocolInvalidOperationError"); break;
-        case QNetworkReply::UnknownNetworkError: errorMessage = QLatin1String("QNetworkReply::UnknownNetworkError"); break;
-        case QNetworkReply::UnknownProxyError: errorMessage = QLatin1String("QNetworkReply::UnknownProxyError"); break;
-        case QNetworkReply::UnknownContentError: errorMessage = QLatin1String("QNetworkReply::UnknownContentError"); break;
-        case QNetworkReply::ProtocolFailure: errorMessage = QLatin1String("QNetworkReply::ProtocolFailure"); break;
-        default: errorMessage = QLatin1String("Unknown QNetworkReply::NetworkError"); break;
-    }
-
+    // TODO: This huge switch should be better, with QMetaEnum for example.
+    // It should also be exported, in order to be used elsewhere
+    errorMessage = networkErrorString(networkError);
     error = SocialNetworkInterface::RequestError;
     status = SocialNetworkInterface::Error;
 
@@ -203,8 +251,8 @@ void IdentifiableContentItemInterfacePrivate::sslErrorsHandler(const QList<QSslE
     if (sslErrors.isEmpty()) {
         errorMessage += QLatin1String("unknown SSL error");
     } else {
-        foreach (const QSslError &sslE, sslErrors)
-            errorMessage += sslE.errorString() + QLatin1String("; ");
+        foreach (const QSslError &sslError, sslErrors)
+            errorMessage += sslError.errorString() + QLatin1String("; ");
         errorMessage.chop(2);
     }
 
@@ -249,12 +297,12 @@ void IdentifiableContentItemInterfacePrivate::sslErrorsHandler(const QList<QSslE
 
     Item {
         SocialNetwork {
-            id: sn
+            id: socialNetwork
             nodeIdentifier: "1234567"
         }
 
         ListView {
-            model: sn
+            model: socialNetwork
             delegate: Text { text: contentItem.data["description"] }
         }
     }
@@ -350,70 +398,6 @@ QString IdentifiableContentItemInterface::errorMessage() const
     return d->errorMessage;
 }
 
-/*! \reimp */
-void IdentifiableContentItemInterface::emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData)
-{
-    Q_D(IdentifiableContentItemInterface);
-    // most derived types will do:
-    // {
-    //     foreach (key, propKeys) {
-    //         if (newData.value(key) != oldData.value(key)) {
-    //             emit thatPropertyChanged();
-    //         }
-    //     }
-    //     SuperClass::emitPropertyChangeSignals(oldData, newData);
-    // }
-    // But this one is a bit special, since if the id changed, it's a terrible error.
-
-    // check identifier - NOTE: derived types MUST fill out this field before calling this class' implementation of emitPropertyChangeSignals.
-    QString oldId = oldData.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
-    QString newId = newData.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
-    if (newId.isEmpty() && oldId.isEmpty()) {
-        // this will fall through to being reported as an error due to identifier change (to empty) below.
-        qWarning() << Q_FUNC_INFO << "ERROR: derived types MUST set the NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID field appropriately prior to calling the superclass emitPropertyChangeSignals() function!";
-    }
-
-    if (oldId.isEmpty())
-        oldId = d->identifier; // might have been set directly by client via icii.setIdentifier() which sets dd->identifier.
-
-    if (oldId.isEmpty() && !newId.isEmpty()) {
-        // this must be a new object created by the model.  We now have an identifier; set it and update.
-        d->identifier = newId;
-        emit identifierChanged();
-    } else if (newId.isEmpty() || oldId != newId) {
-        // the identifier changed.  This shouldn't happen in real life.  Must be an error.
-        d->status = SocialNetworkInterface::Invalid;
-        d->error = SocialNetworkInterface::DataUpdateError;
-        d->errorMessage = QString(QLatin1String("identifier changed during data update from %1 to %2")).arg(oldId).arg(newId);
-        d->s = 0;
-        emit statusChanged();
-        emit errorChanged();
-        emit errorMessageChanged();
-        emit socialNetworkChanged();
-    }
-
-    // finally, as all derived classes must do, call super class implementation.
-    ContentItemInterface::emitPropertyChangeSignals(oldData, newData);
-}
-
-/*! \reimp */
-void IdentifiableContentItemInterface::initializationComplete()
-{
-    Q_D(IdentifiableContentItemInterface);
-    // reload content if required.
-    if (d->needsReload) {
-        d->needsReload = false;
-        d->status = SocialNetworkInterface::Idle; // but DON'T emit, otherwise reload() will fail.
-        reload(); // XXX TODO: allow specifying whichFields for first time initialization reload()?
-    } else {
-        d->status = SocialNetworkInterface::Idle;
-        emit statusChanged();
-    }
-
-    // finally, as all derived classes must do, call super class implementation.
-    ContentItemInterface::initializationComplete();
-}
-
 /*!
     \qmlmethod bool IdentifiableContentItem::remove()
     Removes the object from the social network.
@@ -462,8 +446,7 @@ bool IdentifiableContentItemInterface::reload(const QStringList &whichFields)
     and must delete the reply via dd->deleteReply() when they are
     finished with it.
 */
-bool IdentifiableContentItemInterface::request(
-        IdentifiableContentItemInterface::RequestType t,
+bool IdentifiableContentItemInterface::request(IdentifiableContentItemInterface::RequestType requestType,
         const QString &objectIdentifier,
         const QString &extraPath,
         const QStringList &whichFields, // only valid for GET  requests
@@ -477,14 +460,16 @@ bool IdentifiableContentItemInterface::request(
     if (d->status == SocialNetworkInterface::Initializing
             || d->status == SocialNetworkInterface::Busy
             || d->status == SocialNetworkInterface::Invalid) {
-        qWarning() << Q_FUNC_INFO << "Warning: cannot start request, because status is Initializing/Busy/Invalid";
+        qWarning() << Q_FUNC_INFO
+                   << "Warning: cannot start request, because status is Initializing/Busy/Invalid";
         return false;
     }
 
-    if (t != IdentifiableContentItemInterface::Get
-            && t != IdentifiableContentItemInterface::Post
-            && t != IdentifiableContentItemInterface::Delete) {
-        qWarning() << Q_FUNC_INFO << "Warning: cannot start request, because request type is unknown";
+    if (requestType != IdentifiableContentItemInterface::Get
+            && requestType != IdentifiableContentItemInterface::Post
+            && requestType != IdentifiableContentItemInterface::Delete) {
+        qWarning() << Q_FUNC_INFO
+                   << "Warning: cannot start request, because request type is unknown";
         return false;
     }
 
@@ -493,21 +478,29 @@ bool IdentifiableContentItemInterface::request(
         return false;
     }
 
-    SocialNetworkInterface *sni = socialNetwork();
-    if (!sni) {
+    SocialNetworkInterface *socialNetworkInterface = socialNetwork();
+    if (!socialNetworkInterface) {
         qWarning() << Q_FUNC_INFO << "Error: social network is not valid!";
         return false;
     }
 
-    QNetworkReply *sniReply = 0;
-    switch (t) {
-        case IdentifiableContentItemInterface::Get:  sniReply = sni->getRequest(objectIdentifier, extraPath, whichFields, extraData); break;
-        case IdentifiableContentItemInterface::Post: sniReply = sni->postRequest(objectIdentifier, extraPath, postData, extraData);   break;
-        default: sniReply = sni->deleteRequest(objectIdentifier, extraPath, extraData); break;
+    QNetworkReply *reply = 0;
+    switch (requestType) {
+    case IdentifiableContentItemInterface::Get:
+        reply = socialNetworkInterface->getRequest(objectIdentifier, extraPath, whichFields,
+                                                   extraData);
+        break;
+    case IdentifiableContentItemInterface::Post:
+        reply = socialNetworkInterface->postRequest(objectIdentifier, extraPath, postData,
+                                                    extraData);
+        break;
+    default:
+        reply = socialNetworkInterface->deleteRequest(objectIdentifier, extraPath, extraData);
+        break;
     }
 
-    if (sniReply) {
-        d->currentReply = sniReply;
+    if (reply) {
+        d->currentReply = reply;
         d->status = SocialNetworkInterface::Busy;
         emit statusChanged();
         return true;
