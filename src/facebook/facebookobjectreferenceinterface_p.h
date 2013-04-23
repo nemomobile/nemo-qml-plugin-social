@@ -29,27 +29,20 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef SORTERINTERFACE_H
-#define SORTERINTERFACE_H
 
-#include <QtCore/QObject>
+#ifndef FACEBOOKOBJECTREFERENCEINTERFACE_P_H
+#define FACEBOOKOBJECTREFERENCEINTERFACE_P_H
 
-class SocialNetworkInterfacePrivate;
-class ContentItemInterface;
-class SorterInterfacePrivate;
-class SorterInterface : public QObject
+#include "contentiteminterface_p.h"
+
+class FacebookObjectReferenceInterface;
+class FacebookObjectReferenceInterfacePrivate : public ContentItemInterfacePrivate
 {
-    Q_OBJECT
-
 public:
-    explicit SorterInterface(QObject *parent = 0);
-    virtual ~SorterInterface();
-    Q_INVOKABLE virtual bool firstLessThanSecond(ContentItemInterface *first, ContentItemInterface *second) const;
-protected:
-    QScopedPointer<SorterInterfacePrivate> d_ptr;
+    explicit FacebookObjectReferenceInterfacePrivate(FacebookObjectReferenceInterface *q);
+    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
 private:
-    Q_DECLARE_PRIVATE(SorterInterface)
-    friend class SocialNetworkInterfacePrivate;
+    Q_DECLARE_PUBLIC(FacebookObjectReferenceInterface)
 };
 
-#endif // SORTERINTERFACE_H
+#endif // FACEBOOKOBJECTREFERENCEINTERFACE_P_H

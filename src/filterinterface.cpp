@@ -29,62 +29,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKOBJECTREFERENCEINTERFACE_H
-#define FACEBOOKOBJECTREFERENCEINTERFACE_H
+#include "filterinterface.h"
+#include "filterinterface_p.h"
 
 #include "contentiteminterface.h"
-#include "facebookinterface.h"
-#include <QtCore/QString>
 
-/*
- * NOTE: if you construct one of these in C++ directly,
- * you MUST call classBegin() and componentCompleted()
- * directly after construction.
- */
+#include <QtDebug>
 
-/*
- * NOTE: this is an unidentifiable content item which
- * is read only and only creatable by the top level
- * FacebookInterface.
- */
-
-/*
- * This particular content item contains a reference to
- * an identifiable object, however the reference itself
- * is not identifiable.  It basically provides the type
- * of object which it references, the identifier of the
- * object it references, and the name of the object it
- * references.
- */
-
-class FacebookObjectReferenceInterfacePrivate;
-class FacebookObjectReferenceInterface : public ContentItemInterface
+FilterInterfacePrivate::FilterInterfacePrivate()
+    : ownedBySocialNetworkInterface(false)
 {
-    Q_OBJECT
-    Q_PROPERTY(QString objectIdentifier READ objectIdentifier NOTIFY objectIdentifierChanged)
-    Q_PROPERTY(QString objectName READ objectName NOTIFY objectNameChanged)
-    Q_PROPERTY(FacebookInterface::ContentItemType objectType READ objectType NOTIFY objectTypeChanged)
+}
 
-    Q_ENUMS(FacebookInterface::ContentItemType)
+// ------------------------------
 
-public:
-    explicit FacebookObjectReferenceInterface(QObject *parent = 0);
+FilterInterface::FilterInterface(QObject *parent)
+    : QObject(parent), d_ptr(new FilterInterfacePrivate)
+{
+}
 
-    // overrides.
-    int type() const;
+FilterInterface::FilterInterface(FilterInterfacePrivate &dd, QObject *parent)
+    : QObject(parent), d_ptr(&dd)
+{
+}
 
-    // property accessors
-    QString objectIdentifier() const;
-    QString objectName() const;
-    FacebookInterface::ContentItemType objectType() const;
+FilterInterface::~FilterInterface()
+{
+}
 
-Q_SIGNALS:
-    void objectIdentifierChanged();
-    void objectNameChanged();
-    void objectTypeChanged();
+bool FilterInterface::matches(ContentItemInterface *) const
+{
+    return false;
+}
 
-private:
-    Q_DECLARE_PRIVATE(FacebookObjectReferenceInterface)
-};
-
-#endif // FACEBOOKOBJECTREFERENCEINTERFACE_H
+bool FilterInterface::matches(const QVariantMap &) const
+{
+    return false;
+}

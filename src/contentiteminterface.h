@@ -33,9 +33,9 @@
 #define CONTENTITEMINTERFACE_H
 
 #include <QtCore/QObject>
-#include <QtCore/QVariantMap>
-#include <QtCore/QStringList>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QVariantMap>
 #include <QtDeclarative/QDeclarativeParserStatus>
 
 class IdentifiableContentItemInterface;
@@ -62,10 +62,10 @@ class ContentItemInterface : public QObject, public QDeclarativeParserStatus
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
 
-    Q_PROPERTY(SocialNetworkInterface *socialNetwork READ socialNetwork WRITE setSocialNetwork NOTIFY socialNetworkChanged)
+    Q_PROPERTY(SocialNetworkInterface *socialNetwork READ socialNetwork WRITE setSocialNetwork
+               NOTIFY socialNetworkChanged)
     Q_PROPERTY(int type READ type CONSTANT)
     Q_PROPERTY(QVariantMap data READ data NOTIFY dataChanged)
-
     Q_PROPERTY(bool isIdentifiable READ isIdentifiable CONSTANT)
 
 public:
@@ -76,20 +76,17 @@ public:
     void classBegin();
     void componentComplete();
 
-    // property accessors.
+    // Property accessors.
     SocialNetworkInterface *socialNetwork() const;
     virtual int type() const;
     QVariantMap data() const;
     virtual bool isIdentifiable() const;
 
-    // property mutators.
-    void setSocialNetwork(SocialNetworkInterface *sn);
+    // Property mutators.
+    void setSocialNetwork(SocialNetworkInterface *socialNetwork);
 
-    // invokable api
+    // Invokable api
     Q_INVOKABLE IdentifiableContentItemInterface *asIdentifiable();
-
-    // helper api - parse network reply data into QVariantMap
-    static QVariantMap parseReplyData(const QByteArray &replyData, bool *ok);
 
 Q_SIGNALS:
     void socialNetworkChanged();
@@ -98,16 +95,12 @@ Q_SIGNALS:
 protected:
     explicit ContentItemInterface(ContentItemInterfacePrivate &dd, QObject *parent = 0);
     QScopedPointer<ContentItemInterfacePrivate> d_ptr;
-    virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-    virtual void initializationComplete();
-    bool isInitialized() const;
-
-private Q_SLOTS:
-    void socialNetworkStatusChangedHandler();
+    bool isInitialized() const; // TODO: Is this method really useful
 
 private:
     Q_DECLARE_PRIVATE(ContentItemInterface)
-    void setDataPrivate(const QVariantMap &v);
+    Q_PRIVATE_SLOT(d_func(), void socialNetworkStatusChangedHandler())
+    void setDataPrivate(const QVariantMap &data);
     QVariantMap dataPrivate() const;
     friend class SocialNetworkInterface;
 };

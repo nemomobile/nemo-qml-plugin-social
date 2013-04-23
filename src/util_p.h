@@ -29,27 +29,20 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef SORTERINTERFACE_H
-#define SORTERINTERFACE_H
+#ifndef UTIL_P_H
+#define UTIL_P_H
 
-#include <QtCore/QObject>
+#include <QtCore/QMetaEnum>
+#include <QtCore/QMetaObject>
+#include <QtNetwork/QNetworkReply>
 
-class SocialNetworkInterfacePrivate;
-class ContentItemInterface;
-class SorterInterfacePrivate;
-class SorterInterface : public QObject
+inline QString networkErrorString(QNetworkReply::NetworkError networkError)
 {
-    Q_OBJECT
+    QMetaObject meta = QNetworkReply::staticMetaObject;
+    QMetaEnum networkErrorEnum = meta.enumerator(meta.indexOfEnumerator("NetworkError"));
 
-public:
-    explicit SorterInterface(QObject *parent = 0);
-    virtual ~SorterInterface();
-    Q_INVOKABLE virtual bool firstLessThanSecond(ContentItemInterface *first, ContentItemInterface *second) const;
-protected:
-    QScopedPointer<SorterInterfacePrivate> d_ptr;
-private:
-    Q_DECLARE_PRIVATE(SorterInterface)
-    friend class SocialNetworkInterfacePrivate;
-};
+    return QLatin1String("QNetworkReply::")
+            + QLatin1String(networkErrorEnum.valueToKey(networkError));
+}
 
-#endif // SORTERINTERFACE_H
+#endif // UTIL_P_H

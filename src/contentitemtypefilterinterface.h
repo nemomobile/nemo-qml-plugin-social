@@ -36,6 +36,7 @@
 
 #include <QStringList>
 
+class ContentItemTypeFilterInterfacePrivate;
 class ContentItemTypeFilterInterface : public FilterInterface
 {
     Q_OBJECT
@@ -54,19 +55,16 @@ public:
     int type() const;
     QStringList whichFields() const;
     int limit() const;
-    void setType(int t);
-    void setWhichFields(const QStringList &wf);
-    void setLimit(int l);
+    void setType(int type);
+    void setWhichFields(const QStringList &whichFields);
+    void setLimit(int limit);
 
 Q_SIGNALS:
     void typeChanged();
     void whichFieldsChanged();
     void limitChanged();
-
 private:
-    int m_type;
-    int m_limit;
-    QStringList m_whichFields;
+    Q_DECLARE_PRIVATE(ContentItemTypeFilterInterface)
 };
 
 #endif // CONTENTITEMTYPEFILTERINTERFACE_H

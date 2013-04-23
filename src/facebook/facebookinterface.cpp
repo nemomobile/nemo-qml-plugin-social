@@ -35,6 +35,7 @@
 #include "socialnetworkinterface_p.h"
 
 #include "contentiteminterface.h"
+#include "contentiteminterface_p.h"
 #include "identifiablecontentiteminterface.h"
 #include "contentitemtypefilterinterface.h"
 
@@ -47,6 +48,8 @@
 #include "facebookpictureinterface.h"
 #include "facebooktaginterface.h"
 #include "facebooknotificationinterface.h"
+
+#include "util_p.h"
 
 #include <QtCore/QVariantMap>
 #include <QtCore/QStringList>
@@ -225,7 +228,7 @@ QNetworkReply *FacebookInterfacePrivate::uploadImage(const QString &objectId, co
     request.setRawHeader("Content-Type",QString("multipart/form-data; boundary="+multipartBoundary).toAscii());
     request.setHeader(QNetworkRequest::ContentLengthHeader, postData.size());
 
-    return qnam->post(request, postData);
+    return networkAccessManager->post(request, postData);
 }
 
 void FacebookInterfacePrivate::connectFinishedAndErrors()
@@ -251,7 +254,7 @@ void FacebookInterfacePrivate::finishedHandler()
     QVariant specialLimitVar = currentReply->property("specialLimit");
     deleteReply();
     bool ok = false;
-    QVariantMap responseData = ContentItemInterface::parseReplyData(replyData, &ok);
+    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok) {
         responseData.insert("response", replyData);
         error = SocialNetworkInterface::RequestError;
@@ -309,34 +312,7 @@ void FacebookInterfacePrivate::errorHandler(QNetworkReply::NetworkError err)
         // ignore this.  It's not actually an error, Facebook just formats some responses strangely.
         return;
     }
-
-    switch (err) {
-        case QNetworkReply::NoError: errorMessage = QLatin1String("QNetworkReply::NoError"); break;
-        case QNetworkReply::ConnectionRefusedError: errorMessage = QLatin1String("QNetworkReply::ConnectionRefusedError"); break;
-        case QNetworkReply::RemoteHostClosedError: errorMessage = QLatin1String("QNetworkReply::RemoteHostClosedError"); break;
-        case QNetworkReply::HostNotFoundError: errorMessage = QLatin1String("QNetworkReply::HostNotFoundError"); break;
-        case QNetworkReply::TimeoutError: errorMessage = QLatin1String("QNetworkReply::TimeoutError"); break;
-        case QNetworkReply::OperationCanceledError: errorMessage = QLatin1String("QNetworkReply::OperationCanceledError"); break;
-        case QNetworkReply::SslHandshakeFailedError: errorMessage = QLatin1String("QNetworkReply::SslHandshakeFailedError"); break;
-        case QNetworkReply::TemporaryNetworkFailureError: errorMessage = QLatin1String("QNetworkReply::TemporaryNetworkFailureError"); break;
-        case QNetworkReply::ProxyConnectionRefusedError: errorMessage = QLatin1String("QNetworkReply::ProxyConnectionRefusedError"); break;
-        case QNetworkReply::ProxyConnectionClosedError: errorMessage = QLatin1String("QNetworkReply::ProxyConnectionClosedError"); break;
-        case QNetworkReply::ProxyNotFoundError: errorMessage = QLatin1String("QNetworkReply::ProxyNotFoundError"); break;
-        case QNetworkReply::ProxyTimeoutError: errorMessage = QLatin1String("QNetworkReply::ProxyTimeoutError"); break;
-        case QNetworkReply::ProxyAuthenticationRequiredError: errorMessage = QLatin1String("QNetworkReply::ProxyAuthenticationRequiredError"); break;
-        case QNetworkReply::ContentAccessDenied: errorMessage = QLatin1String("QNetworkReply::ContentAccessDenied"); break;
-        case QNetworkReply::ContentOperationNotPermittedError: errorMessage = QLatin1String("QNetworkReply::ContentOperationNotPermittedError"); break;
-        case QNetworkReply::ContentNotFoundError: errorMessage = QLatin1String("QNetworkReply::ContentNotFoundError"); break;
-        case QNetworkReply::AuthenticationRequiredError: errorMessage = QLatin1String("QNetworkReply::AuthenticationRequiredError"); break;
-        case QNetworkReply::ContentReSendError: errorMessage = QLatin1String("QNetworkReply::ContentReSendError"); break;
-        case QNetworkReply::ProtocolUnknownError: errorMessage = QLatin1String("QNetworkReply::ProtocolUnknownError"); break;
-        case QNetworkReply::ProtocolInvalidOperationError: errorMessage = QLatin1String("QNetworkReply::ProtocolInvalidOperationError"); break;
-        case QNetworkReply::UnknownNetworkError: errorMessage = QLatin1String("QNetworkReply::UnknownNetworkError"); break;
-        case QNetworkReply::UnknownProxyError: errorMessage = QLatin1String("QNetworkReply::UnknownProxyError"); break;
-        case QNetworkReply::UnknownContentError: errorMessage = QLatin1String("QNetworkReply::UnknownContentError"); break;
-        case QNetworkReply::ProtocolFailure: errorMessage = QLatin1String("QNetworkReply::ProtocolFailure"); break;
-        default: errorMessage = QLatin1String("Unknown QNetworkReply::NetworkError"); break;
-    }
+    errorMessage = networkErrorString(err);
 
     qWarning() << Q_FUNC_INFO << "Error: network error occurred:" << err << ":" << errorMessage;
 
@@ -551,7 +527,7 @@ QNetworkReply *FacebookInterface::getRequest(const QString &objectIdentifier, co
     if (!extraData.contains(QLatin1String("metadata")))
         modifiedExtraData.insert(QLatin1String("metadata"), QLatin1String("1")); // request "type" field.
     QUrl geturl = d->requestUrl(objectIdentifier, extraPath, whichFields, modifiedExtraData);
-    return d->qnam->get(QNetworkRequest(geturl));
+    return d->networkAccessManager->get(QNetworkRequest(geturl));
 }
 
 /*! \reimp */
@@ -592,7 +568,7 @@ QNetworkReply *FacebookInterface::postRequest(const QString &objectIdentifier, c
     request.setHeader(QNetworkRequest::ContentLengthHeader, postData.size());
 
     // perform POST request
-    return d->qnam->post(request, postData);
+    return d->networkAccessManager->post(request, postData);
 }
 
 /*! \reimp */
@@ -604,7 +580,7 @@ QNetworkReply *FacebookInterface::deleteRequest(const QString &objectIdentifier,
         return 0;
     }
 
-    return d->qnam->deleteResource(QNetworkRequest(d->requestUrl(objectIdentifier, extraPath, QStringList(), extraData)));
+    return d->networkAccessManager->deleteResource(QNetworkRequest(d->requestUrl(objectIdentifier, extraPath, QStringList(), extraData)));
 }
 
 /*! \reimp */
@@ -614,10 +590,8 @@ void FacebookInterface::updateInternalData(QList<CacheEntry*> data)
     qWarning() << Q_FUNC_INFO << "filtering/sorting not implemented.  TODO!";
 
     // XXX TODO: filter the data in a better manner than linear searches...
-    QList<CacheEntry*> filteredData = data;
+    QList<CacheEntry*> filteredData;
     for (int i = 0; i < d->filters.size(); ++i) {
-        QList<CacheEntry*> temp = filteredData;
-        filteredData.clear();
         FilterInterface *currFilter = d->filters.at(i);
         for (int j = 0; j < data.size(); ++j) {
             CacheEntry *currEntry = data.at(j);
@@ -975,7 +949,7 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
         QUrl continuationUrl(continuationRequestUri);
         if (continuationUrl.queryItemValue(QLatin1String("access_token")).isEmpty())
             continuationUrl.addQueryItem(QLatin1String("access_token"), d->accessToken);
-        d->currentReply = d->qnam->get(QNetworkRequest(continuationUrl));
+        d->currentReply = d->networkAccessManager->get(QNetworkRequest(continuationUrl));
         if (d->outOfBandConnectionsLimit != -1) {
             d->currentReply->setProperty("specialLimit", d->outOfBandConnectionsLimit);
         }
@@ -1175,6 +1149,9 @@ QVariantMap FacebookInterface::facebookContentItemData(ContentItemInterface *con
 /*! \internal */
 void FacebookInterface::setFacebookContentItemData(ContentItemInterface *contentItem, const QVariantMap &data)
 {
+    // TODO: Using FacebookInterface, that have many friends, to call a private method
+    // seems to be wrong. There should be a pretty way to change an object, and
+    // the best way should be to make the setter public.
     setContentItemData(contentItem, data);
 }
 

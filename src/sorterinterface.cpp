@@ -29,87 +29,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "filterinterface.h"
-#include "contentitemtypefilterinterface.h"
+#include "sorterinterface.h"
+#include "sorterinterface_p.h"
 
 #include "contentiteminterface.h"
 
-#include <QtDebug>
-
-// ------------------------------ FilterInterface
-
-FilterInterface::FilterInterface(QObject *parent) : QObject(parent), m_ownedBySni(false)
+SorterInterfacePrivate::SorterInterfacePrivate()
+    : ownedBySocialNetworkInterface(false)
 {
 }
 
-FilterInterface::~FilterInterface()
+// ------------------------------ SorterInterface
+
+SorterInterface::SorterInterface(QObject *parent)
+    : QObject(parent), d_ptr(new SorterInterfacePrivate)
 {
 }
 
-bool FilterInterface::matches(ContentItemInterface *) const
-{
-    return false;
-}
-
-bool FilterInterface::matches(const QVariantMap &) const
-{
-    return false;
-}
-
-// ------------------------------ ContentItemTypeFilterInterface
-
-ContentItemTypeFilterInterface::ContentItemTypeFilterInterface(QObject *parent)
-    : FilterInterface(parent), m_type(0), m_limit(-1)
+SorterInterface::~SorterInterface()
 {
 }
 
-bool ContentItemTypeFilterInterface::matches(ContentItemInterface *content) const
+// The default sorting algorithm is to sort by type.
+bool SorterInterface::firstLessThanSecond(ContentItemInterface *first, ContentItemInterface *second) const
 {
-    if (content && content->type() > 0)
-        return m_type == content->type();
-    return false;
-}
+    if (!first && second)
+        return true;
 
-bool ContentItemTypeFilterInterface::matches(const QVariantMap &contentData) const
-{
-    return m_type == contentData.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
-}
+    if (!second)
+        return false;
 
-int ContentItemTypeFilterInterface::type() const
-{
-    return m_type;
-}
-
-void ContentItemTypeFilterInterface::setType(int t)
-{
-    if (m_type != t) {
-        m_type = t;
-        emit typeChanged();
-    }
-}
-
-int ContentItemTypeFilterInterface::limit() const
-{
-    return m_limit;
-}
-
-void ContentItemTypeFilterInterface::setLimit(int l)
-{
-    if (m_limit != l) {
-        m_limit = l;
-        emit limitChanged();
-    }
-}
-
-QStringList ContentItemTypeFilterInterface::whichFields() const
-{
-    return m_whichFields;
-}
-
-void ContentItemTypeFilterInterface::setWhichFields(const QStringList &wf)
-{
-    if (m_whichFields != wf) {
-        m_whichFields = wf;
-        emit whichFieldsChanged();
-    }
+    return first->type() < second->type();
 }

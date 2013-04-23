@@ -36,12 +36,98 @@
 #include "socialnetworkinterface.h"
 
 #include <QtDebug>
-
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
 #include <qjson/parser.h>
 #else
 #include <QJsonDocument>
 #endif
+
+ContentItemInterfacePrivate::ContentItemInterfacePrivate(ContentItemInterface *q)
+    : socialNetworkInterface(0), isInitialized(false), q_ptr(q)
+{
+}
+
+ContentItemInterfacePrivate::~ContentItemInterfacePrivate()
+{
+}
+
+QVariantMap ContentItemInterfacePrivate::data() const
+{
+    return m_data;
+}
+
+void ContentItemInterfacePrivate::setData(const QVariantMap &data)
+{
+    Q_Q(ContentItemInterface);
+    if (m_data != data) {
+        QVariantMap oldData = m_data;
+        m_data = data;
+        emitPropertyChangeSignals(oldData, data);
+        emit q->dataChanged();
+    }
+}
+
+/*
+    Specific implementations of the ContentItem interface MUST implement this
+    function.  It must be implemented so that the delta between the \c oldData
+    and \c newData is examined, and appropriate property change signals emitted.
+    All ContentItem derived types must then call the \c emitPropertyChangeSignals()
+    function of its immediate superclass.
+
+    If the derived type is an IdentifiableContentItem derived type, it MUST
+    fill the NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID (defined in identifiablecontentiteminterface.h)
+    field of both the oldData and newData maps with the social-network-and-type-specific
+    identifier for that content item PRIOR to calling the emitPropertyChangeSignals()
+    function of its super class.
+*/
+void ContentItemInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &, const QVariantMap &)
+{
+    // Default implementation does nothing.
+    // All derived-types must call Super::emitPropertyChangeSignals() in their override.
+}
+
+/*
+    Specific implementations of the ContentItem interface SHOULD implement this
+    function.  If implemented, it should be used to trigger requests or actions
+    which require the social network to be initialized and all properties of the
+    content item to be initialized, prior to activation.  The implementation MUST
+    then call the \c initializationComplete() function of its immediate superclass.
+*/
+void ContentItemInterfacePrivate::initializationComplete()
+{
+    // Default implementation does nothing.
+    // All derived-types must call Super::initializationComplete() in their override.
+}
+
+QVariantMap ContentItemInterfacePrivate::parseReplyData(const QByteArray &replyData, bool *ok)
+{
+    QVariant parsed;
+
+#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
+    QJson::Parser jsonParser;
+    parsed = jsonParser.parse(replyData, ok);
+#else
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(replyData);
+    *ok = !doc.isEmpty();
+    parsed = doc.toVariant();
+#endif
+
+    if (*ok && parsed.type() == QVariant::Map)
+        return parsed.toMap();
+    *ok = false;
+    return QVariantMap();
+}
+
+void ContentItemInterfacePrivate::socialNetworkStatusChangedHandler()
+{
+    Q_Q(ContentItemInterface);
+    if (socialNetworkInterface && socialNetworkInterface->isInitialized()) {
+        QObject::disconnect(socialNetworkInterface, SIGNAL(statusChanged()),
+                            q, SLOT(socialNetworkStatusChangedHandler()));
+        isInitialized = true;
+        initializationComplete();
+    }
+}
 
 
 /*!
@@ -85,19 +171,9 @@ void ContentItemInterface::classBegin()
 void ContentItemInterface::componentComplete()
 {
     Q_D(ContentItemInterface);
-    if (d->s && d->s->isInitialized()) {
+    if (d->socialNetworkInterface && d->socialNetworkInterface->isInitialized()) {
         d->isInitialized = true;
-        initializationComplete();
-    }
-}
-
-void ContentItemInterface::socialNetworkStatusChangedHandler()
-{
-    Q_D(ContentItemInterface);
-    if (d->s && d->s->isInitialized()) {
-        disconnect(d->s, SIGNAL(statusChanged()), this, SLOT(socialNetworkStatusChangedHandler()));
-        d->isInitialized = true;
-        initializationComplete();
+        d->initializationComplete();
     }
 }
 
@@ -110,23 +186,26 @@ void ContentItemInterface::socialNetworkStatusChangedHandler()
 SocialNetworkInterface *ContentItemInterface::socialNetwork() const
 {
     Q_D(const ContentItemInterface);
-    return d->s;
+    return d->socialNetworkInterface;
 }
 
-void ContentItemInterface::setSocialNetwork(SocialNetworkInterface *sn)
+void ContentItemInterface::setSocialNetwork(SocialNetworkInterface *socialNetwork)
 {
     Q_D(ContentItemInterface);
     if (d->isInitialized) {
-        qWarning() << Q_FUNC_INFO << "Can't change social network after content item has been initialized!";
+        qWarning() << Q_FUNC_INFO
+                   << "Can't change social network after content item has been initialized!";
         return;
     }
 
-    if (d->s != sn) {
-        if (d->s)
-            disconnect(d->s);
-        if (sn && !sn->isInitialized())
-            connect(sn, SIGNAL(statusChanged()), this, SLOT(socialNetworkStatusChangedHandler()));
-        d->s = sn;
+    if (d->socialNetworkInterface != socialNetwork) {
+        if (d->socialNetworkInterface)
+            disconnect(d->socialNetworkInterface);
+        if (socialNetwork && !socialNetwork->isInitialized()) {
+            connect(socialNetwork, SIGNAL(statusChanged()),
+                    this, SLOT(socialNetworkStatusChangedHandler()));
+        }
+        d->socialNetworkInterface = socialNetwork;
         emit socialNetworkChanged();
     }
 }
@@ -177,10 +256,10 @@ IdentifiableContentItemInterface *ContentItemInterface::asIdentifiable()
     return qobject_cast<IdentifiableContentItemInterface*>(this);
 }
 
-void ContentItemInterface::setDataPrivate(const QVariantMap &v)
+void ContentItemInterface::setDataPrivate(const QVariantMap &data)
 {
     Q_D(ContentItemInterface);
-    d->setData(v);
+    d->setData(data);
 }
 
 QVariantMap ContentItemInterface::dataPrivate() const
@@ -189,60 +268,10 @@ QVariantMap ContentItemInterface::dataPrivate() const
     return d->data();
 }
 
-QVariantMap ContentItemInterface::parseReplyData(const QByteArray &replyData, bool *ok)
-{
-    QVariant parsed;
-
-#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-    QJson::Parser jsonParser;
-    parsed = jsonParser.parse(replyData, ok);
-#else
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(replyData);
-    *ok = !doc.isEmpty();
-    parsed = doc.toVariant();
-#endif
-
-    if (*ok && parsed.type() == QVariant::Map)
-        return parsed.toMap();
-    *ok = false;
-    return QVariantMap();
-}
-
 bool ContentItemInterface::isInitialized() const
 {
     Q_D(const ContentItemInterface);
     return d->isInitialized;
 }
 
-/*
-    Specific implementations of the ContentItem interface MUST implement this
-    function.  It must be implemented so that the delta between the \c oldData
-    and \c newData is examined, and appropriate property change signals emitted.
-    All ContentItem derived types must then call the \c emitPropertyChangeSignals()
-    function of its immediate superclass.
-
-    If the derived type is an IdentifiableContentItem derived type, it MUST
-    fill the NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID (defined in identifiablecontentiteminterface.h)
-    field of both the oldData and newData maps with the social-network-and-type-specific
-    identifier for that content item PRIOR to calling the emitPropertyChangeSignals()
-    function of its super class.
-*/
-void ContentItemInterface::emitPropertyChangeSignals(const QVariantMap &, const QVariantMap &)
-{
-    // Default implementation does nothing.
-    // All derived-types must call Super::emitPropertyChangeSignals() in their override.
-}
-
-/*
-    Specific implementations of the ContentItem interface SHOULD implement this
-    function.  If implemented, it should be used to trigger requests or actions
-    which require the social network to be initialized and all properties of the
-    content item to be initialized, prior to activation.  The implementation MUST
-    then call the \c initializationComplete() function of its immediate superclass.
-*/
-void ContentItemInterface::initializationComplete()
-{
-    // Default implementation does nothing.
-    // All derived-types must call Super::initializationComplete() in their override.
-}
-
+#include "moc_contentiteminterface.cpp"

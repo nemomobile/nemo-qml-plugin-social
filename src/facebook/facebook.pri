@@ -17,7 +17,11 @@ HEADERS += \
     $$PWD/facebookpictureinterface.h \
     $$PWD/facebooktaginterface.h \
     $$PWD/facebookuserinterface.h \
-    $$PWD/facebookuserinterface_p.h
+    $$PWD/facebookuserinterface_p.h \
+    $$PWD/facebooklikeinterface_p.h \
+    $$PWD/facebookobjectreferenceinterface_p.h \
+    $$PWD/facebookpictureinterface_p.h \
+    $$PWD/facebooktaginterface_p.h
 
 SOURCES += \
     $$PWD/facebookalbuminterface.cpp \
