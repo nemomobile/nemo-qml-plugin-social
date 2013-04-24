@@ -21,3 +21,20 @@ Obsoletes:
 Files:
     - "%{_libdir}/qt4/imports/org/nemomobile/social/libnemosocial.so"
     - "%{_libdir}/qt4/imports/org/nemomobile/social/qmldir"
+
+SubPackages:
+    - Name: tests
+      Summary: Qt based library for still image metadata manipulation - unit tests
+      Group: System/Libraries
+      Description: |
+          A Qt based library which can access and edit Exif, XMP and IPTC
+          metadata for still images (currently only JPEG format), offering
+          transparent reconciliation between different metadata representations.
+
+          This package includes the unit tests.
+      Requires:
+          - testrunner-lite
+
+      Files:
+           - /opt/nemo-qml-plugins/social/tests/bin/socialtest
+           - /opt/nemo-qml-plugins/social/tests/share/*.qml
