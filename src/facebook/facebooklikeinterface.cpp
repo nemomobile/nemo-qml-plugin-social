@@ -36,6 +36,11 @@
 #include "facebookinterface.h"
 #include "facebooklikeinterface_p.h"
 
+FacebookLikeInterfacePrivate::FacebookLikeInterfacePrivate(FacebookLikeInterface *q)
+    : ContentItemInterfacePrivate(q)
+{
+}
+
 /*! \reimp */
 void FacebookLikeInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData)
 {
