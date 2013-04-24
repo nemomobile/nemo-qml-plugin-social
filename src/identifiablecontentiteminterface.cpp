@@ -65,6 +65,83 @@ void IdentifiableContentItemInterfacePrivate::deleteReply()
     }
 }
 
+/*
+    This convenience function should be called by derived types
+    when they want to implement any form of network communication.
+
+    If the request is created successfully, the state of the
+    IdentifiableContentItem will change to Busy, and the function
+    will return true.  The caller takes ownership of dd->reply()
+    and must delete the reply via dd->deleteReply() when they are
+    finished with it.
+
+    whichFields is only valid for post requests
+    postData is only valid for post requests
+    extraData is specific to the social network
+*/
+bool IdentifiableContentItemInterfacePrivate::request(RequestType requestType,
+                                                      const QString &objectIdentifier,
+                                                      const QString &extraPath,
+                                                      const QStringList &whichFields,
+                                                      const QVariantMap &postData,
+                                                      const QVariantMap &extraData)
+{
+    Q_Q(IdentifiableContentItemInterface);
+    // Caller takes ownership of dd->reply() and must dd->deleteReply()
+    // If request created successfully, changes state to Busy and returns true.
+
+    if (status == SocialNetworkInterface::Initializing
+            || status == SocialNetworkInterface::Busy
+            || status == SocialNetworkInterface::Invalid) {
+        qWarning() << Q_FUNC_INFO
+                   << "Warning: cannot start request, because status is Initializing/Busy/Invalid";
+        return false;
+    }
+
+    if (requestType != IdentifiableContentItemInterfacePrivate::Get
+            && requestType != IdentifiableContentItemInterfacePrivate::Post
+            && requestType != IdentifiableContentItemInterfacePrivate::Delete) {
+        qWarning() << Q_FUNC_INFO
+                   << "Warning: cannot start request, because request type is unknown";
+        return false;
+    }
+
+    if (currentReply != 0) {
+        qWarning() << Q_FUNC_INFO << "Error: not Busy and yet current reply is non-null!";
+        return false;
+    }
+
+    if (!socialNetworkInterface) {
+        qWarning() << Q_FUNC_INFO << "Error: social network is not valid!";
+        return false;
+    }
+
+    QNetworkReply *reply = 0;
+    switch (requestType) {
+    case IdentifiableContentItemInterfacePrivate::Get:
+        reply = socialNetworkInterface->getRequest(objectIdentifier, extraPath, whichFields,
+                                                   extraData);
+        break;
+    case IdentifiableContentItemInterfacePrivate::Post:
+        reply = socialNetworkInterface->postRequest(objectIdentifier, extraPath, postData,
+                                                    extraData);
+        break;
+    default:
+        reply = socialNetworkInterface->deleteRequest(objectIdentifier, extraPath, extraData);
+        break;
+    }
+
+    if (reply) {
+        currentReply = reply;
+        status = SocialNetworkInterface::Busy;
+        emit q->statusChanged();
+        return true;
+    }
+
+    qWarning() << "Warning: social network was unable to create request";
+    return false;
+}
+
 /*! \reimp */
 void IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                                         const QVariantMap &newData)
@@ -408,7 +485,7 @@ QString IdentifiableContentItemInterface::errorMessage() const
 bool IdentifiableContentItemInterface::remove()
 {
     Q_D(IdentifiableContentItemInterface);
-    if (!request(IdentifiableContentItemInterface::Delete, d->identifier))
+    if (!d->request(IdentifiableContentItemInterfacePrivate::Delete, d->identifier))
         return false;
 
     connect(d->reply(), SIGNAL(finished()), this, SLOT(removeHandler()));
@@ -428,92 +505,13 @@ bool IdentifiableContentItemInterface::remove()
 bool IdentifiableContentItemInterface::reload(const QStringList &whichFields)
 {
     Q_D(IdentifiableContentItemInterface);
-    if (!request(IdentifiableContentItemInterface::Get, d->identifier, QString(), whichFields))
+    if (!d->request(IdentifiableContentItemInterfacePrivate::Get, d->identifier,
+                    QString(), whichFields))
         return false;
 
     connect(d->reply(), SIGNAL(finished()), this, SLOT(reloadHandler()));
     d->connectErrors();
     return true;
-}
-
-/*
-    This convenience function should be called by derived types
-    when they want to implement any form of network communication.
-
-    If the request is created successfully, the state of the
-    IdentifiableContentItem will change to Busy, and the function
-    will return true.  The caller takes ownership of dd->reply()
-    and must delete the reply via dd->deleteReply() when they are
-    finished with it.
-*/
-bool IdentifiableContentItemInterface::request(IdentifiableContentItemInterface::RequestType requestType,
-        const QString &objectIdentifier,
-        const QString &extraPath,
-        const QStringList &whichFields, // only valid for GET  requests
-        const QVariantMap &postData,    // only valid for POST requests
-        const QVariantMap &extraData)   // social-network-specific
-{
-    Q_D(IdentifiableContentItemInterface);
-    // Caller takes ownership of dd->reply() and must dd->deleteReply()
-    // If request created successfully, changes state to Busy and returns true.
-
-    if (d->status == SocialNetworkInterface::Initializing
-            || d->status == SocialNetworkInterface::Busy
-            || d->status == SocialNetworkInterface::Invalid) {
-        qWarning() << Q_FUNC_INFO
-                   << "Warning: cannot start request, because status is Initializing/Busy/Invalid";
-        return false;
-    }
-
-    if (requestType != IdentifiableContentItemInterface::Get
-            && requestType != IdentifiableContentItemInterface::Post
-            && requestType != IdentifiableContentItemInterface::Delete) {
-        qWarning() << Q_FUNC_INFO
-                   << "Warning: cannot start request, because request type is unknown";
-        return false;
-    }
-
-    if (d->currentReply != 0) {
-        qWarning() << Q_FUNC_INFO << "Error: not Busy and yet current reply is non-null!";
-        return false;
-    }
-
-    SocialNetworkInterface *socialNetworkInterface = socialNetwork();
-    if (!socialNetworkInterface) {
-        qWarning() << Q_FUNC_INFO << "Error: social network is not valid!";
-        return false;
-    }
-
-    QNetworkReply *reply = 0;
-    switch (requestType) {
-    case IdentifiableContentItemInterface::Get:
-        reply = socialNetworkInterface->getRequest(objectIdentifier, extraPath, whichFields,
-                                                   extraData);
-        break;
-    case IdentifiableContentItemInterface::Post:
-        reply = socialNetworkInterface->postRequest(objectIdentifier, extraPath, postData,
-                                                    extraData);
-        break;
-    default:
-        reply = socialNetworkInterface->deleteRequest(objectIdentifier, extraPath, extraData);
-        break;
-    }
-
-    // Due the network unlinearity just make sure that the old reply has been deleted and
-    // ignored before assigning a new one to it.
-    if (d->currentReply != 0) {
-        d->deleteReply();
-    }
-
-    if (reply) {
-        d->currentReply = reply;
-        d->status = SocialNetworkInterface::Busy;
-        emit statusChanged();
-        return true;
-    }
-
-    qWarning() << "Warning: social network was unable to create request";
-    return false;
 }
 
 #include "moc_identifiablecontentiteminterface.cpp"

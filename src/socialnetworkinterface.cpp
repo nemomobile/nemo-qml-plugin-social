@@ -101,9 +101,10 @@ bool ArbitraryRequestHandler::request(int requestType, const QString &requestUri
 
     QList<QPair<QString, QString> > formattedQueryItems;
     QStringList queryItemKeys = queryItems.keys();
-    foreach (const QString &key, queryItemKeys)
+    foreach (const QString &key, queryItemKeys) {
         formattedQueryItems.append(qMakePair<QString, QString>(key,
                                                                queryItems.value(key).toString()));
+    }
 
     QUrl url(requestUri);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)

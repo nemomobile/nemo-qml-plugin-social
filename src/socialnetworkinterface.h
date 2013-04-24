@@ -199,7 +199,7 @@ protected:
     virtual void populateDataForNode(const QString &unseenNodeIdentifier);            // requires d->pushNode(), d->populateCache(),
                                                                                       //     and then updateInternalData()
     QScopedPointer<SocialNetworkInterfacePrivate> d_ptr;
-    friend class IdentifiableContentItemInterface;
+    friend class IdentifiableContentItemInterfacePrivate;
 
 private:
     bool isInitialized() const; // TODO: This might be exported as a public method

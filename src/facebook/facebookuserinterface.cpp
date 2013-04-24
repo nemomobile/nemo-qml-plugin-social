@@ -407,9 +407,9 @@ bool FacebookUserInterface::uploadPhoto(const QUrl &source, const QString &messa
     if (!message.isEmpty())
         postData.insert("message", message);
 
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("photos"),
-                               QStringList(), postData, extraData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("photos"),
+                                  QStringList(), postData, extraData);
 
     if (!requestMade)
         return false;
@@ -432,7 +432,7 @@ bool FacebookUserInterface::uploadPhoto(const QUrl &source, const QString &messa
 bool FacebookUserInterface::removePhoto(const QString &photoIdentifier)
 {
     Q_D(FacebookUserInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Delete, photoIdentifier);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete, photoIdentifier);
 
     if (!requestMade)
         return false;
@@ -467,9 +467,9 @@ bool FacebookUserInterface::uploadAlbum(const QString &name, const QString &mess
     if (privacy != QVariantMap())
         postData.insert("privacy", privacy);
 
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("albums"),
-                               QStringList(), postData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("albums"),
+                                  QStringList(), postData);
 
     if (!requestMade)
         return false;
@@ -492,7 +492,7 @@ bool FacebookUserInterface::uploadAlbum(const QString &name, const QString &mess
 bool FacebookUserInterface::removeAlbum(const QString &albumIdentifier)
 {
     Q_D(FacebookUserInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Delete, albumIdentifier);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete, albumIdentifier);
 
     if (!requestMade)
         return false;
