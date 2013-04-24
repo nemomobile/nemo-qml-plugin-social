@@ -34,6 +34,19 @@ Requires:   testrunner-lite
 %description tests
 This package includes the unit tests.
 
+%package tests
+Summary:    Qt based library for still image metadata manipulation - unit tests
+Group:      System/Libraries
+Requires:   %{name} = %{version}-%{release}
+Requires:   testrunner-lite
+
+%description tests
+A Qt based library which can access and edit Exif, XMP and IPTC
+metadata for still images (currently only JPEG format), offering
+transparent reconciliation between different metadata representations.
+
+This package includes the unit tests.
+
 
 %prep
 %setup -q -n %{name}-%{version}
