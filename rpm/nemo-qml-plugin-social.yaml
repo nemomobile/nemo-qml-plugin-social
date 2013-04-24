@@ -2,7 +2,7 @@ Name: nemo-qml-plugin-social
 Summary: Social plugin for Nemo Mobile
 URL: https://github.com/nemomobile/nemo-qml-plugin-social
 Group: System/Libraries
-Description: "%{summary}."
+Description: Social QML adapters for Nemo.
 Version: 0.0.0
 Release: 1
 Sources:
@@ -21,3 +21,16 @@ Obsoletes:
 Files:
     - "%{_libdir}/qt4/imports/org/nemomobile/social/libnemosocial.so"
     - "%{_libdir}/qt4/imports/org/nemomobile/social/qmldir"
+
+SubPackages:
+    - Name: tests
+      Summary: Social QML adapters for Nemo - unit tests
+      Group: System/Libraries
+      Description: |
+          This package includes the unit tests.
+      Requires:
+          - testrunner-lite
+
+      Files:
+           - /opt/nemo-qml-plugins/social/tests/bin/socialtest
+           - /opt/nemo-qml-plugins/social/tests/share/*.qml
