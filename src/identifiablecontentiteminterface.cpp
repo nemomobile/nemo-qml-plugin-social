@@ -75,7 +75,6 @@ void IdentifiableContentItemInterfacePrivate::deleteReply()
     and must delete the reply via dd->deleteReply() when they are
     finished with it.
 
-    whichFields is only valid for post requests
     postData is only valid for post requests
     extraData is specific to the social network
 */
