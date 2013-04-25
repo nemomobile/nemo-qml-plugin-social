@@ -100,6 +100,7 @@ protected:
     QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply *postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply *deleteRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &extraData);
+    QString dataSection(int type, const QVariantMap &data) const;
     void updateInternalData(QList<CacheEntry*> data);
     void populateDataForNode(IdentifiableContentItemInterface *currentNode);
     void populateDataForNode(const QString &unseenNodeIdentifier);
