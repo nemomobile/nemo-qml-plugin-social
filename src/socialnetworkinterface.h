@@ -97,7 +97,8 @@ public:
         ContentItemRole = Qt::UserRole + 1,
         ContentItemTypeRole,
         ContentItemDataRole,
-        ContentItemIdentifierRole // 0 for unidentifiable content items
+        ContentItemIdentifierRole, // 0 for unidentifiable content items
+        SectionRole
     };
     enum ContentType {
         NotInitialized = 0,
@@ -176,6 +177,7 @@ protected:
     void setContentItemData(ContentItemInterface *contentItem, const QVariantMap &data) const;
 
     // Virtual methods
+    virtual QString dataSection(int type, const QVariantMap &data) const;
     virtual ContentItemInterface *contentItemFromData(QObject *parent, const QVariantMap &data) const;
     virtual void updateInternalData(QList<CacheEntry*> data);                         // model data, requires filter/sort/dataChanged()
     virtual void populateDataForNode(IdentifiableContentItemInterface *currentNode);  // requires d->populateCache() + updateInternalData()
