@@ -217,6 +217,7 @@ void SocialNetworkInterfacePrivate::init()
     headerData.insert(SocialNetworkInterface::ContentItemTypeRole, "contentItemType");
     headerData.insert(SocialNetworkInterface::ContentItemDataRole, "contentItemData" );
     headerData.insert(SocialNetworkInterface::ContentItemIdentifierRole, "contentItemIdentifier");
+    headerData.insert(SocialNetworkInterface::SectionRole, "section");
     q->setRoleNames(headerData);
 
     // Construct the placeholder node.  This node is used as a placeholder
@@ -1091,10 +1092,14 @@ QVariant SocialNetworkInterface::data(const QModelIndex &index, int role) const
     CacheEntry *cacheEntry = d->internalData.at(index.row());
 
     switch (role) {
-        case ContentItemTypeRole: return QVariant::fromValue(cacheEntry->data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt());
-        case ContentItemDataRole: return QVariant::fromValue(cacheEntry->data);
-        case ContentItemIdentifierRole: return QVariant::fromValue(cacheEntry->data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString());
-        case ContentItemRole: {
+    case ContentItemTypeRole:
+        return QVariant::fromValue(cacheEntry->data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt());
+    case ContentItemDataRole:
+        return QVariant::fromValue(cacheEntry->data);
+    case ContentItemIdentifierRole:
+        return QVariant::fromValue(cacheEntry->data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString());
+    case ContentItemRole:
+        {
             if (cacheEntry->item)
                 return QVariant::fromValue(cacheEntry->item);
             // instantiate the item.
@@ -1103,7 +1108,10 @@ QVariant SocialNetworkInterface::data(const QModelIndex &index, int role) const
             return QVariant::fromValue(newItem);
         }
         break;
-        default: return QVariant();
+    case SectionRole:
+        return dataSection(cacheEntry->data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt(), cacheEntry->data);
+    default:
+        return QVariant();
     }
 }
 
@@ -1215,6 +1223,16 @@ QNetworkReply *SocialNetworkInterface::deleteRequest(const QString &, const QStr
 {
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
     return 0;
+}
+
+/*
+    TODO: do the documentation
+*/
+QString SocialNetworkInterface::dataSection(int type, const QVariantMap &data) const
+{
+    Q_UNUSED(type)
+    Q_UNUSED(data)
+    return QString();
 }
 
 /*

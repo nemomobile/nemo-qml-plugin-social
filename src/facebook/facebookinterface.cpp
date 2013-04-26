@@ -604,6 +604,18 @@ QNetworkReply *FacebookInterface::deleteRequest(const QString &objectIdentifier,
 }
 
 /*! \reimp */
+QString FacebookInterface::dataSection(int type, const QVariantMap &data) const
+{
+    switch (type) {
+    case User:
+        return data.value(FACEBOOK_ONTOLOGY_USER_NAME).toString();
+    default:
+        break;
+    }
+    return SocialNetworkInterface::dataSection(type, data);
+}
+
+/*! \reimp */
 void FacebookInterface::updateInternalData(QList<CacheEntry*> data)
 {
     Q_D(FacebookInterface);
