@@ -67,7 +67,9 @@ public:
         Other
     };
     InternalStatus internalStatus; // used for state machine in reply finished.
-    QNetworkReply *currentReply;
+
+    void setCurrentReply(QNetworkReply *newCurrentReply, const QString &whichNodeIdentifier);
+    QNetworkReply *currentReply; // this should never be set directly, always use the above mutator.
 
     QUrl requestUrl(const QString &objectId, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply *uploadImage(const QString &objectId, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);

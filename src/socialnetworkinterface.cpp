@@ -72,8 +72,9 @@ CacheEntry::CacheEntry(const QVariantMap &data, ContentItemInterface *item)
 
 CacheEntry::~CacheEntry()
 {
-    if (item)
+    if (item) {
         delete item;
+    }
 }
 
 ArbitraryRequestHandler::ArbitraryRequestHandler(QNetworkAccessManager *networkAccessManager,
@@ -357,9 +358,10 @@ void SocialNetworkInterfacePrivate::purgeDoomedNode(IdentifiableContentItemInter
 }
 
 /*! \internal */
-void SocialNetworkInterfacePrivate::maybePurgeDoomedNodes(int count, int direction)
+void SocialNetworkInterfacePrivate::maybePurgeDoomedNodes(int count, int direction, IdentifiableContentItemInterface *makingSpaceFor)
 {
-    // Removes \a count nodes from the node stack.  The nodes
+    // Removes \a count nodes from the node stack, to make space
+    // for the given node \a makingSpaceFor.  The nodes
     // will be removed from the top (most recent) of the stack
     // if direction == 1, and from the bottom (least recent)
     // of the stack if direction == 0.
@@ -387,13 +389,13 @@ void SocialNetworkInterfacePrivate::maybePurgeDoomedNodes(int count, int directi
         }
 
         // determine whether we need to purge the doomed node.
-        if (!nodeStack.contains(doomedNode)) {
-            // the node doesn't appear anywhere else in the navigation breadcrumb trail.
+        if (!nodeStack.contains(doomedNode) && doomedNode != makingSpaceFor) {
+            // the node doesn't appear anywhere else in the navigation breadcrumb trail,
+            // and it isn't the node which we're making space for.
             // so we have to delete it and purge our cache of content items for the node.
             purgeDoomedNode(doomedNode);
         }
     }
-
 }
 
 /*! \internal */
@@ -446,11 +448,11 @@ void SocialNetworkInterfacePrivate::pushNode(IdentifiableContentItemInterface *n
         // are pushing a node.  This node becomes the new top
         // of stack.  Purge any cache entries beyond the current
         // position if applicable.
-        maybePurgeDoomedNodes(currentNodePosition+1, 1);
+        maybePurgeDoomedNodes(currentNodePosition+1, 1, node);
     } else if (nodeStack.size() == nodeStackSize) {
         // current node position is already top of stack, and
         // we've reached our max for cached navigation steps.
-        maybePurgeDoomedNodes(1, 0); // purge the bottom (least recently used) node.
+        maybePurgeDoomedNodes(1, 0, node); // purge the bottom (least recently used) node.
     }
 
     nodeStack.append(node);
@@ -571,6 +573,9 @@ void SocialNetworkInterfacePrivate::addEntryToNodeContent(IdentifiableContentIte
     if (entry->refcount == 1) {
         // new cache entry.
         cache.append(entry);
+        if (entry->item && !cachedItems.contains(entry->item)) {
+            cachedItems.insert(entry->item, entry);
+        }
     }
 
     nodeContent.insert(item, entry);
@@ -596,10 +601,17 @@ void SocialNetworkInterfacePrivate::removeEntryFromNodeContent(IdentifiableConte
 /*! \internal */
 void SocialNetworkInterfacePrivate::updateCacheEntry(CacheEntry *entry, ContentItemInterface *item, const QVariantMap &data) const
 {
-    if (item)
+    if (item) {
+        if (entry->item) {
+            qWarning() << Q_FUNC_INFO << "Warning: modifying instantiated item for existing cache entry"; // probably an error.
+            cachedItems.remove(entry->item);
+        }
         entry->item = item;
-    if (data != QVariantMap())
+        cachedItems.insert(item, entry);
+    }
+    if (data != QVariantMap()) {
         entry->data = data;
+    }
 }
 
 /*! \internal */
@@ -611,6 +623,9 @@ void SocialNetworkInterfacePrivate::derefCacheEntry(CacheEntry *entry)
     entry->refcount--;
     if (entry->refcount <= 0) {
         cache.removeAll(entry);
+        if (entry->item) {
+            cachedItems.remove(entry->item);
+        }
         delete entry;
     }
 }
@@ -945,9 +960,19 @@ void SocialNetworkInterface::setNodeIdentifier(const QString &contentItemIdentif
             //   perform filtering/sorting based on the defined stuff.
             //   and then emit dataChanged() etc signals.
             d->pushNode(cachedNode);
+            emit nodeChanged();
             updateInternalData(data);
         } else {
-            qWarning() << Q_FUNC_INFO << "Error: cached node has no cached content!";
+            // Despite having no content cached, we still call the same codepath.
+            // This will happen if the given node has no related data.
+            // ie, if the cached node was found in the nodeStack but not in nodeContent.
+            // XXX TODO: reload the content from network, in case more has arrived?
+            // call derived class data update:
+            //   perform filtering/sorting based on the defined stuff.
+            //   and then emit dataChanged() etc signals.
+            d->pushNode(cachedNode);
+            emit nodeChanged();
+            updateInternalData(data);
         }
     }
 }

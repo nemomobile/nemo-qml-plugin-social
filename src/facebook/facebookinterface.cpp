@@ -231,6 +231,13 @@ QNetworkReply *FacebookInterfacePrivate::uploadImage(const QString &objectId, co
     return networkAccessManager->post(request, postData);
 }
 
+void FacebookInterfacePrivate::setCurrentReply(QNetworkReply *newCurrentReply, const QString &whichNodeIdentifier)
+{
+    deleteReply();
+    newCurrentReply->setProperty("whichNodeIdentifier", whichNodeIdentifier);
+    currentReply = newCurrentReply;
+}
+
 void FacebookInterfacePrivate::connectFinishedAndErrors()
 {
     Q_Q(FacebookInterface);
@@ -247,6 +254,18 @@ void FacebookInterfacePrivate::finishedHandler()
         // if an error occurred, it might have been deleted by the error handler.
         qWarning() << Q_FUNC_INFO << "network request finished but no reply!";
         return;
+    }
+
+    if (currentReply->property("whichNodeIdentifier").toString() != q->nodeIdentifier()) {
+        // the data we've received is not for the current node.
+        // The client must have changed the node while the request was in process.
+        // Note that this should NEVER happen, as we should always use SNIP::setCurrentReply()
+        // which should delete the old reply (and thus the disconnect it from the finished handler).
+        qWarning() << Q_FUNC_INFO
+                   << "error: network request finished for non-current node:"
+                   << currentReply->property("whichNodeIdentifier").toString()
+                   << ", expected:" << q->nodeIdentifier();
+        return; // ignore this data, as otherwise we will corrupt the cache
     }
 
     QByteArray replyData = currentReply->readAll();
@@ -362,6 +381,7 @@ void FacebookInterfacePrivate::sslErrorsHandler(const QList<QSslError> &errs)
 void FacebookInterfacePrivate::deleteReply()
 {
     if (currentReply) {
+        currentReply->disconnect();
         currentReply->deleteLater();
         currentReply = 0;
     }
@@ -727,7 +747,7 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
         // special case code for FacebookAlbum "populate all photos" request
         QVariantMap extraData;
         extraData.insert(QLatin1String("limit"), QLatin1String("25"));
-        d->currentReply = getRequest(whichNode->identifier(), FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS, QStringList(), extraData);
+        d->setCurrentReply(getRequest(whichNode->identifier(), FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS, QStringList(), extraData), whichNode->identifier());
         d->connectFinishedAndErrors();
     } else if (connectionTypes.size() == 1 && connectionTypes.at(0) == FacebookInterface::Notification
             && whichNode->type() == FacebookInterface::User) {
@@ -741,7 +761,7 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
             extraData.insert(QLatin1String("limit"), QString::number(connectionLimits.at(0)));
         }
         extraData.insert(QLatin1String("include_read"), QLatin1String("true"));
-        d->currentReply = getRequest(whichNode->identifier(), FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS, QStringList(), extraData);
+        d->setCurrentReply(getRequest(whichNode->identifier(), FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS, QStringList(), extraData), whichNode->identifier());
         d->currentReply->setProperty("specialLimit", specialLimit); // we have to handle limit specially for notifications :-/
         d->connectFinishedAndErrors();
     } else {
@@ -793,7 +813,7 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
         extraData.insert("fields", totalFieldsQuery);
 
         // now start the request.
-        d->currentReply = getRequest(whichNode->identifier(), QString(), QStringList(), extraData);
+        d->setCurrentReply(getRequest(whichNode->identifier(), QString(), QStringList(), extraData), whichNode->identifier());
         d->connectFinishedAndErrors();
     }
 }
@@ -949,7 +969,7 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
         QUrl continuationUrl(continuationRequestUri);
         if (continuationUrl.queryItemValue(QLatin1String("access_token")).isEmpty())
             continuationUrl.addQueryItem(QLatin1String("access_token"), d->accessToken);
-        d->currentReply = d->networkAccessManager->get(QNetworkRequest(continuationUrl));
+        d->setCurrentReply(d->networkAccessManager->get(QNetworkRequest(continuationUrl)), d->currentNode()->identifier());
         if (d->outOfBandConnectionsLimit != -1) {
             d->currentReply->setProperty("specialLimit", d->outOfBandConnectionsLimit);
         }
@@ -994,7 +1014,7 @@ void FacebookInterface::populateDataForNode(const QString &unseenNodeIdentifier)
     }
 
     // get the unseen node data.
-    d->currentReply = getRequest(unseenNodeIdentifier, QString(), QStringList(), QVariantMap());
+    d->setCurrentReply(getRequest(unseenNodeIdentifier, QString(), QStringList(), QVariantMap()), unseenNodeIdentifier);
     d->connectFinishedAndErrors();
 
     // continued in continuePopulateDataForUnseenNode().
@@ -1004,6 +1024,7 @@ void FacebookInterface::populateDataForNode(const QString &unseenNodeIdentifier)
 void FacebookInterface::continuePopulateDataForUnseenNode(const QVariantMap &nodeData)
 {
     Q_D(FacebookInterface);
+
     // having retrieved the node data, we construct the node, push it, and request
     // the related data required according to the filters.
     ContentItemInterface *convertedNode = contentItemFromData(this, nodeData);
