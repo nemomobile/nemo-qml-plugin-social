@@ -29,42 +29,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
+#ifndef ALPHABETICALSORTERINTERFACE_H
+#define ALPHABETICALSORTERINTERFACE_H
+
 #include "sorterinterface.h"
-#include "sorterinterface_p.h"
 
-#include "contentiteminterface.h"
-
-SorterInterfacePrivate::SorterInterfacePrivate()
-    : ownedBySocialNetworkInterface(false)
+class AlphabeticalSorterInterfacePrivate;
+class AlphabeticalSorterInterface: public SorterInterface
 {
-}
+    Q_OBJECT
+    Q_PROPERTY(QString field READ field WRITE setField NOTIFY fieldChanged)
+public:
+    explicit AlphabeticalSorterInterface(QObject *parent = 0);
+    QString field() const;
+    void setField(const QString &field);
+    Q_INVOKABLE bool firstLessThanSecond(const QVariantMap &first,
+                                         const QVariantMap &second) const;
+Q_SIGNALS:
+    void fieldChanged();
+private:
+    Q_DECLARE_PRIVATE(AlphabeticalSorterInterface)
+};
 
-// ------------------------------ SorterInterface
-
-
-SorterInterface::SorterInterface(QObject *parent)
-    : QObject(parent), d_ptr(new SorterInterfacePrivate)
-{
-}
-
-SorterInterface::SorterInterface(SorterInterfacePrivate &dd, QObject *parent)
-    : QObject(parent), d_ptr(&dd)
-{
-}
-
-SorterInterface::~SorterInterface()
-{
-}
-
-// The default sorting algorithm is to sort by type.
-bool SorterInterface::firstLessThanSecond(const QVariantMap &first, const QVariantMap &second) const
-{
-    if (first.empty() && !second.empty())
-        return true;
-
-    if (second.empty())
-        return false;
-
-    return first.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt()
-           < second.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
-}
+#endif // ALPHABETICALSORTERINTERFACE_H

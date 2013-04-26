@@ -29,18 +29,68 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef NAMESORTERINTERFACE_H
-#define NAMESORTERINTERFACE_H
+#include "alphabeticalsorterinterface.h"
+#include "contentiteminterface.h"
+#include <QtCore/QMetaProperty>
+#include <QtCore/QMetaObject>
+#include "sorterinterface_p.h"
 
-#include "sorterinterface.h"
-
-class NameSorterInterface: public SorterInterface
+class AlphabeticalSorterInterfacePrivate: public SorterInterfacePrivate
 {
-    Q_OBJECT
 public:
-    explicit NameSorterInterface(QObject *parent = 0);
-    Q_INVOKABLE bool firstLessThanSecond(const QVariantMap &first,
-                                         const QVariantMap &second) const;
+    AlphabeticalSorterInterfacePrivate();
+    QString field;
 };
 
-#endif // NAMESORTERINTERFACE_H
+AlphabeticalSorterInterfacePrivate::AlphabeticalSorterInterfacePrivate()
+{
+}
+
+AlphabeticalSorterInterface::AlphabeticalSorterInterface(QObject *parent):
+    SorterInterface(*(new AlphabeticalSorterInterfacePrivate()), parent)
+{
+}
+
+QString AlphabeticalSorterInterface::field() const
+{
+    Q_D(const AlphabeticalSorterInterface);
+    return d->field;
+}
+
+void AlphabeticalSorterInterface::setField(const QString &field)
+{
+    Q_D(AlphabeticalSorterInterface);
+    if (d->field != field) {
+        d->field = field;
+        emit fieldChanged();
+    }
+}
+
+bool AlphabeticalSorterInterface::firstLessThanSecond(const QVariantMap &first,
+                                              const QVariantMap &second) const
+{
+    Q_D(const AlphabeticalSorterInterface);
+    if (d->field.isEmpty()) {
+        return SorterInterface::firstLessThanSecond(first, second);
+    }
+
+    if (first.empty() && !second.empty())
+        return true;
+
+    if (second.empty())
+        return false;
+
+    // We first order by type
+    int firstType = first.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
+    int secondType = second.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
+    if (firstType < secondType)
+        return true;
+    if (firstType > secondType)
+        return false;
+
+
+
+    return first.value(d->field).toString()
+           < second.value(d->field).toString();
+
+}

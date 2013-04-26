@@ -73,7 +73,7 @@ Item {
             break
         case 2:
             facebook.filters = [ facebook.friendsFilter ]
-            facebook.sorters = [facebook.nameSorter]
+            facebook.sorters = [ facebook.alphabeticalSorter ]
             break
         case 3:
             facebook.filters = [ facebook.albumsFilter ]
@@ -100,7 +100,7 @@ Item {
         property QtObject albumsFilter:        ContentItemTypeFilter { type: Facebook.Album }
         property QtObject photosFilter:        ContentItemTypeFilter { type: Facebook.Photo }
         property QtObject commentsFilter:      ContentItemTypeFilter { type: Facebook.Comment }
-        property QtObject nameSorter:          NameSorter{}
+        property QtObject alphabeticalSorter:  AlphabeticalSorter{ field: "name" }
     }
 
 

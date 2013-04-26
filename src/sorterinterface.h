@@ -48,6 +48,7 @@ public:
     Q_INVOKABLE virtual bool firstLessThanSecond(const QVariantMap &first,
                                                  const QVariantMap &second) const;
 protected:
+    explicit SorterInterface(SorterInterfacePrivate &dd, QObject *parent = 0);
     QScopedPointer<SorterInterfacePrivate> d_ptr;
 private:
     Q_DECLARE_PRIVATE(SorterInterface)

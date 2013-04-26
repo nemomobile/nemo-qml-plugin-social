@@ -686,7 +686,7 @@ void FacebookInterface::updateInternalData(QList<CacheEntry*> data)
     QList<CacheEntry*> sortedData = filteredData;
     foreach (SorterInterface *sorter, d->sorters) {
         SorterFunctor functor (sorter);
-        qStableSort(sortedData.begin(), sortedData.end(), functor);
+        std::stable_sort(sortedData.begin(), sortedData.end(), functor);
     }
 
     // clear the internal data
