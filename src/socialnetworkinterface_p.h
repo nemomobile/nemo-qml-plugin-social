@@ -140,7 +140,7 @@ public:
 private:
     void init();
     void purgeDoomedNode(IdentifiableContentItemInterface *n);
-    void maybePurgeDoomedNodes(int count, int direction);
+    void maybePurgeDoomedNodes(int count, int direction, IdentifiableContentItemInterface *makingSpaceFor);
     int currentNodePosition;                                 // the position of the current node in the nodeStack.
     int nodeStackSize;                                       // the number of nodes in the nodeStack (navigation)
     QList<IdentifiableContentItemInterface*> nodeStack;      // navigation breadcrumbs.
@@ -161,7 +161,7 @@ private:
     void derefCacheEntry(CacheEntry *entry); // if after deref, count == 0, removes from cache list and deletes.
 
     QList<CacheEntry*> cache; // the actual cache
-    QHash<ContentItemInterface*, CacheEntry*> cachedItems; // "index" of cache entries which have items constructed.
+    mutable QHash<ContentItemInterface*, CacheEntry*> cachedItems; // "index" of cache entries which have items constructed.
     QMultiHash<IdentifiableContentItemInterface*, CacheEntry*> nodeContent; // cache entries which are connections/related content for a given node
 
     ArbitraryRequestHandler *arbitraryRequestHandler;

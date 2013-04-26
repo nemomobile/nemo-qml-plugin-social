@@ -27,9 +27,7 @@ SubPackages:
       Group: System/Libraries
       Description: |
           This package includes the unit tests.
-      Requires:
-          - testrunner-lite
 
       Files:
-           - /opt/nemo-qml-plugins/social/tests/bin/socialtest
-           - /opt/nemo-qml-plugins/social/tests/share/*.qml
+           - /opt/tests/nemo-qml-plugins/social/socialtest
+           - /opt/tests/nemo-qml-plugins/social/share/*.qml
