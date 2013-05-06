@@ -42,14 +42,14 @@ Item {
         id: backgroundImage
         opacity: 0.4
         anchors.fill: parent
-        source: model.node.source // full-size image url
+        source: model != null ? model.node.source : "" // full-size image url
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "Comments: have " + model.count + " comments on this photo"
+        text: model != null ? "There are " + model.count + " comments on this photo" : ""
     }
 
     Button {

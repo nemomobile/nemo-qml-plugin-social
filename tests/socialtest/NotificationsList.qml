@@ -42,7 +42,7 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " notifications"
+        text: model != null ? "You have " + model.count + " notifications" : ""
     }
 
     Button {
@@ -70,11 +70,12 @@ Item {
                 height: nameLabel.height + countLabel.height
                 Text {
                     id: nameLabel
-                    text: "From: " + model.contentItem.from.objectName
+                    text: model.contentItem != null ? "From: " + model.contentItem.from.objectName
+                                                    : ""
                 }
                 Text {
                     id: countLabel
-                    text: "Title: " + model.contentItem.title
+                    text: model.contentItem != null ? "Title: " + model.contentItem.title : ""
                 }
             }
         }
