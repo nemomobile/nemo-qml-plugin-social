@@ -43,7 +43,7 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " albums"
+        text: model != null ? "You have " + model.count + " albums" : ""
     }
 
     Button {

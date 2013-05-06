@@ -64,8 +64,6 @@ Item {
     property string accessToken // provided by main.cpp
     property int whichActive: 0
 
-    Component.onCompleted: showPage(0)
-
     function makeActive(which, nodeId) {
         facebook.nodeIdentifier = nodeId
         switch (which) {

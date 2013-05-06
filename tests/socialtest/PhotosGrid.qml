@@ -43,7 +43,7 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " photos in the album"
+        text: model != null ? "You have " + model.count + " photos in the album" : ""
     }
 
     Button {
@@ -73,7 +73,7 @@ Item {
             Image {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
-                source: model.contentItem.picture // low-res icon
+                source: model.contentItem != null ? model.contentItem.picture : ""
             }
         }
     }
