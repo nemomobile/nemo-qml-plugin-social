@@ -63,6 +63,7 @@ Item {
     height: 500
     property string accessToken // provided by main.cpp
     property int whichActive: 0
+    property string userIdentifier: "me"
 
     function makeActive(which, nodeId) {
         facebook.nodeIdentifier = nodeId
@@ -89,6 +90,27 @@ Item {
     Facebook {
         id: facebook
         accessToken: root.accessToken
+        onNodeChanged: {
+            // Connect to that signal to get the user identifier
+            if (root.userIdentifier != "me") {
+                return
+            }
+
+            if (node.identifier == "") {
+                return
+            }
+
+            // We can get the true identifier of "me" only
+            // with some of the actions
+            switch (root.whichActive) {
+            case 1:
+            case 2:
+            case 3:
+                userIdentifier = node.identifier
+            default:
+                return
+            }
+        }
 
         property QtObject notificationsFilter: ContentItemTypeFilter { type: Facebook.Notification; limit: 10 }
         property QtObject friendsFilter:       ContentItemTypeFilter { type: Facebook.User }
@@ -132,7 +154,7 @@ Item {
                     if (model.which == -1) {
                         Qt.quit()
                     } else {
-                        makeActive(model.which, "me")
+                        makeActive(model.which, root.userIdentifier)
                     }
                 }
             }
@@ -143,21 +165,21 @@ Item {
         id: notificationsList
         visible: whichActive == 1
         model: visible ? facebook : null
-        onBackClicked: makeActive(0, "me")
+        onBackClicked: makeActive(0, root.userIdentifier)
     }
 
     FriendsList {
         id: friendsList
         visible: whichActive == 2
         model: visible ? facebook : null
-        onBackClicked: makeActive(0, "me")
+        onBackClicked: makeActive(0, root.userIdentifier)
     }
 
     AlbumsList {
         id: albumsList
         visible: whichActive == 3
         model: visible ? facebook : null
-        onBackClicked: makeActive(0, "me")
+        onBackClicked: makeActive(0, root.userIdentifier)
         onAlbumClicked: makeActive(4, albumId)
     }
 
@@ -165,7 +187,7 @@ Item {
         id: photosGrid
         visible: whichActive == 4
         model: visible ? facebook : null
-        onBackClicked: makeActive(3, "me")
+        onBackClicked: makeActive(3, root.userIdentifier)
         onPhotoClicked: {
             photoCommentsList.backAlbumId = model.node.identifier
             makeActive(5, photoId)
