@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
 #
 # You may use this file under the terms of the BSD license as follows:
@@ -27,32 +28,41 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 
-def upperCamelCase(splitted):
-    camelCased = camelCase(splitted)
-    return camelCased[0].upper() + camelCased[1:]
+# Regenerate all the Facebook*Interface based on the .json
+# files that are provided.
 
-def isPointer(name):
-    if name.strip()[-1:] == "*":
-        return True
-    else:
-        return False
-        
-def removePointer(name):
-    return name.replace("*", "").strip()
+# Move the ontology file
+mv ../src/facebook/facebookontology_p.h .
+mv facebook/*.json .
 
-def split(name):
-    return name.split("_")
+for file in `ls -1 *.json`; do
+    # Generate ontologies
+    ./ontology-writer.py facebookontology_p.h $file Facebook
+   
+    headerfile=facebook${file/.json/}interface.h
+    sourcefile=facebook${file/.json/}interface.cpp
+    privatefile=facebook${file/.json/}interface_p.h
+    
+    
+    # Move source and header files
+    mv ../src/facebook/$headerfile .
+    mv ../src/facebook/$sourcefile .
+    if [ -f ../src/facebook/$privatefile ]
+    then
+        mv ../src/facebook/$privatefile .
+    fi
+    
+    ./interface-writer.py $file Facebook
+    
+    # Move the files back
+    mv $headerfile ../src/facebook/
+    mv $sourcefile ../src/facebook/
+    
+    if [ -f $privatefile ]
+    then
+        mv $privatefile ../src/facebook/
+    fi
+done
 
-def camelCase(splitted):
-    newSplitted = []
-    for splittedWord in splitted:
-        splittedWord = splittedWord.lower()
-        splittedWord = splittedWord[0].upper() + splittedWord[1:]
-        newSplitted.append(splittedWord)
-    camelCase = "".join(newSplitted)
-    camelCase = camelCase[0].lower() + camelCase[1:]
-    return camelCase
-
-def addSpaces(string, size):
-    spacesToAdd = max(size - len(string), 0)
-    return string + (" " * spacesToAdd)
+mv *.json facebook/
+mv facebookontology_p.h ../src/facebook/

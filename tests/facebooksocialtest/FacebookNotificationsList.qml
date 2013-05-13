@@ -47,8 +47,7 @@ Item {
         socialNetwork: facebook
         filters: [
             ContentItemTypeFilter {
-                type: Facebook.User
-                limit: 50
+                type: Facebook.Notification
             }
         ]
     }
@@ -57,10 +56,10 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " friends"
+        text: "You have " + model.count + " notifications"
     }
 
-    Button {
+    FacebookButton {
         id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
@@ -76,33 +75,23 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         model: model
-        footer: Item {
-            width: view.width
-            height: column.height
-            Column {
-                id: column
-                anchors.left: parent.left; anchors.right: parent.right
-                Button {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Reload"
-                    onClicked: model.repopulate()
-                }
-                Button {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: model.hasNext ? "Load more" : "Cannot load more"
-                    onClicked: model.loadNext()
-                }
-            }
-
-        }
-
         delegate: Item {
             width: view.width
-            height: 50
+            height: column.height + 20
+            Column {
+                id: column
+                anchors.left: parent.left; anchors.leftMargin: 10
+                anchors.right: parent.right; anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
 
-            Text {
-                anchors.centerIn: parent
-                text: model.contentItem.name
+                Text {
+                    text: "From: " + model.contentItem.from.objectName
+                }
+                Text {
+                    anchors.left: parent.left; anchors.right: parent.right
+                    wrapMode: Text.WordWrap
+                    text: "Title: " + model.contentItem.title
+                }
             }
         }
     }

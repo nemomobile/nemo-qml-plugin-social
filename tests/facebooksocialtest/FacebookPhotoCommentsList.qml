@@ -67,11 +67,11 @@ Item {
 
     Column {
         id: buttons
-        Button {
+        FacebookButton {
             text: "Likes"
             onClicked: root.showLikesClicked()
         }
-        Button {
+        FacebookButton {
             text: "Back"
             onClicked: root.backClicked()
         }

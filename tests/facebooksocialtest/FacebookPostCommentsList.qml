@@ -33,12 +33,16 @@ import QtQuick 1.1
 import org.nemomobile.social 1.0
 
 Item {
-    id: container
+    id: root
     anchors.fill: parent
+    property string currentIdentifier
     signal backClicked
-    signal postClicked(string postId)
-    property alias filters: model.filters
     function populate(nodeId) {
+        if (currentIdentifier == nodeId) {
+            model.repopulate()
+            return
+        }
+
         model.nodeIdentifier = nodeId
         model.populate()
         view.positionViewAtBeginning()
@@ -47,21 +51,24 @@ Item {
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
+        filters: [ commentsFilter ]
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "There are " + model.count + " posts"
+        text: model.node == null ? "... Loading ..."
+              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
+              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
     }
 
-    Button {
+    FacebookButton {
         id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Back"
-        onClicked: container.backClicked()
+        onClicked: root.backClicked()
     }
 
     ListView {
@@ -72,35 +79,23 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         model: model
-        footer: Item {
-            width: view.width
-            height: childrenRect.height
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: model.hasNext ? "Load more" : "Cannot load more"
-                onClicked: model.loadNext()
-            }
-        }
-        delegate: ButtonBackground {
-            width: view.width
+        delegate: Item {
+            id: commentDelegate
+            width: parent.width
             height: column.height + 20
-            onClicked: container.postClicked(model.contentItem.identifier)
             Column {
                 id: column
-                property string message: model.contentItem.message
-                property string story: model.contentItem.story
                 anchors.left: parent.left; anchors.leftMargin: 10
                 anchors.right: parent.right; anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
-                    text: "From: " + model.contentItem.from.objectName
+                    id: nameLabel
+                    text: "From: " + contentItem.from.objectName
                 }
                 Text {
-                    anchors.left: parent.left; anchors.right: parent.right
-                    text: column.message != "" ? column.message
-                                               : (column.story != "" ? column.story : "<No text>")
-                    wrapMode: Text.WordWrap
+                    id: countLabel
+                    text: "Message: " + contentItem.message
                 }
             }
         }

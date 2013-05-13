@@ -36,73 +36,62 @@ Item {
     id: container
     anchors.fill: parent
     signal backClicked
-
-    Connections {
-        target: root
-        onWhichActiveChanged: {
-            container.visible = (root.whichActive == 10)
-        }
-    }
+    signal photoClicked(string photoId)
 
     function populate(nodeId) {
-        filterDestructionTestModel.nodeIdentifier = nodeId
-        filterDestructionTestModel.filters = [testFilter]
-        filterDestructionTestModel.populate()
+        model.nodeIdentifier = nodeId
+        model.populate()
         view.positionViewAtBeginning()
     }
 
-    ContentItemTypeFilter {
-        id: testFilter
-        type: Facebook.User
+    SocialNetworkModel {
+        id: model
+        socialNetwork: facebook
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Photo
+            }
+        ]
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + filterDestructionTestModel.count + " friends"
+        text: model.node == null ? "... Loading ..."
+              : "There are "  + model.node.count + " photos in this album"
+              + "\nComments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
+              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
     }
 
-    Button {
+    FacebookButton {
         id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Back"
-        onClicked: {
-            container.backClicked()
-            // If we do not destroy the filter first, we might go into a race
-            // conditin in Qt 5 where the delegates are destroyed twice, and
-            // leads into a segfault :(
-            testFilter.destroy()
-            container.destroy()
-        }
+        onClicked: container.backClicked()
     }
 
-    ListView {
+    GridView {
         id: view
         clip: true
         anchors.top: topLabel.bottom
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
-        model: filterDestructionTestModel
-        footer: Item {
-            width: view.width
-            height: childrenRect.height
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: filterDestructionTestModel.hasNext ? "Load more" : "Cannot load more"
-                onClicked: filterDestructionTestModel.loadNext()
-            }
-        }
-
-        delegate: Item {
-            width: view.width
-            height: 50
-
-            Text {
-                anchors.centerIn: parent
-                text: model.contentItem.name
+        cellWidth: width / 4
+        cellHeight: cellWidth
+        model: model
+        delegate: MouseArea {
+            id: photoDelegate
+            onClicked: container.photoClicked(model.contentItem.identifier)
+            width: view.cellWidth
+            height: view.cellHeight
+            clip: true
+            Image {
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectCrop
+                source: model.contentItem.picture
             }
         }
     }

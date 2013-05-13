@@ -33,38 +33,7 @@ import minipatcher
 import structure
 import formattingtools
 import typehelper
-
-license = """/*
- * Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
- *
- * You may use this file under the terms of the BSD license as follows:
- *
- * "Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in
- *     the documentation and/or other materials provided with the
- *     distribution.
- *   * Neither the name of Nemo Mobile nor the names of its contributors
- *     may be used to endorse or promote products derived from this
- *     software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
- */
-"""
+import writerhelper
 
 def indent(code, count):
     splitted = code.split("\n")
@@ -99,16 +68,14 @@ def generate(structure_file):
     struct = structure.extract(structure_file)
 
     name = formattingtools.upperCamelCase(formattingtools.split(struct.name))
-    className = "Facebook" + name + "Interface"
-    qmlClassName = "Facebook" + name
-    shortClassName = "Facebook" + name
+    className = writerhelper.socialNetwork() + name + "Interface"
+    writerhelper.className = className
+    qmlClassName = writerhelper.socialNetwork() + name
     prefix = struct.name.upper()
 
     # HEADER
-    header = license
-    header += "\n"
-    header += "#ifndef " + className.upper() + "_H\n"
-    header += "#define " + className.upper() + "_H\n"
+    header = writerhelper.license()
+    header += writerhelper.guardOpening()
     header += "\n"
 
     if struct.identifiable:
@@ -149,7 +116,7 @@ def generate(structure_file):
         header += "/*\n"
         header += " * NOTE: this is an unidentifiable content item which\n"
         header += " * is read only and only creatable by the top level\n"
-        header += " * FacebookInterface.\n"
+        header += " * " + writerhelper.socialNetwork() + "Interface.\n"
         header += " */\n"
         header += "\n"
 
@@ -229,7 +196,7 @@ def generate(structure_file):
         header += struct.extraEnd
         header += "\n"
     header += "\n"
-    header += "#endif // " + className.upper() + "_H\n"
+    header += writerhelper.guardClosing()
 
     try:
         f = open(className.lower() + ".h", "w")
@@ -248,30 +215,21 @@ def generate(structure_file):
         if property.custom:
             haveCustom = True
 
-    private = license
+    private = writerhelper.license()
     if struct.identifiable:
+        private += writerhelper.guardOpening(True)
         private += "\n"
-        private += "#ifndef " + className.upper() + "_P_H\n"
-        private += "#define " + className.upper() + "_P_H\n"
 
-    private += "\n"
     private += "#include \"" + className.lower() + ".h\"\n"
     if not struct.identifiable:
-        private += "#include \"facebookinterface.h\"\n"
-        private += "#include \"facebookontology_p.h\"\n"
+        private += writerhelper.socialNetworkIncludes()
     if struct.identifiable:
-        private += "#include \"facebookinterface_p.h\"\n"
+        private += writerhelper.socialNetworkIdentifiableIncludes()
         private += "#include \"identifiablecontentiteminterface_p.h\"\n"
     else:
         private += "#include \"contentiteminterface_p.h\"\n"
     if hasLists:
         private += "#include <QtCore/QList>\n"
-    #includesListde = []
-    #for property in struct.interfaceProperties:
-        #if property.custom:
-            #if not property.type.lower() in includesListde:
-                #includesListde.append(property.type.lower())
-    #print includesListde
     
     if not struct.identifiable:
         private += "// <<< include\n"
@@ -298,7 +256,7 @@ const QVariantMap &newData);\n"
 
     # Add the custom attributes
     if struct.identifiable:
-        private += "    FacebookInterfacePrivate::FacebookAction action;\n"
+        private += "    " + writerhelper.socialNetworkActionAttribute()
     for property in struct.interfaceProperties:
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
         propertyDefinition = getType(property, listPrivate = property.isList)
@@ -340,7 +298,7 @@ const QVariantMap &newData);\n"
     source = ""
     if struct.identifiable:
         private += "\n"
-        private += "#endif // " + className.upper() + "_P_H\n"
+        private += writerhelper.guardClosing(True)
         try:
             f = open(className.lower() + "_p.h", "w")
             f.write(private)
@@ -348,11 +306,9 @@ const QVariantMap &newData);\n"
             print "Failed to write the private header in " + className.lower() + "_p.h"
         f.close()
 
-        source += license
-        source += "\n"
+        source += writerhelper.license()
         source += "#include \"" + className.lower() + "_p.h\"\n"
-        source += "#include \"facebookontology_p.h\"\n"
-        source += "#include \"facebookinterface.h\"\n"
+        source += writerhelper.socialNetworkIncludes()
         source += "// <<< include\n"
         if "include" in patcherDataSource["markers"]:
             source += patcherDataSource["data"]["include"]
@@ -371,7 +327,7 @@ const QVariantMap &newData);\n"
         source += "ContentItemInterfacePrivate"
     source += "(q)\n"
     if struct.identifiable:
-        source += "    , action(FacebookInterfacePrivate::NoAction)\n"
+        source += "    , " + writerhelper.socialNetworkActionAttributeInitialization() +  "\n"
 
     if haveCustom:
         source += "// <<< custom\n"
@@ -415,10 +371,10 @@ const QVariantMap &newData);\n"
 
         if not property.custom:
             source += "    QVariant old" + upperPropertyName + " = "
-            source += "oldData.value(" + formattingtools.ontologyKey(splittedPropertyName, prefix)
+            source += "oldData.value(" + writerhelper.ontologyKey(splittedPropertyName, prefix)
             source += ");\n"
             source += "    QVariant new" + upperPropertyName + " = "
-            source += "newData.value(" + formattingtools.ontologyKey(splittedPropertyName, prefix)
+            source += "newData.value(" + writerhelper.ontologyKey(splittedPropertyName, prefix)
             source += ");\n"
         else:
             unknownProperties.append(property.name)
@@ -450,10 +406,10 @@ const QVariantMap &newData);\n"
     if struct.identifiable:
         source += "    QVariantMap oldDataWithId = oldData;\n"
         source += "    oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,\n"
-        source += "                         oldData.value(FACEBOOK_ONTOLOGY_METADATA_ID));\n"
+        source += "                         oldData.value(" + writerhelper.socialNetworkIdMetadata() + "));\n"
         source += "    QVariantMap newDataWithId = newData;\n"
         source += "    newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,\n"
-        source += "                         newData.value(FACEBOOK_ONTOLOGY_METADATA_ID));\n"
+        source += "                         newData.value(" + writerhelper.socialNetworkIdMetadata() + "));\n"
         source += "    IdentifiableContentItemInterfacePrivate"
         source += "::emitPropertyChangeSignals(oldDataWithId, newDataWithId);\n"
     else:
@@ -528,7 +484,7 @@ const QVariantMap &newData);\n"
     source += "//-------------------------------\n"
     source += "\n"
     source += "/*!\n"
-    source += "    \\qmltype " + shortClassName + "\n"
+    source += "    \\qmltype " + qmlClassName + "\n"
     source += "    \\instantiates " + className + "\n"
     source += indent(struct.doc, 1)
     source += "\n"
@@ -554,7 +510,7 @@ const QVariantMap &newData);\n"
     source += "/*! \\reimp */\n"
     source += "int " + className + "::type() const\n"
     source += "{\n"
-    source += "    return FacebookInterface::" + name + ";\n"
+    source += "    return " + writerhelper.socialNetworkType(name) + ";\n"
     source += "}\n"
     source += "\n"
     if struct.identifiable:
@@ -638,7 +594,7 @@ const QVariantMap &newData);\n"
             source += "    Q_D(const " + className + ");\n"
         if not property.custom:
             line = "d->data().value(" 
-            line += formattingtools.ontologyKey(splittedPropertyName, prefix) + ")"
+            line += writerhelper.ontologyKey(splittedPropertyName, prefix) + ")"
             source += indent(typehelper.convert(type, line), 1) + "\n"
         else:
             if property.isList:
@@ -668,7 +624,11 @@ const QVariantMap &newData);\n"
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Interface writer')
     parser.add_argument('structure_file', metavar='structure_file', type=str,
-                        help="""Input Facebook object structure file (JSON)""")
+                        help="""Input object structure file (JSON)""")
+    parser.add_argument('social_network', metavar='social_network', type=str,
+                        help="""Social network to use""")
     args = parser.parse_args()
     structure_file = args.structure_file
+    writerhelper.setSocialNetwork(args.social_network)
     generate(structure_file)
+

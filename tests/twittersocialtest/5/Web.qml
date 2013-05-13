@@ -29,60 +29,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-import QtQuick 1.1
-import org.nemomobile.social 1.0
+import QtQuick 2.0
+import QtWebKit 3.0
 
-Item {
-    id: container
-    anchors.fill: parent
-    signal backClicked
-    function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
-        view.positionViewAtBeginning()
-    }
-
-    SocialNetworkModel {
-        id: model
-        socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Like
-            }
-        ]
-    }
-
-    Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "There are " + model.count + " likes"
-    }
-
-    Button {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
-    }
-
-    ListView {
-        id: view
-        clip: true
-        anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        model: model
-        delegate: Item {
-            width: view.width
-            height: 50
-
-            Text {
-                anchors.centerIn: parent
-                text: model.contentItem.userName
-            }
-        }
-    }
-}
+WebView {}

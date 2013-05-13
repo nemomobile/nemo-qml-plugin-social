@@ -30,74 +30,23 @@
  */
 
 import QtQuick 1.1
-import org.nemomobile.social 1.0
 
-Item {
+Rectangle {
     id: container
-    anchors.fill: parent
-    signal backClicked
-
-    Connections {
-        target: root
-        onWhichActiveChanged: container.visible = (root.whichActive == 6)
-    }
-
-    function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
-        view.positionViewAtBeginning()
-    }
-
-    SocialNetworkModel {
-        id: model
-        socialNetwork: facebook
-        filters: [ friendsFilter ]
-    }
+    property alias text: text.text
+    signal clicked()
+    width: 200
+    height: 60
+    color: !mouseArea.pressed ? "white" : "#DCDCDC"
 
     Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " friends"
+        id: text
+        anchors.centerIn: parent
     }
 
-    Button {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: {
-            container.backClicked()
-            container.destroy()
-        }
-    }
-
-    ListView {
-        id: view
-        clip: true
-        anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        model: model
-        footer: Item {
-            width: view.width
-            height: childrenRect.height
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: model.hasNext ? "Load more" : "Cannot load more"
-                onClicked: model.loadNext()
-            }
-        }
-
-        delegate: Item {
-            width: view.width
-            height: 50
-
-            Text {
-                anchors.centerIn: parent
-                text: model.contentItem.name
-            }
-        }
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        onClicked: container.clicked()
     }
 }
