@@ -46,7 +46,7 @@ class IdentifiableContentItemInterfacePrivate : public ContentItemInterfacePriva
 {
 public:
     explicit IdentifiableContentItemInterfacePrivate(IdentifiableContentItemInterface *q);
-    ~IdentifiableContentItemInterfacePrivate();
+    virtual ~IdentifiableContentItemInterfacePrivate();
 
     QNetworkReply *reply(); // returns currentReply
     void deleteReply();     // disconnect()s and then deleteLater()s currentReply, sets to null.  DOES NOT SET STATE.
