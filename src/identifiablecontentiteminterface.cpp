@@ -499,6 +499,12 @@ bool IdentifiableContentItemInterface::request(IdentifiableContentItemInterface:
         break;
     }
 
+    // Due the network unlinearity just make sure that the old reply has been deleted and
+    // ignored before assigning a new one to it.
+    if (d->currentReply != 0) {
+        d->deleteReply();
+    }
+
     if (reply) {
         d->currentReply = reply;
         d->status = SocialNetworkInterface::Busy;
