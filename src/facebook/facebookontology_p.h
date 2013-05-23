@@ -35,6 +35,8 @@
 #define FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER QLatin1String("id")
 #define FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME       QLatin1String("name")
 #define FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE       QLatin1String("object_type")
+// TODO: object picture is not part of the object reference
+// it should be removed from there ...
 #define FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTPICTURE    QLatin1String("picture") // XXX TODO.
 // >>> objectreference
 
@@ -46,6 +48,7 @@
 #define FACEBOOK_ONTOLOGY_METADATA_ID                      QLatin1String("id")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING                  QLatin1String("paging")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT             QLatin1String("next")
+#define FACEBOOK_ONTOLOGY_METADATA_DATA                    QLatin1String("data")
 // >>> metadata
 
 // <<< connections
@@ -63,24 +66,20 @@
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_SUMMARY              QLatin1String("summary")
 // >>> connections
 
-// <<< like
-#define FACEBOOK_ONTOLOGY_LIKE_TARGETIDENTIFIER            QLatin1String("target_id")
-#define FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER              QLatin1String("id")
-#define FACEBOOK_ONTOLOGY_LIKE_USERNAME                    QLatin1String("name")
-// >>> like
-
-// <<< picture
-#define FACEBOOK_ONTOLOGY_PICTURE_SOURCE                   QLatin1String("url")
-#define FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE             QLatin1String("is_silhouette")
-// >>> picture
-
-// <<< tag
-#define FACEBOOK_ONTOLOGY_TAG_TARGETIDENTIFIER             QLatin1String("target_id")
-#define FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER               QLatin1String("to")
-#define FACEBOOK_ONTOLOGY_TAG_TEXT                         QLatin1String("tag_text")
-#define FACEBOOK_ONTOLOGY_TAG_XOFFSET                      QLatin1String("x")
-#define FACEBOOK_ONTOLOGY_TAG_YOFFSET                      QLatin1String("y")
-// >>> tag
+// <<< album
+#define FACEBOOK_ONTOLOGY_ALBUM                            QLatin1String("album")
+#define FACEBOOK_ONTOLOGY_ALBUM_FROM                       QLatin1String("from")
+#define FACEBOOK_ONTOLOGY_ALBUM_NAME                       QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION                QLatin1String("description")
+#define FACEBOOK_ONTOLOGY_ALBUM_LINK                       QLatin1String("link")
+#define FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO                 QLatin1String("cover_photo")
+#define FACEBOOK_ONTOLOGY_ALBUM_PRIVACY                    QLatin1String("privacy")
+#define FACEBOOK_ONTOLOGY_ALBUM_COUNT                      QLatin1String("count")
+#define FACEBOOK_ONTOLOGY_ALBUM_ALBUMTYPE                  QLatin1String("type")
+#define FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME                QLatin1String("created_time")
+#define FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME                QLatin1String("updated_time")
+#define FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD                  QLatin1String("can_upload")
+// >>> album
 
 // <<< comment
 #define FACEBOOK_ONTOLOGY_COMMENT                          QLatin1String("comment")
@@ -96,7 +95,6 @@
 // <<< photo
 #define FACEBOOK_ONTOLOGY_PHOTO                            QLatin1String("photo")
 #define FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER            QLatin1String("album_id")
-#define FACEBOOK_ONTOLOGY_PHOTO_ID                         QLatin1String("id")
 #define FACEBOOK_ONTOLOGY_PHOTO_FROM                       QLatin1String("from")
 #define FACEBOOK_ONTOLOGY_PHOTO_TAGS                       QLatin1String("tags")
 #define FACEBOOK_ONTOLOGY_PHOTO_NAME                       QLatin1String("name")
@@ -112,23 +110,12 @@
 #define FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME                QLatin1String("created_time")
 #define FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME                QLatin1String("updated_time")
 #define FACEBOOK_ONTOLOGY_PHOTO_POSITION                   QLatin1String("position")
-#define FACEBOOK_ONTOLOGY_PHOTO_LIKED                      QLatin1String("user_likes")
 // >>> photo
 
-// <<< album
-#define FACEBOOK_ONTOLOGY_ALBUM                            QLatin1String("album")
-#define FACEBOOK_ONTOLOGY_ALBUM_FROM                       QLatin1String("from")
-#define FACEBOOK_ONTOLOGY_ALBUM_NAME                       QLatin1String("name")
-#define FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION                QLatin1String("description")
-#define FACEBOOK_ONTOLOGY_ALBUM_LINK                       QLatin1String("link")
-#define FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO                 QLatin1String("cover_photo")
-#define FACEBOOK_ONTOLOGY_ALBUM_PRIVACY                    QLatin1String("privacy")
-#define FACEBOOK_ONTOLOGY_ALBUM_COUNT                      QLatin1String("count")
-#define FACEBOOK_ONTOLOGY_ALBUM_ALBUMTYPE                  QLatin1String("type")
-#define FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME                QLatin1String("created_time")
-#define FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME                QLatin1String("updated_time")
-#define FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD                  QLatin1String("can_upload")
-// >>> album
+// <<< picture
+#define FACEBOOK_ONTOLOGY_PICTURE_SOURCE                   QLatin1String("url")
+#define FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE             QLatin1String("is_silhouette")
+// >>> picture
 
 // <<< user
 #define FACEBOOK_ONTOLOGY_USER                             QLatin1String("user")
@@ -170,6 +157,19 @@
 #define FACEBOOK_ONTOLOGY_USER_WORK                        QLatin1String("work")
 // >>> user
 
+// <<< image
+#define FACEBOOK_ONTOLOGY_IMAGE                            QLatin1String("image")
+#define FACEBOOK_ONTOLOGY_IMAGE_SOURCE                     QLatin1String("source")
+#define FACEBOOK_ONTOLOGY_IMAGE_WIDTH                      QLatin1String("width")
+#define FACEBOOK_ONTOLOGY_IMAGE_HEIGHT                     QLatin1String("height")
+// >>> image
+
+// <<< like
+#define FACEBOOK_ONTOLOGY_LIKE_TARGETIDENTIFIER            QLatin1String("target_id")
+#define FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER              QLatin1String("id")
+#define FACEBOOK_ONTOLOGY_LIKE_USERNAME                    QLatin1String("name")
+// >>> like
+
 // <<< notification
 #define FACEBOOK_ONTOLOGY_NOTIFICATION                     QLatin1String("notification")
 #define FACEBOOK_ONTOLOGY_NOTIFICATION_ID                  QLatin1String("id")
@@ -183,5 +183,25 @@
 #define FACEBOOK_ONTOLOGY_NOTIFICATION_LINK                QLatin1String("link")
 #define FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD              QLatin1String("unread")
 // >>> notification
+
+// <<< name_tag
+#define FACEBOOK_ONTOLOGY_NAME_TAG                         QLatin1String("name_tag")
+#define FACEBOOK_ONTOLOGY_NAME_TAG_IDENTIFIER              QLatin1String("id")
+#define FACEBOOK_ONTOLOGY_NAME_TAG_NAME                    QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE             QLatin1String("type")
+#define FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET                  QLatin1String("offset")
+#define FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH                  QLatin1String("length")
+// >>> name_tag
+
+// <<< tag
+#define FACEBOOK_ONTOLOGY_TAG                              QLatin1String("tag")
+#define FACEBOOK_ONTOLOGY_TAG_IDENTIFIER                   QLatin1String("id")
+#define FACEBOOK_ONTOLOGY_TAG_NAME                         QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_TAG_X                            QLatin1String("x")
+#define FACEBOOK_ONTOLOGY_TAG_Y                            QLatin1String("y")
+#define FACEBOOK_ONTOLOGY_TAG_CREATEDTIME                  QLatin1String("created_time")
+// >>> tag
+
+
 
 #endif // FACEBOOKONTOLOGY_P_H

@@ -29,27 +29,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebookphotointerface.h"
 #include "facebookphotointerface_p.h"
-
 #include "facebookontology_p.h"
-#include "facebookobjectreferenceinterface.h"
-#include "identifiablecontentiteminterface_p.h"
-#include "contentiteminterface_p.h"
-
-#include <QtDebug>
+#include "facebookinterface.h"
+// <<< include
+#include <QtCore/QDebug>
+// >>> include
 
 FacebookPhotoInterfacePrivate::FacebookPhotoInterfacePrivate(FacebookPhotoInterface *q)
     : IdentifiableContentItemInterfacePrivate(q)
-    , from(0)
-    , pendingTagToRemoveIndex(-1)
     , action(FacebookInterfacePrivate::NoAction)
+// <<< custom
+    , from(0)
     , liked(false)
+    , pendingTagToRemoveIndex(-1)
+// >>> custom
 {
 }
 
 void FacebookPhotoInterfacePrivate::finishedHandler()
 {
+// <<< finishedHandler
     Q_Q(FacebookPhotoInterface);
     if (!reply()) {
         // if an error occurred, it might have been deleted by the error handler.
@@ -132,230 +132,403 @@ void FacebookPhotoInterfacePrivate::finishedHandler()
         }
         break;
     }
+// >>> finishedHandler
 }
-
-/*! \reimp */
-void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData)
+void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                              const QVariantMap &newData)
 {
     Q_Q(FacebookPhotoInterface);
-    QString aidStr = newData.value(FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER).toString();
-    QVariantList tagsList = newData.value(FACEBOOK_ONTOLOGY_PHOTO_TAGS).toList();
-    QVariantMap fromMap = newData.value(FACEBOOK_ONTOLOGY_PHOTO_FROM).toMap();
-    QString nameStr = newData.value(FACEBOOK_ONTOLOGY_PHOTO_NAME).toString();
-    QVariantMap ntMap = newData.value(FACEBOOK_ONTOLOGY_PHOTO_NAMETAGS).toMap();
-    QString iconStr = newData.value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toString();
-    QString picStr = newData.value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toString();
-    QString srcStr = newData.value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toString();
-    QString heightInt = newData.value(FACEBOOK_ONTOLOGY_PHOTO_HEIGHT).toString();
-    QString widthInt = newData.value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).toString();
-    QVariantMap imgsMap = newData.value(FACEBOOK_ONTOLOGY_PHOTO_IMAGES).toMap();
-    QString linkStr = newData.value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toString();
-    QVariantMap placeMap = newData.value(FACEBOOK_ONTOLOGY_PHOTO_PLACE).toMap();     // XXX TODO: Location/Place object reference
-    QString ctStr = newData.value(FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME).toString();
-    QString utStr = newData.value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME).toString();
-    QString posInt = newData.value(FACEBOOK_ONTOLOGY_PHOTO_POSITION).toString();
-    QString likedBool = newData.value(FACEBOOK_ONTOLOGY_PHOTO_LIKED).toString();
+    QString oldAlbumIdentifier = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER).toString();
+    QString newAlbumIdentifier = newData.value(FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER).toString();
+    QString oldName = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_NAME).toString();
+    QString newName = newData.value(FACEBOOK_ONTOLOGY_PHOTO_NAME).toString();
+    QUrl oldIcon = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toUrl();
+    QUrl newIcon = newData.value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toUrl();
+    QUrl oldPicture = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toUrl();
+    QUrl newPicture = newData.value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toUrl();
+    QUrl oldSource = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toUrl();
+    QUrl newSource = newData.value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toUrl();
+    int oldHeight = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_HEIGHT).toInt();
+    int newHeight = newData.value(FACEBOOK_ONTOLOGY_PHOTO_HEIGHT).toInt();
+    int oldWidth = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).toInt();
+    int newWidth = newData.value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).toInt();
+    QUrl oldLink = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toUrl();
+    QUrl newLink = newData.value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toUrl();
+    QVariantMap oldPlace = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_PLACE).toMap();
+    QVariantMap newPlace = newData.value(FACEBOOK_ONTOLOGY_PHOTO_PLACE).toMap();
+    QString oldCreatedTime = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME).toString();
+    QString newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME).toString();
+    QString oldUpdatedTime = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME).toString();
+    QString newUpdatedTime = newData.value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME).toString();
+    int oldPosition = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_POSITION).toInt();
+    int newPosition = newData.value(FACEBOOK_ONTOLOGY_PHOTO_POSITION).toInt();
 
-    QString oldAidStr = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER).toString();
-    QVariantList oldTagsList = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_TAGS).toList();
-    QVariantMap oldFromMap = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_FROM).toMap();
-    QString oldNameStr = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_NAME).toString();
-    QVariantMap oldNtMap = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_NAMETAGS).toMap();
-    QString oldIconStr = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toString();
-    QString oldPicStr = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toString();
-    QString oldSrcStr = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toString();
-    QString oldHeightInt = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_HEIGHT).toString();
-    QString oldWidthInt = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).toString();
-    QVariantMap oldImgsMap = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_IMAGES).toMap();
-    QString oldLinkStr = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toString();
-    QVariantMap oldPlaceMap = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_PLACE).toMap();     // XXX TODO: Location/Place object reference
-    QString oldCtStr = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME).toString();
-    QString oldUtStr = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME).toString();
-    QString oldPosInt = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_POSITION).toString();
-    QString oldLikedBool = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_LIKED).toString();
-
-    if (aidStr != oldAidStr)
+    if (newAlbumIdentifier != oldAlbumIdentifier)
         emit q->albumIdentifierChanged();
-    if (nameStr != oldNameStr)
+    if (newName != oldName)
         emit q->nameChanged();
-    if (ntMap != oldNtMap)
-        emit q->nameTagsChanged();
-    if (iconStr != oldIconStr)
+    if (newIcon != oldIcon)
         emit q->iconChanged();
-    if (picStr != oldPicStr)
+    if (newPicture != oldPicture)
         emit q->pictureChanged();
-    if (srcStr != oldSrcStr)
+    if (newSource != oldSource)
         emit q->sourceChanged();
-    if (heightInt != oldHeightInt)
+    if (newHeight != oldHeight)
         emit q->heightChanged();
-    if (widthInt != oldWidthInt)
+    if (newWidth != oldWidth)
         emit q->widthChanged();
-    if (imgsMap != oldImgsMap)
-        emit q->imagesChanged();
-    if (linkStr != oldLinkStr)
+    if (newLink != oldLink)
         emit q->linkChanged();
-    if (placeMap != oldPlaceMap)
+    if (newPlace != oldPlace)
         emit q->placeChanged();
-    if (ctStr != oldCtStr)
+    if (newCreatedTime != oldCreatedTime)
         emit q->createdTimeChanged();
-    if (utStr != oldUtStr)
+    if (newUpdatedTime != oldUpdatedTime)
         emit q->updatedTimeChanged();
-    if (posInt != oldPosInt)
+    if (newPosition != oldPosition)
         emit q->positionChanged();
-    if (likedBool != oldLikedBool) {
-        liked = likedBool == QLatin1String("true");
-        emit q->likedChanged();
-    }
 
-    // update tags list
-    if (tagsList != oldTagsList) {
-        // clear the old tags
-        foreach (FacebookTagInterface *doomedTag, tags)
-            doomedTag->deleteLater();
-        tags.clear();
+// <<< emitPropertyChangeSignals
+    QVariantMap oldFromMap = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_FROM).toMap();
+    QString oldFromId = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString oldFromName = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    QVariantMap newFromMap = newData.value(FACEBOOK_ONTOLOGY_ALBUM_FROM).toMap();
+    QString newFromId = newFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString newFromName = newFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
 
-        // update with the new tag data
-        for (int i = 0; i < tagsList.size(); ++i) {
-            QVariantMap currTagMap = tagsList.at(i).toMap();
-            currTagMap.insert(FACEBOOK_ONTOLOGY_TAG_TARGETIDENTIFIER, q->identifier());
-            FacebookTagInterface *currTag = new FacebookTagInterface(q);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(currTag, currTagMap);
-            tags.append(currTag);
-        }
-
-        // emit change signal
-        emit q->tagsChanged();
-    }
-
-    // update from reference
-    if (fromMap != oldFromMap) {
+    // Update the from object if required
+    if (newFromId != oldFromId || newFromName != oldFromName) {
         QVariantMap newFromData;
-        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User); // could also be a Profile ...
-        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER));
-        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME));
+        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
+        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
+        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
         qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
         emit q->fromChanged();
     }
 
-    // call the super class implementation
-    QVariantMap oldDataWithId = oldData; oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, oldData.value(FACEBOOK_ONTOLOGY_PHOTO_ID));
-    QVariantMap newDataWithId = newData; newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, newData.value(FACEBOOK_ONTOLOGY_PHOTO_ID));
+    // Update tags list
+    QVariantMap newTagsDataMap = newData.value(FACEBOOK_ONTOLOGY_PHOTO_TAGS).toMap();
+    QVariantList newTagsList = newTagsDataMap.value(FACEBOOK_ONTOLOGY_METADATA_DATA).toList();
+    QVariantMap oldTagsDataMap = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_TAGS).toMap();
+    QVariantList oldTagsList = oldTagsDataMap.value(FACEBOOK_ONTOLOGY_METADATA_DATA).toList();
+
+    if (newTagsList != oldTagsList) {
+        // Clear the old tags
+        foreach (FacebookTagInterface *tag, tags) {
+            tag->deleteLater();
+        }
+        tags.clear();
+
+        // Update with the new tag data
+        foreach (QVariant tag, newTagsList) {
+            QVariantMap tagMap = tag.toMap();
+            FacebookTagInterface *tagInterface = new FacebookTagInterface(q);
+            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(tagInterface, tagMap);
+            tags.append(tagInterface);
+        }
+
+        // Emit change signal
+        emit q->tagsChanged();
+    }
+
+    // Update name_tags list
+    // This entry is tricky (not to say "/me vomit")
+    // If there is only one tag, the name_tag property holds a list of lists with one entry
+    // If there are more than one tag, the name_tag property is an object, with keys corresponding
+    // to the offset, and values being lists containing just one object
+    QVariant newNameTagsData = newData.value(FACEBOOK_ONTOLOGY_PHOTO_NAMETAGS);
+    QVariant oldNameTagsData = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_NAMETAGS);
+
+    if (newNameTagsData != oldNameTagsData) {
+        // Clear the old name_tags
+        foreach (FacebookNameTagInterface *nameTag, nameTags) {
+            nameTag->deleteLater();
+        }
+        nameTags.clear();
+        // Update with the new name_tag data
+        // Only one entry
+        if (newNameTagsData.type() == QVariant::List) {
+            QVariantList newNameTagsList = newNameTagsData.toList();
+            if (newNameTagsList.count() == 1) {
+                QVariantList nameTagList = newNameTagsList.at(0).toList();
+                foreach (QVariant nameTag, nameTagList) {
+                    QVariantMap nameTagMap = nameTag.toMap();
+                    FacebookNameTagInterface *nameTagInterface = new FacebookNameTagInterface(q);
+                    qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(nameTagInterface, nameTagMap);
+                    nameTags.append(nameTagInterface);
+                }
+            }
+        } else if (newNameTagsData.type() == QVariant::Map) {
+            foreach (QVariant nameTagList, newNameTagsData.toMap()) {
+                foreach (QVariant nameTag, nameTagList.toList()) {
+                    QVariantMap nameTagMap = nameTag.toMap();
+                    FacebookNameTagInterface *nameTagInterface = new FacebookNameTagInterface(q);
+                    qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(nameTagInterface, nameTagMap);
+                    nameTags.append(nameTagInterface);
+                }
+            }
+        }
+
+        // Emit change signal
+        emit q->nameTagsChanged();
+    }
+
+    // Update images list
+    QVariantList newImagesList = newData.value(FACEBOOK_ONTOLOGY_PHOTO_IMAGES).toList();
+    QVariantList oldImagesList = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_IMAGES).toList();
+
+    if (newImagesList != oldImagesList) {
+        // Clear the old images
+        foreach (FacebookImageInterface *image, images) {
+            image->deleteLater();
+        }
+        images.clear();
+
+        // Update with the new tag data
+        foreach (QVariant image, newImagesList) {
+            QVariantMap imageMap = image.toMap();
+            FacebookImageInterface *imageInterface = new FacebookImageInterface(q);
+            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(imageInterface, imageMap);
+            images.append(imageInterface);
+        }
+
+        // Emit change signal
+        emit q->imagesChanged();
+    }
+
+    // Check if the user liked this photo
+    QString currentUserIdentifier
+            = qobject_cast<FacebookInterface*>(q->socialNetwork())->currentUserIdentifier();
+    bool newLiked = false;
+    QVariant likes = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
+    if (!likes.isNull()) {
+        QVariantMap likesMap = likes.toMap();
+        QVariantList data = likesMap.value(FACEBOOK_ONTOLOGY_METADATA_DATA).toList();
+        foreach (QVariant dataEntry, data) {
+            QVariant idVariant
+                    = dataEntry.toMap().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER);
+            if (idVariant.toString() == currentUserIdentifier) {
+                newLiked = true;
+            }
+        }
+    }
+
+    if (liked != newLiked) {
+        liked = newLiked;
+        emit q->likedChanged();
+    }
+// >>> emitPropertyChangeSignals
+
+    // Call super class implementation
+    QVariantMap oldDataWithId = oldData;
+    oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,
+                         oldData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
+    QVariantMap newDataWithId = newData;
+    newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,
+                         newData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
     IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(oldDataWithId, newDataWithId);
 }
-
-/*! \internal */
-void FacebookPhotoInterfacePrivate::tags_append(QDeclarativeListProperty<FacebookTagInterface> *list, FacebookTagInterface *tag)
+void FacebookPhotoInterfacePrivate::tags_append(QDeclarativeListProperty<FacebookTagInterface> *list,
+                                                FacebookTagInterface *data)
 {
-    FacebookPhotoInterface *fci = qobject_cast<FacebookPhotoInterface *>(list->object);
-    if (fci) {
-        tag->setParent(fci);
-        fci->d_func()->tags.append(tag);
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        data->setParent(interface);
+        interface->d_func()->tags.append(data);
     }
 }
 
-/*! \internal */
-FacebookTagInterface *FacebookPhotoInterfacePrivate::tags_at(QDeclarativeListProperty<FacebookTagInterface> *list, int index)
+FacebookTagInterface * FacebookPhotoInterfacePrivate::tags_at(QDeclarativeListProperty<FacebookTagInterface> *list,
+                                                              int index)
 {
-    FacebookPhotoInterface *fci = qobject_cast<FacebookPhotoInterface *>(list->object);
-    if (fci && index < fci->d_func()->tags.count() && index >= 0)
-        return fci->d_func()->tags.at(index);
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface
+        && index < interface->d_func()->tags.count()
+        && index >= 0) {
+        return interface->d_func()->tags.at(index);
+    }
     return 0;
 }
 
-/*! \internal */
 void FacebookPhotoInterfacePrivate::tags_clear(QDeclarativeListProperty<FacebookTagInterface> *list)
 {
-    FacebookPhotoInterface *fci = qobject_cast<FacebookPhotoInterface *>(list->object);
-    if (fci) {
-        foreach (FacebookTagInterface *tag, fci->d_func()->tags)
-            tag->deleteLater();
-        fci->d_func()->tags.clear();
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        foreach (FacebookTagInterface *entry, interface->d_func()->tags) {
+            entry->deleteLater();
+        }
+        interface->d_func()->tags.clear();
     }
 }
 
-/*! \internal */
 int FacebookPhotoInterfacePrivate::tags_count(QDeclarativeListProperty<FacebookTagInterface> *list)
 {
-    FacebookPhotoInterface *fci = qobject_cast<FacebookPhotoInterface *>(list->object);
-    if (fci)
-        return fci->d_func()->tags.count();
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        return interface->d_func()->tags.count();
+    }
     return 0;
 }
 
-//---------------------------------------
+void FacebookPhotoInterfacePrivate::name_tags_append(QDeclarativeListProperty<FacebookNameTagInterface> *list,
+                                                     FacebookNameTagInterface *data)
+{
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        data->setParent(interface);
+        interface->d_func()->nameTags.append(data);
+    }
+}
+
+FacebookNameTagInterface * FacebookPhotoInterfacePrivate::name_tags_at(QDeclarativeListProperty<FacebookNameTagInterface> *list,
+                                                                       int index)
+{
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface
+        && index < interface->d_func()->nameTags.count()
+        && index >= 0) {
+        return interface->d_func()->nameTags.at(index);
+    }
+    return 0;
+}
+
+void FacebookPhotoInterfacePrivate::name_tags_clear(QDeclarativeListProperty<FacebookNameTagInterface> *list)
+{
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        foreach (FacebookNameTagInterface *entry, interface->d_func()->nameTags) {
+            entry->deleteLater();
+        }
+        interface->d_func()->nameTags.clear();
+    }
+}
+
+int FacebookPhotoInterfacePrivate::name_tags_count(QDeclarativeListProperty<FacebookNameTagInterface> *list)
+{
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        return interface->d_func()->nameTags.count();
+    }
+    return 0;
+}
+
+void FacebookPhotoInterfacePrivate::images_append(QDeclarativeListProperty<FacebookImageInterface> *list,
+                                                  FacebookImageInterface *data)
+{
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        data->setParent(interface);
+        interface->d_func()->images.append(data);
+    }
+}
+
+FacebookImageInterface * FacebookPhotoInterfacePrivate::images_at(QDeclarativeListProperty<FacebookImageInterface> *list,
+                                                                  int index)
+{
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface
+        && index < interface->d_func()->images.count()
+        && index >= 0) {
+        return interface->d_func()->images.at(index);
+    }
+    return 0;
+}
+
+void FacebookPhotoInterfacePrivate::images_clear(QDeclarativeListProperty<FacebookImageInterface> *list)
+{
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        foreach (FacebookImageInterface *entry, interface->d_func()->images) {
+            entry->deleteLater();
+        }
+        interface->d_func()->images.clear();
+    }
+}
+
+int FacebookPhotoInterfacePrivate::images_count(QDeclarativeListProperty<FacebookImageInterface> *list)
+{
+    FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
+    if (interface) {
+        return interface->d_func()->images.count();
+    }
+    return 0;
+}
+
+
+//-------------------------------
 
 /*!
     \qmltype FacebookPhoto
     \instantiates FacebookPhotoInterface
     \inqmlmodule org.nemomobile.social 1
     \brief A FacebookPhoto represents a Photo object from the Facebook OpenGraph API
-
+    
     Every FacebookPhoto has a unique identifier, and thus a photo may be
     set as the \c node (or central content item) in the Facebook
     adapter.  The content items related to a photo include various
     likes and comments.
-
+    
     An example of usage of a FacebookPhoto as the node in a Facebook
     model is as follows:
-
+    
     \qml
     import QtQuick 1.1
     import org.nemomobile.social 1.0
-
+    
     Item {
         id: root
         width: 400
         height: 800
-
+    
         Flickable {
             anchors.top: parent.verticalCenter
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
-
+    
             ListView {
                 model: fb
                 anchors.fill: parent
                 delegate: Label { text: "id: " + contentItemIdentifier } // Comment ids
             }
         }
-
+    
         Facebook {
             id: fb
             accessToken: "your access token"    // you must supply a valid access token
             nodeIdentifier: "10150146071966729" // some valid Facebook photo id.
             filters: [ ContentItemTypeFilter { type: Facebook.Comment } ]
         }
-
+    
         Component.onCompleted: {
             fb.populate()
         }
     }
     \endqml
-
+    
     A FacebookPhoto may also be used "directly" by clients, in order to
     upload comments, or like the photo.  An example of direct
     usage of the FacebookPhoto type is as follows:
-
+    
     \qml
     import QtQuick 1.1
     import org.nemomobile.social 1.0
-
+    
     Item {
         id: root
         width: 400
         height: 800
-
+    
         Facebook {
             id: fb
             accessToken: "your access token"    // you must supply a valid access token
         }
-
+    
         FacebookPhoto {
             id: fbph
             socialNetwork: fb
             identifier: "10150146071966729"     // some valid Facebook Photo fbid
-
+    
             onStatusChanged: {
                 if (status == SocialNetwork.Idle) {
                     // could comment on the photo
@@ -367,7 +540,7 @@ int FacebookPhotoInterfacePrivate::tags_count(QDeclarativeListProperty<FacebookT
                 }
             }
         }
-
+    
         Image {
             anchors.fill: parent
             source: fbph.source
@@ -375,12 +548,13 @@ int FacebookPhotoInterfacePrivate::tags_count(QDeclarativeListProperty<FacebookT
     }
     \endqml
 */
-
 FacebookPhotoInterface::FacebookPhotoInterface(QObject *parent)
     : IdentifiableContentItemInterface(*(new FacebookPhotoInterfacePrivate(this)), parent)
 {
+// <<< constructor
     Q_D(FacebookPhotoInterface);
     d->from = new FacebookObjectReferenceInterface(this);
+// >>> constructor
 }
 
 /*! \reimp */
@@ -392,26 +566,31 @@ int FacebookPhotoInterface::type() const
 /*! \reimp */
 bool FacebookPhotoInterface::remove()
 {
+// <<< remove
     return IdentifiableContentItemInterface::remove();
+// >>> remove
 }
 
 /*! \reimp */
 bool FacebookPhotoInterface::reload(const QStringList &whichFields)
 {
+// <<< reload
     return IdentifiableContentItemInterface::reload(whichFields);
+// >>> reload
 }
 
 /*!
-    \qmlmethod bool FacebookPhoto::like()
+    \qmlmethod bool FacebookPhotoInterface::like()
     Initiates a "like" operation on the photo.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the photo will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookPhotoInterface::like()
 {
+// <<< like
     Q_D(FacebookPhotoInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
                                   identifier(), QLatin1String("likes"));
@@ -422,19 +601,20 @@ bool FacebookPhotoInterface::like()
     d->action = FacebookInterfacePrivate::LikeAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> like
 }
-
 /*!
-    \qmlmethod bool FacebookPhoto::unlike()
+    \qmlmethod bool FacebookPhotoInterface::unlike()
     Initiates a "delete like" operation on the photo.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the photo will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookPhotoInterface::unlike()
 {
+// <<< unlike
     Q_D(FacebookPhotoInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
                                   identifier(), QLatin1String("likes"));
@@ -445,24 +625,25 @@ bool FacebookPhotoInterface::unlike()
     d->action = FacebookInterfacePrivate::DeleteLikeAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> unlike
 }
-
 /*!
-    \qmlmethod bool FacebookPhoto::tagUser(const QString &userId, qreal xOffset, qreal yOffset)
+    \qmlmethod bool FacebookPhotoInterface::tagUser(const QString &userId, float xOffset, float yOffset)
     Initiates a "tag user" operation on the photo.  The user specified
     by the given \a userId will be tagged into the photo at the position
     specified by the given \a xOffset and \a yOffset.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the photo will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
     false.
-
+    
     Once the network request completes, the \c responseReceived()
-    signal will be emitted.
-*/
-bool FacebookPhotoInterface::tagUser(const QString &userId, qreal xOffset, qreal yOffset)
+    signal will be emitted.*/
+
+bool FacebookPhotoInterface::tagUser(const QString &userId, float xOffset, float yOffset)
 {
+// <<< tagUser
     Q_D(FacebookPhotoInterface);
     QVariantMap postData;
     postData.insert("id", userId);
@@ -481,20 +662,21 @@ bool FacebookPhotoInterface::tagUser(const QString &userId, qreal xOffset, qreal
     d->action = FacebookInterfacePrivate::TagAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> tagUser
 }
-
 /*!
-    \qmlmethod bool FacebookPhoto::untagUser(const QString &userId)
+    \qmlmethod bool FacebookPhotoInterface::untagUser(const QString &userId)
     Initiates a "delete tag" operation on the tag which tags the
     user specified by the given \a userId into the photo.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the photo will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookPhotoInterface::untagUser(const QString &userId)
 {
+// <<< untagUser
     Q_D(FacebookPhotoInterface);
     QVariantMap extraData;
     extraData.insert("to", userId);
@@ -502,8 +684,8 @@ bool FacebookPhotoInterface::untagUser(const QString &userId)
     // try to find which tag will be removed if it succeeds
     int tempPendingTagToRemoveIndex = -1;
     for (int i = 0; i < d->tags.count(); ++i) {
-        QString tagUid = d->tags.at(i)->userIdentifier();
-        if (!tagUid.isEmpty() && tagUid == userId) {
+        QString tagUserIdentifier = d->tags.at(i)->identifier();
+        if (!tagUserIdentifier.isEmpty() && tagUserIdentifier == userId) {
             tempPendingTagToRemoveIndex = i;
             break;
         }
@@ -524,24 +706,25 @@ bool FacebookPhotoInterface::untagUser(const QString &userId)
     d->pendingTagToRemoveIndex = tempPendingTagToRemoveIndex;
     d->connectFinishedAndErrors();
     return true;
+// >>> untagUser
 }
-
 /*!
-    \qmlmethod bool FacebookPhoto::tagText(const QString &text, qreal xOffset, qreal yOffset)
+    \qmlmethod bool FacebookPhotoInterface::tagText(const QString &text, float xOffset, float yOffset)
     Initiates a "tag text" operation on the photo.  The position
     specified by the given \a xOffset and \a yOffset will be tagged
     with the specified \a text.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the photo will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
     false.
-
+    
     Once the network request completes, the \c responseReceived()
-    signal will be emitted.
-*/
-bool FacebookPhotoInterface::tagText(const QString &text, qreal xOffset, qreal yOffset)
+    signal will be emitted.*/
+
+bool FacebookPhotoInterface::tagText(const QString &text, float xOffset, float yOffset)
 {
+// <<< tagText
     Q_D(FacebookPhotoInterface);
     QVariantMap postData;
     postData.insert("tag_text", text);
@@ -560,20 +743,21 @@ bool FacebookPhotoInterface::tagText(const QString &text, qreal xOffset, qreal y
     d->action = FacebookInterfacePrivate::TagAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> tagText
 }
-
 /*!
-    \qmlmethod bool FacebookPhoto::untagText(const QString &text)
+    \qmlmethod bool FacebookPhotoInterface::untagText(const QString &text)
     Initiates a "delete tag" operation on the tag specified by
     the given text.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the photo will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookPhotoInterface::untagText(const QString &text)
 {
+// <<< untagText
     Q_D(FacebookPhotoInterface);
     QVariantMap extraData;
     extraData.insert("tag_text", text);
@@ -581,8 +765,8 @@ bool FacebookPhotoInterface::untagText(const QString &text)
     // try to find which tag will be removed if it succeeds
     int tempPendingTagToRemoveIndex = -1;
     for (int i = 0; i < d->tags.count(); ++i) {
-        QString tagText = d->tags.at(i)->text();
-        if (!tagText.isEmpty() && tagText == text) {
+        QString tagName = d->tags.at(i)->name();
+        if (!tagName.isEmpty() && tagName == text) {
             tempPendingTagToRemoveIndex = i;
             break;
         }
@@ -603,24 +787,25 @@ bool FacebookPhotoInterface::untagText(const QString &text)
     d->pendingTagToRemoveIndex = tempPendingTagToRemoveIndex;
     d->connectFinishedAndErrors();
     return true;
+// >>> untagText
 }
-
 /*!
-    \qmlmethod bool FacebookPhoto::uploadComment(const QString &message)
+    \qmlmethod bool FacebookPhotoInterface::uploadComment(const QString &message)
     Initiates a "post comment" operation on the photo.  The comment
     will contain the specified \a message.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the photo will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
     false.
-
+    
     Once the network request completes, the \c responseReceived()
     signal will be emitted.  The \c data parameter of the signal
-    will contain the \c id of the newly uploaded comment.
-*/
+    will contain the \c id of the newly uploaded comment.*/
+
 bool FacebookPhotoInterface::uploadComment(const QString &message)
 {
+// <<< uploadComment
     Q_D(FacebookPhotoInterface);
     QVariantMap postData;
     postData.insert("message", message);
@@ -635,20 +820,21 @@ bool FacebookPhotoInterface::uploadComment(const QString &message)
     d->action = FacebookInterfacePrivate::UploadCommentAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> uploadComment
 }
-
 /*!
-    \qmlmethod bool FacebookPhoto::removeComment(const QString &identifier)
+    \qmlmethod bool FacebookPhotoInterface::removeComment(const QString &commentIdentifier)
     Initiates a "delete comment" operation on the comment specified by
     the given \a identifier.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the photo will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookPhotoInterface::removeComment(const QString &commentIdentifier)
 {
+// <<< removeComment
     Q_D(FacebookPhotoInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
                                   commentIdentifier);
@@ -659,11 +845,11 @@ bool FacebookPhotoInterface::removeComment(const QString &commentIdentifier)
     d->action = FacebookInterfacePrivate::DeleteCommentAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> removeComment
 }
 
-
 /*!
-    \qmlproperty QString FacebookPhoto::albumIdentifier
+    \qmlproperty QString FacebookPhotoInterface::albumIdentifier
     Holds the identifier of the album to which this photo belongs.
     Note: this property is currently not implemented.
     XXX TODO: implement this.
@@ -675,31 +861,31 @@ QString FacebookPhotoInterface::albumIdentifier() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReference *FacebookPhoto::from
-    Holds a reference to the user or profile which uploaded this photo
+    \qmlproperty FacebookObjectReferenceInterface * FacebookPhotoInterface::from
+    Holds a reference to the user or profile which uploaded this photo.
 */
-FacebookObjectReferenceInterface *FacebookPhotoInterface::from() const
+FacebookObjectReferenceInterface * FacebookPhotoInterface::from() const
 {
     Q_D(const FacebookPhotoInterface);
     return d->from;
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookTag> FacebookPhoto::tags
+    \qmlproperty QDeclarativeListProperty<FacebookTagInterface> FacebookPhotoInterface::tags
     Holds the tags which have been uploaded for this photo
 */
 QDeclarativeListProperty<FacebookTagInterface> FacebookPhotoInterface::tags()
 {
     return QDeclarativeListProperty<FacebookTagInterface>(
-            this, 0,
-            &FacebookPhotoInterfacePrivate::tags_append,
-            &FacebookPhotoInterfacePrivate::tags_count,
-            &FacebookPhotoInterfacePrivate::tags_at,
-            &FacebookPhotoInterfacePrivate::tags_clear);
+                this, 0,
+                &FacebookPhotoInterfacePrivate::tags_append,
+                &FacebookPhotoInterfacePrivate::tags_count,
+                &FacebookPhotoInterfacePrivate::tags_at,
+                &FacebookPhotoInterfacePrivate::tags_clear);
 }
 
 /*!
-    \qmlproperty QString FacebookPhoto::name
+    \qmlproperty QString FacebookPhotoInterface::name
     Holds the name (caption) of the photo
 */
 QString FacebookPhotoInterface::name() const
@@ -709,87 +895,85 @@ QString FacebookPhotoInterface::name() const
 }
 
 /*!
-    \qmlproperty QVariantMap FacebookPhoto::nameTags
+    \qmlproperty QDeclarativeListProperty<FacebookNameTagInterface> FacebookPhotoInterface::nameTags
     Holds the names of various tagged entities
 */
-QVariantMap FacebookPhotoInterface::nameTags() const
+QDeclarativeListProperty<FacebookNameTagInterface> FacebookPhotoInterface::nameTags()
 {
-    Q_D(const FacebookPhotoInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_NAMETAGS).toMap();
+    return QDeclarativeListProperty<FacebookNameTagInterface>(
+                this, 0,
+                &FacebookPhotoInterfacePrivate::name_tags_append,
+                &FacebookPhotoInterfacePrivate::name_tags_count,
+                &FacebookPhotoInterfacePrivate::name_tags_at,
+                &FacebookPhotoInterfacePrivate::name_tags_clear);
 }
 
 /*!
-    \qmlproperty QUrl FacebookPhoto::icon
+    \qmlproperty QUrl FacebookPhotoInterface::icon
     Holds a url to the icon for the photo
 */
 QUrl FacebookPhotoInterface::icon() const
 {
     Q_D(const FacebookPhotoInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toString());
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toUrl();
 }
 
 /*!
-    \qmlproperty QUrl FacebookPhoto::picture
+    \qmlproperty QUrl FacebookPhotoInterface::picture
     Holds a url to the picture for the photo
 */
 QUrl FacebookPhotoInterface::picture() const
 {
     Q_D(const FacebookPhotoInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toString());
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toUrl();
 }
 
 /*!
-    \qmlproperty QUrl FacebookPhoto::icon
+    \qmlproperty QUrl FacebookPhotoInterface::source
     Holds a url to the source for the photo, full size
 */
 QUrl FacebookPhotoInterface::source() const
 {
     Q_D(const FacebookPhotoInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toString());
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toUrl();
 }
 
 /*!
-    \qmlproperty int FacebookPhoto::height
+    \qmlproperty int FacebookPhotoInterface::height
     Holds the height of the photo
 */
 int FacebookPhotoInterface::height() const
 {
     Q_D(const FacebookPhotoInterface);
-    QString hStr = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_HEIGHT).toString();
-    bool ok = false;
-    int retn = hStr.toInt(&ok);
-    if (!ok)
-        return -1;
-    return retn;
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_HEIGHT).toInt();
 }
 
 /*!
-    \qmlproperty int FacebookPhoto::height
+    \qmlproperty int FacebookPhotoInterface::width
     Holds the width of the photo
 */
 int FacebookPhotoInterface::width() const
 {
     Q_D(const FacebookPhotoInterface);
-    QString wStr = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).toString();
-    bool ok = false;
-    int retn = wStr.toInt(&ok);
-    if (!ok)
-        return -1;
-    return retn;
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).toInt();
 }
 
 /*!
-    \qmlproperty QVariantMap FacebookPhoto::images
+    \qmlproperty QDeclarativeListProperty<FacebookImageInterface> FacebookPhotoInterface::images
     Holds links to and metadata about scaled versions of the photo
 */
-QVariantMap FacebookPhotoInterface::images() const
+QDeclarativeListProperty<FacebookImageInterface> FacebookPhotoInterface::images()
 {
-    Q_D(const FacebookPhotoInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGES).toMap();
+    return QDeclarativeListProperty<FacebookImageInterface>(
+                this, 0,
+                &FacebookPhotoInterfacePrivate::images_append,
+                &FacebookPhotoInterfacePrivate::images_count,
+                &FacebookPhotoInterfacePrivate::images_at,
+                &FacebookPhotoInterfacePrivate::images_clear);
 }
 
 /*!
-    \qmlproperty QUrl FacebookPhoto::link
+    \qmlproperty QUrl FacebookPhotoInterface::link
     Holds a url to the photo which may be used as an external link.
     Note that this link url contains the album identifier embedded
     within it.
@@ -797,24 +981,24 @@ QVariantMap FacebookPhotoInterface::images() const
 QUrl FacebookPhotoInterface::link() const
 {
     Q_D(const FacebookPhotoInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toString());
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toUrl();
 }
 
 /*!
-    \qmlproperty QVariantMap FacebookPhoto::place
+    \qmlproperty QVariantMap FacebookPhotoInterface::place
     Holds information about the place associated with the photo.
     Note: this property will change in the future to return
-    an object reference or location reference.
+    an object reference or location reference. (TODO)
 */
 QVariantMap FacebookPhotoInterface::place() const
 {
     Q_D(const FacebookPhotoInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_PLACE).toMap(); // XXX TODO: Location/Place object reference
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_PLACE).toMap();
 }
 
 /*!
-    \qmlproperty QString FacebookPhoto::createdTime
-    Holds the creation time of the photo in an ISO8601-formatted string
+    \qmlproperty QString FacebookPhotoInterface::createdTime
+    Holds the creation time of the photo in an ISO8601-formatted string.
 */
 QString FacebookPhotoInterface::createdTime() const
 {
@@ -823,8 +1007,8 @@ QString FacebookPhotoInterface::createdTime() const
 }
 
 /*!
-    \qmlproperty QString FacebookPhoto::updatedTime
-    Holds the last-update time of the photo in an ISO8601-formatted string
+    \qmlproperty QString FacebookPhotoInterface::updatedTime
+    Holds the last-update time of the photo in an ISO8601-formatted string.
 */
 QString FacebookPhotoInterface::updatedTime() const
 {
@@ -833,26 +1017,22 @@ QString FacebookPhotoInterface::updatedTime() const
 }
 
 /*!
-    \qmlproperty int FacebookPhoto::position
-    Holds the position of the photo within the album
+    \qmlproperty int FacebookPhotoInterface::position
+    Holds the position of the photo within the album.
 */
 int FacebookPhotoInterface::position() const
 {
     Q_D(const FacebookPhotoInterface);
-    QString posStr = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_POSITION).toString();
-    bool ok = false;
-    int retn = posStr.toInt(&ok);
-    if (!ok)
-        return -1;
-    return retn;
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_POSITION).toInt();
 }
 
 /*!
-    \qmlproperty bool FacebookPhoto::liked
-    Whether the current user has liked the photo
+    \qmlproperty bool FacebookPhotoInterface::liked
+    Whether the photo has been liked by the current user.
 */
 bool FacebookPhotoInterface::liked() const
 {
     Q_D(const FacebookPhotoInterface);
-    return d->liked; // XXX TODO: instead of using a variable, update the data().
+    return d->liked;
 }
+

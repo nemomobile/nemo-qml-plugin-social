@@ -28,6 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 
 import json
+import formattingtools
 
 class Variable:
     def __init__(self):
@@ -35,7 +36,7 @@ class Variable:
         self.key = ""
         self.type = ""
         self.isPointer = False
-        self.isPointer = False
+        self.isConst = False
         self.isReference = False
 
 class Property(Variable):
@@ -44,6 +45,7 @@ class Property(Variable):
         self.doc = ""
         self.custom = False
         self.isOntology = True
+        self.isList = False
     
 class Parameter(Variable):
     def __init__(self):
@@ -66,6 +68,9 @@ class FacebookObject:
         self.extraPublic = ""
         self.extraProtected = ""
         self.extraPrivate = ""
+        self.extraPublicP = ""
+        self.extraProtectedP = ""
+        self.extraPrivateP = ""
         self.extraSource = ""
 
 def extract(file):
@@ -84,10 +89,20 @@ def extract(file):
     for propertyAttributes in data["properties"]:
         property = Property()
         property.name = propertyAttributes["name"]
-        # Handle the specific "type"
         if property.name == "type":
+            # Handle the specific "type"
             property.name = object.name + "_" + property.name
             property.key = "type"
+        elif "id" in formattingtools.split(property.name):
+            # Replace id with identifier
+            realSplittedName = []
+            for entry in formattingtools.split(property.name):
+                if entry == "id":
+                    realSplittedName.append("identifier")
+                else:
+                    realSplittedName.append(entry)
+            property.key = property.name
+            property.name = "_".join(realSplittedName)
         else:
             property.key = property.name
         property.type = propertyAttributes["type"]
@@ -104,6 +119,16 @@ def extract(file):
             property.custom = True
         if "is_ontology" in propertyAttributes:
             property.isOntology = propertyAttributes["is_ontology"]
+        if "is_list" in propertyAttributes:
+            property.isList = propertyAttributes["is_list"]
+        # A list should be stored in a specific attribute
+        if property.isList:
+            property.custom = True
+            if property.isPointer or property.isReference or property.isConst:
+                print "Warning: if a property is a list, it should not be a pointer, a reference or a constant"
+                property.isPointer = False
+                property.isReference = False
+                property.isConst = False
         property.doc = propertyAttributes["doc"]
         object.properties.append(property)
 
@@ -113,6 +138,12 @@ def extract(file):
         object.extraProtected = data["extra_protected"]
     if "extra_private" in data:
         object.extraPrivate = data["extra_private"]
+    if "extra_public_p" in data:
+        object.extraPublicP = data["extra_public_p"]
+    if "extra_protected_p" in data:
+        object.extraProtectedP = data["extra_protected_p"]
+    if "extra_private_p" in data:
+        object.extraPrivateP = data["extra_private_p"]
     if "extra_source" in data:
         object.extraSource = data["extra_source"]
 

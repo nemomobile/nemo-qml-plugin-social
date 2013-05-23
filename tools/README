@@ -96,6 +96,16 @@ methods are passed as lists for the "properties" and "methods" field.
 * extra_private (string)
     This field contains code that should be added in the header, with a private scope.
     
+* extra_public_p (string)
+    This field contains code that should be added in the private header, with a public scope.
+    Additionnal attributes can be declared in that field.
+    
+* extra_protected_p (string)
+    This field contains code that should be added in the private header, with a protected scope.
+    
+* extra_private_p (string)
+    This field contains code that should be added in the private header, with a private scope.
+    
 * extra_source (string)
     This field contains code that should be added in the source code. It often contains
     implementation of methods declared with extra_public, extra_protected or extra_private.
@@ -126,6 +136,10 @@ and be available in the QML context.
     Tells that the property is a pointer. 
 * is_reference (boolean)
     Tells that the property is a reference. 
+* is_list (boolean)
+    Tells that the property is a list.
+    If a property is a list, the provided type must be a class deriving from ContentItemInterface,
+    and all the other modifiers (is_pointer, is_const or is_reference) must be turned off.
 * custom (boolean)
     Tells that this property should be handled specifically. The default properties are
     read directly from the data retrived from the Facebook graph API. However, some specific 
@@ -136,7 +150,7 @@ and be available in the QML context.
     The accessor will always return that attribute instead of reading it from data from the Facebook
     graph API.
     
-    Note that if is_pointer is set to true, custom is automatically set to true as well.
+    Note that if is_pointer or is_list is set to true, custom is automatically set to true as well.
 * is_ontology (boolean)
     Ontology keys are macros that corresponds to the name of the property in the Facebook graph
     API. If you define a property that do not exist in the Facebook graph API, you should disable

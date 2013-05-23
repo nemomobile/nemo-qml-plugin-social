@@ -73,7 +73,7 @@ def indent(code, count):
         finalSplitted.append(("    " * count) + line)
     return "\n".join(finalSplitted)
 
-def getType(property):
+def getParameterType(property):
     type = property.type
     if property.isPointer:
         type += " *"
@@ -84,6 +84,16 @@ def getType(property):
         type = "const " + type
     
     return type
+
+def getType(property, listPrivate = False):
+    type = property.type
+    if property.isList:
+        if not listPrivate:
+            return "QDeclarativeListProperty<" + type + ">"
+        else:
+            return "QList<" + type + " *>"
+        
+    return getParameterType(property)
 
 def generate(structure_file):
     struct = structure.extract(structure_file)
@@ -105,6 +115,17 @@ def generate(structure_file):
     else:
         header += "#include \"contentiteminterface.h\"\n"
     header += "\n"
+    hasLists = False
+    for property in struct.properties:
+        if property.isList:
+            hasLists = True
+    if hasLists:
+        header += "#if QT_VERSION_5\n"
+        header += "#include <QtQml/QQmlListProperty>\n"
+        header += "#define QDeclarativeListProperty QQmlListProperty\n"
+        header += "#else\n"
+        header += "#include <QtDeclarative/QDeclarativeListProperty>\n"
+        header += "#endif\n"
 
     # Get a list of the includes that will be used
     includeList = []
@@ -176,7 +197,10 @@ def generate(structure_file):
             
             parameterList = []
             for parameter in method.parameters:
-                parameterName = getType(parameter) + parameter.name
+                parameterName = getParameterType(parameter)
+                if parameterName[-1] != "*" and parameterName[-1] != "&":
+                    parameterName += " "
+                parameterName += parameter.name
                 if len(parameter.default) > 0:
                     parameterName += " = " + parameter.default
                 parameterList.append(parameterName)
@@ -188,7 +212,10 @@ def generate(structure_file):
     for property in struct.properties:
         type = getType(property)
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
-        header += "    " + type + " " + propertyName + "() const;\n"
+        header += "    " + type + " " + propertyName + "()"
+        if not property.isList:
+            header += " const"
+        header += ";\n"
     header += "Q_SIGNALS:\n"
     for property in struct.properties:
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
@@ -232,6 +259,15 @@ def generate(structure_file):
         private += "#include \"identifiablecontentiteminterface_p.h\"\n"
     else:
         private += "#include \"contentiteminterface_p.h\"\n"
+    if hasLists:
+        private += "#include <QtCore/QList>\n"
+    #includesListde = []
+    #for property in struct.properties:
+        #if property.custom:
+            #if not property.type.lower() in includesListde:
+                #includesListde.append(property.type.lower())
+    #print includesListde
+    
     if not struct.identifiable:
         private += "// <<< include\n"
         if "include" in patcherDataSource["markers"]:
@@ -260,11 +296,40 @@ const QVariantMap &newData);\n"
         private += "    FacebookInterfacePrivate::FacebookAction action;\n"
     for property in struct.properties:
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
-        propertyDefinition = getType(property) + " " + propertyName
+        propertyDefinition = getType(property, listPrivate = property.isList)
+        if propertyDefinition[-1] != "*" and propertyDefinition[-1] != "&":
+            propertyDefinition += " "
+        propertyDefinition += propertyName
         if property.custom:
             private += "    " + propertyDefinition + ";\n"
     private += "private:\n"
     private += "    Q_DECLARE_PUBLIC(" + className + ")\n"
+    for property in struct.properties:
+        if property.isList:
+            type = getType(property)
+            private += "    static void " + property.name + "_append(" + type + " *list,\n"
+            private += "                        " + (" " * len(property.name))
+            private += property.type + " *data);\n"
+            private += "    static " + property.type + " * " + property.name + "_at(" 
+            private += type + " *list,\n"
+            private += "                  " + (" " * (len(property.name) + len(property.type)))
+            private += "int index);\n"
+            private += "    static void " + property.name + "_clear(" + type + " *list);\n"
+            private += "    static int " + property.name + "_count(" + type + " *list);\n"
+    
+    # Extra code
+    if len(struct.extraPublicP) > 0:
+        private += "public:\n"
+        private += indent(struct.extraPublicP, 1)
+        private += "\n"
+    if len(struct.extraProtectedP) > 0:
+        private += "protected:\n"
+        private += indent(struct.extraProtectedP, 1)
+        private += "\n"
+    if len(struct.extraPrivateP) > 0:
+        private += "private:\n"
+        private += indent(struct.extraPrivateP, 1)
+        private += "\n"
     private += "};\n"
 
     source = ""
@@ -390,6 +455,70 @@ const QVariantMap &newData);\n"
         source += "    ContentItemInterfacePrivate"
         source += "::emitPropertyChangeSignals(oldData, newData);\n"
     source += "}\n"
+    
+    # Lists
+    
+    for property in struct.properties:
+        if property.isList:
+            type = getType(property)
+            propertyName = formattingtools.camelCase(formattingtools.split(property.name))
+            source += "void " + className + "Private::" + property.name + "_append(" 
+            source += type + " *list,\n"
+            source += "                      " + (" " * (len(property.name) + len(className)))
+            source += property.type + " *data)\n"
+            source += "{\n"
+            source += "    " + className + " *interface = qobject_cast<" + className + " *>"
+            source += "(list->object);\n"
+            source += "    if (interface) {\n"
+            source += "        data->setParent(interface);\n"
+            source += "        interface->d_func()->" + propertyName + ".append(data);\n"
+            source += "    }\n"
+            source += "}\n"
+            source += "\n"
+            
+            source += property.type + " * " + className + "Private::" 
+            source += property.name + "_at(" + type + " *list,\n"
+            source += "                " 
+            source += (" " * (len(property.name) + len(property.type) + len(className)))
+            source += "int index)\n"
+            source += "{\n"
+            source += "    " + className + " *interface = qobject_cast<" + className + " *>"
+            source += "(list->object);\n"
+            source += "    if (interface\n"
+            source += "        && index < interface->d_func()->" + propertyName + ".count()\n"
+            source += "        && index >= 0) {\n"
+            source += "        return interface->d_func()->" + propertyName + ".at(index);\n"
+            source += "    }\n"
+            source += "    return 0;\n"
+            source += "}\n"
+            source += "\n"
+            
+            source += "void " + className + "Private::" + property.name + "_clear("
+            source += type + " *list)\n"
+            source += "{\n"
+            source += "    " + className + " *interface = qobject_cast<" + className + " *>"
+            source += "(list->object);\n"
+            source += "    if (interface) {\n"
+            source += "        foreach (" + property.type + " *entry, interface->d_func()->"
+            source += propertyName + ") {\n"
+            source += "            entry->deleteLater();\n"
+            source += "        }\n"
+            source += "        interface->d_func()->" + propertyName + ".clear();\n"
+            source += "    }\n"
+            source += "}\n"
+            source += "\n"
+            
+            source += "int " + className + "Private::" + property.name + "_count("
+            source += type + " *list)\n"
+            source += "{\n"
+            source += "    " + className + " *interface = qobject_cast<" + className + " *>"
+            source += "(list->object);\n"
+            source += "    if (interface) {\n"
+            source += "        return interface->d_func()->" + propertyName + ".count();\n"
+            source += "    }\n"
+            source += "    return 0;\n"
+            source += "}\n"
+            source += "\n"
     source += "\n"
     source += "//-------------------------------\n"
     source += "\n"
@@ -417,14 +546,14 @@ const QVariantMap &newData);\n"
     
     source += "}\n"
     source += "\n"
-    source += "/*! \reimp */\n"
+    source += "/*! \\reimp */\n"
     source += "int " + className + "::type() const\n"
     source += "{\n"
     source += "    return FacebookInterface::" + name + ";\n"
     source += "}\n"
     source += "\n"
     if struct.identifiable:
-        source += "/*! \reimp */\n"
+        source += "/*! \\reimp */\n"
         source += "bool " + className +  "::remove()\n"
         source += "{\n"
         source += "// <<< remove\n"
@@ -436,7 +565,7 @@ const QVariantMap &newData);\n"
         source += "// >>> remove\n"
         source += "}\n"
         source += "\n"
-        source += "/*! \reimp */\n"
+        source += "/*! \\reimp */\n"
         source += "bool " + className +  "::reload(const QStringList &whichFields)\n"
         source += "{\n"
         source += "// <<< reload\n"
@@ -457,7 +586,10 @@ const QVariantMap &newData);\n"
         signature = "bool " + className + "::" + method.name + "("
         parameterList = []
         for parameter in method.parameters:
-            parameterName = getType(parameter) + parameter.name
+            parameterName = getParameterType(parameter)
+            if parameterName[-1] != "*" and parameterName[-1] != "&":
+                parameterName += " "
+            parameterName += parameter.name
             parameterList.append(parameterName)
         signature += ", ".join(parameterList)
         signature += ")"
@@ -489,15 +621,27 @@ const QVariantMap &newData);\n"
         source += "    \qmlproperty " + type + " " + className + "::" + propertyName + "\n"
         source += indent(property.doc, 1) + "\n"
         source += "*/\n"
-        source += type + " " + className + "::" + propertyName + "() const\n"
+        source += type + " " + className + "::" + propertyName + "()"
+        if not property.isList:
+            source += " const"
+        source += "\n"
         source += "{\n"
-        source += "    Q_D(const " + className + ");\n"
+        if not property.isList:
+            source += "    Q_D(const " + className + ");\n"
         if not property.custom:
             source += "    return d->data().value("
             source += formattingtools.ontologyKey(splittedPropertyName, prefix)
             source += ")." + typehelper.convert(type) + ";\n"
         else:
-            source += "    return d->" + propertyName + ";\n"
+            if property.isList:
+                source += "    return QDeclarativeListProperty<" + property.type + ">(\n"
+                source += "                this, 0,\n"
+                source += "                &" + className + "Private::" + property.name + "_append,\n"
+                source += "                &" + className + "Private::" + property.name + "_count,\n"
+                source += "                &" + className + "Private::" + property.name + "_at,\n"
+                source += "                &" + className + "Private::" + property.name + "_clear);\n"
+            else:
+                source += "    return d->" + propertyName + ";\n"
         source += "}\n"
         source += "\n"
         

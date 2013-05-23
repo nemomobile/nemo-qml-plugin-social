@@ -46,6 +46,7 @@ class FacebookObjectReferenceInterface;
 class FacebookPhotoInterface;
 class FacebookPictureInterface;
 class FacebookTagInterface;
+class FacebookNameTagInterface;
 class FacebookUserInterface;
 class IdentifiableContentItemInterface;
 
@@ -74,6 +75,8 @@ public:
         ObjectReference,
         Like,
         Tag,
+        NameTag,
+        Image,
         Picture,
         Location,
         Comment,

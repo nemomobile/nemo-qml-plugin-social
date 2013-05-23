@@ -147,8 +147,8 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     QString newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
     QString oldUpdatedTime = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
     QString newUpdatedTime = newData.value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
-    bool oldCanUpload = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toBool();
-    bool newCanUpload = newData.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toBool();
+    bool oldCanUpload = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString() == QLatin1String("true");
+    bool newCanUpload = newData.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString() == QLatin1String("true");
 
     if (newName != oldName)
         emit q->nameChanged();
@@ -170,6 +170,8 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         emit q->canUploadChanged();
 
 // <<< emitPropertyChangeSignals
+    // TODO: liked is not updated
+
     QVariantMap oldFromMap = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_FROM).toMap();
     QString oldFromId = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
     QString oldFromName = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
@@ -177,7 +179,7 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     QString newFromId = newFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
     QString newFromName = newFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
 
-    // update the from object if required
+    // Update the from object if required
     if (newFromId != oldFromId || newFromName != oldFromName) {
         QVariantMap newFromData;
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
@@ -203,6 +205,29 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
             albumType = FacebookAlbumInterface::Album;
         emit q->albumTypeChanged();
     }
+
+    // Check if the user liked this album
+    QString currentUserIdentifier
+            = qobject_cast<FacebookInterface*>(q->socialNetwork())->currentUserIdentifier();
+    bool newLiked = false;
+    QVariant likes = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
+    if (!likes.isNull()) {
+        QVariantMap likesMap = likes.toMap();
+        QVariantList data = likesMap.value(FACEBOOK_ONTOLOGY_METADATA_DATA).toList();
+        foreach (QVariant dataEntry, data) {
+            QVariant idVariant
+                    = dataEntry.toMap().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER);
+            if (idVariant.toString() == currentUserIdentifier) {
+                newLiked = true;
+            }
+        }
+    }
+
+    if (liked != newLiked) {
+        liked = newLiked;
+        emit q->likedChanged();
+    }
+
 // >>> emitPropertyChangeSignals
 
     // Call super class implementation
@@ -314,13 +339,13 @@ FacebookAlbumInterface::FacebookAlbumInterface(QObject *parent)
 // >>> constructor
 }
 
-/*! eimp */
+/*! \reimp */
 int FacebookAlbumInterface::type() const
 {
     return FacebookInterface::Album;
 }
 
-/*! eimp */
+/*! \reimp */
 bool FacebookAlbumInterface::remove()
 {
 // <<< remove
@@ -328,7 +353,7 @@ bool FacebookAlbumInterface::remove()
 // >>> remove
 }
 
-/*! eimp */
+/*! \reimp */
 bool FacebookAlbumInterface::reload(const QStringList &whichFields)
 {
 // <<< reload
@@ -623,7 +648,7 @@ QString FacebookAlbumInterface::updatedTime() const
 bool FacebookAlbumInterface::canUpload() const
 {
     Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toBool();
+    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString() == QLatin1String("true");
 }
 
 /*!

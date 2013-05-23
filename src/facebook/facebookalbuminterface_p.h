@@ -43,7 +43,7 @@ public:
     void finishedHandler();
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     FacebookInterfacePrivate::FacebookAction action;
-    FacebookObjectReferenceInterface * from;
+    FacebookObjectReferenceInterface *from;
     FacebookAlbumInterface::AlbumType albumType;
     bool liked;
 private:

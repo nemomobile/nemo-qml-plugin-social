@@ -29,12 +29,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKTAGINTERFACE_H
-#define FACEBOOKTAGINTERFACE_H
+#ifndef FACEBOOKIMAGEINTERFACE_H
+#define FACEBOOKIMAGEINTERFACE_H
 
 #include "contentiteminterface.h"
 
-#include <QtCore/QString>
+#include <QtCore/QUrl>
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -48,34 +48,28 @@
  * FacebookInterface.
  */
 
-class FacebookTagInterfacePrivate;
-class FacebookTagInterface: public ContentItemInterface
+class FacebookImageInterfacePrivate;
+class FacebookImageInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString identifier READ identifier NOTIFY identifierChanged)
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
-    Q_PROPERTY(float x READ x NOTIFY xChanged)
-    Q_PROPERTY(float y READ y NOTIFY yChanged)
-    Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
+    Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
+    Q_PROPERTY(int width READ width NOTIFY widthChanged)
+    Q_PROPERTY(int height READ height NOTIFY heightChanged)
 public:
-    explicit FacebookTagInterface(QObject *parent = 0);
+    explicit FacebookImageInterface(QObject *parent = 0);
 
     // Overrides.
     int type() const;
     // Accessors
-    QString identifier() const;
-    QString name() const;
-    float x() const;
-    float y() const;
-    QString createdTime() const;
+    QUrl source() const;
+    int width() const;
+    int height() const;
 Q_SIGNALS:
-    void identifierChanged();
-    void nameChanged();
-    void xChanged();
-    void yChanged();
-    void createdTimeChanged();
+    void sourceChanged();
+    void widthChanged();
+    void heightChanged();
 private:
-    Q_DECLARE_PRIVATE(FacebookTagInterface)
+    Q_DECLARE_PRIVATE(FacebookImageInterface)
 };
 
-#endif // FACEBOOKTAGINTERFACE_H
+#endif // FACEBOOKIMAGEINTERFACE_H

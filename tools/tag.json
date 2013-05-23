@@ -1,0 +1,32 @@
+{
+    "name": "tag",
+    "doc": "An entry representing a tag",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "id",
+            "type": "QString",
+            "doc": "Holds the identifier of the tagged entity"
+        },
+        {
+            "name": "name",
+            "type": "QString",
+            "doc": "Holds the name of the tagged entity"
+        },
+        {
+            "name": "x",
+            "type": "float",
+            "doc": "Holds the x position of the tagged entity or text in the photo.\nThis coordinate is a percentage from the left edge of the photo."
+        },
+        {
+            "name": "y",
+            "type": "float",
+            "doc": "Holds the y position of the tagged entity or text in the photo.\nThis coordinate is a percentage from the top edge of the photo."
+        },
+        {
+            "name": "created_time",
+            "type": "QString",
+            "doc": "Holds the creation time of the tag in an ISO8601-formatted string."
+        }
+    ]
+}

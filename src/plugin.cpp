@@ -59,6 +59,8 @@
 #include "facebook/facebookphotointerface.h"
 #include "facebook/facebookpictureinterface.h"
 #include "facebook/facebooktaginterface.h"
+#include "facebook/facebooknametaginterface.h"
+#include "facebook/facebookimageinterface.h"
 #include "facebook/facebookuserinterface.h"
 
 class Q_DECL_EXPORT NemoSocialPlugin : public QDeclarativeExtensionPlugin
@@ -101,6 +103,8 @@ public:
         qmlRegisterType<FacebookPhotoInterface>(uri, 1, 0, "FacebookPhoto");
         qmlRegisterType<FacebookPictureInterface>(uri, 1, 0, "FacebookPicture");
         qmlRegisterType<FacebookTagInterface>(uri, 1, 0, "FacebookTag");
+        qmlRegisterType<FacebookNameTagInterface>(uri, 1, 0, "FacebookNameTag");
+        qmlRegisterType<FacebookNameTagInterface>(uri, 1, 0, "FacebookImage");
         qmlRegisterType<FacebookUserInterface>(uri, 1, 0, "FacebookUser");
     }
 };

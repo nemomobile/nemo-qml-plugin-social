@@ -33,14 +33,18 @@ def include(property):
     type = property.type
     if type in ["int", "float", "double"]:
         return None
-    if type in ["QString", "QVariant", "QUrl"]:
+    if type in ["QString", "QVariant", "QUrl", "QVariantMap"]:
         return "<QtCore/" + type + ">"
-    if property.isPointer:
+    if property.isPointer or property.isList:
         return "\"" + type.lower() + ".h\""
 
 def convert(type):
-    if type in ["int", "float", "double", "bool"]:
+    if type in ["int", "float", "double"]:
         return "to" + type[0].upper() + type[1:] + "()"
+    if type == "bool":
+        return "toString() == QLatin1String(\"true\")"
     if type in ["QString", "QUrl"]:
         return "to" + type[1].upper() + type[2:] + "()"
+    if type == "QVariantMap":
+        return "toMap()"
     return ""

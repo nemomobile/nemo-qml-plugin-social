@@ -29,20 +29,53 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
+#ifndef FACEBOOKNAMETAGINTERFACE_H
+#define FACEBOOKNAMETAGINTERFACE_H
 
-#ifndef FACEBOOKTAGINTERFACE_P_H
-#define FACEBOOKTAGINTERFACE_P_H
+#include "contentiteminterface.h"
 
-#include "contentiteminterface_p.h"
+#include <QtCore/QString>
 
-class FacebookTagInterface;
-class FacebookTagInterfacePrivate : public ContentItemInterfacePrivate
+/*
+ * NOTE: if you construct one of these in C++ directly,
+ * you MUST call classBegin() and componentCompleted()
+ * directly after construction.
+ */
+
+/*
+ * NOTE: this is an unidentifiable content item which
+ * is read only and only creatable by the top level
+ * FacebookInterface.
+ */
+
+class FacebookNameTagInterfacePrivate;
+class FacebookNameTagInterface: public ContentItemInterface
 {
+    Q_OBJECT
+    Q_PROPERTY(QString identifier READ identifier NOTIFY identifierChanged)
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString nameTagType READ nameTagType NOTIFY nameTagTypeChanged)
+    Q_PROPERTY(int offset READ offset NOTIFY offsetChanged)
+    Q_PROPERTY(int length READ length NOTIFY lengthChanged)
 public:
-    explicit FacebookTagInterfacePrivate(FacebookTagInterface *q);
-    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+    explicit FacebookNameTagInterface(QObject *parent = 0);
+
+    // Overrides.
+    int type() const;
+    // Accessors
+    QString identifier() const;
+    QString name() const;
+    QString nameTagType() const;
+    int offset() const;
+    int length() const;
+Q_SIGNALS:
+    void identifierChanged();
+    void nameChanged();
+    void nameTagTypeChanged();
+    void offsetChanged();
+    void lengthChanged();
 private:
-    Q_DECLARE_PUBLIC(FacebookTagInterface)
+    Q_DECLARE_PRIVATE(FacebookNameTagInterface)
 };
 
-#endif // FACEBOOKTAGINTERFACE_P_H
+#endif // FACEBOOKNAMETAGINTERFACE_H

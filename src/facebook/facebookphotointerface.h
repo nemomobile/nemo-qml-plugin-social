@@ -34,28 +34,19 @@
 
 #include "identifiablecontentiteminterface.h"
 
-#include "facebooktaginterface.h"
-
-#include <QtCore/QObject>
-#include <QtCore/QVariantMap>
-#include <QtCore/QStringList>
-#include <QtCore/QString>
-#include <QtCore/QUrl>
-
-#include <QtGlobal>
 #if QT_VERSION_5
-#include <QtQml>
-#include <QQmlParserStatus>
-#include <QQmlListProperty>
-#define QDeclarativeParserStatus QQmlParserStatus
+#include <QtQml/QQmlListProperty>
 #define QDeclarativeListProperty QQmlListProperty
 #else
-#include <qdeclarative.h>
-#include <QDeclarativeParserStatus>
-#include <QDeclarativeListProperty>
+#include <QtDeclarative/QDeclarativeListProperty>
 #endif
-
-class FacebookObjectReferenceInterface;
+#include <QtCore/QString>
+#include "facebookobjectreferenceinterface.h"
+#include "facebooktaginterface.h"
+#include "facebooknametaginterface.h"
+#include <QtCore/QUrl>
+#include "facebookimageinterface.h"
+#include <QtCore/QVariantMap>
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -64,67 +55,62 @@ class FacebookObjectReferenceInterface;
  */
 
 class FacebookPhotoInterfacePrivate;
-class FacebookPhotoInterface : public IdentifiableContentItemInterface
+class FacebookPhotoInterface: public IdentifiableContentItemInterface
 {
     Q_OBJECT
-
     Q_PROPERTY(QString albumIdentifier READ albumIdentifier NOTIFY albumIdentifierChanged)
-    Q_PROPERTY(FacebookObjectReferenceInterface *from READ from NOTIFY fromChanged)
+    Q_PROPERTY(FacebookObjectReferenceInterface * from READ from NOTIFY fromChanged)
     Q_PROPERTY(QDeclarativeListProperty<FacebookTagInterface> tags READ tags NOTIFY tagsChanged)
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged) // "name" from FB API, kind of a caption
-    Q_PROPERTY(QVariantMap nameTags READ nameTags NOTIFY nameTagsChanged) // /me vomits
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QDeclarativeListProperty<FacebookNameTagInterface> nameTags READ nameTags NOTIFY nameTagsChanged)
     Q_PROPERTY(QUrl icon READ icon NOTIFY iconChanged)
     Q_PROPERTY(QUrl picture READ picture NOTIFY pictureChanged)
     Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
     Q_PROPERTY(int height READ height NOTIFY heightChanged)
     Q_PROPERTY(int width READ width NOTIFY widthChanged)
-    Q_PROPERTY(QVariantMap images READ images NOTIFY imagesChanged)
+    Q_PROPERTY(QDeclarativeListProperty<FacebookImageInterface> images READ images NOTIFY imagesChanged)
     Q_PROPERTY(QUrl link READ link NOTIFY linkChanged)
     Q_PROPERTY(QVariantMap place READ place NOTIFY placeChanged)
     Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
-    Q_PROPERTY(int position READ position NOTIFY positionChanged) // album position
-
-    Q_PROPERTY(bool liked READ liked NOTIFY likedChanged) // requires: requesting all likes connections, iterating through, finding "current user id" / or not.
-
+    Q_PROPERTY(int position READ position NOTIFY positionChanged)
+    Q_PROPERTY(bool liked READ liked NOTIFY likedChanged)
 public:
-    FacebookPhotoInterface(QObject *parent = 0);
+    explicit FacebookPhotoInterface(QObject *parent = 0);
 
-    // overrides.
+    // Overrides.
     int type() const;
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
-    // invokable API
+    // Invokable API.
     Q_INVOKABLE bool like();
     Q_INVOKABLE bool unlike();
-    Q_INVOKABLE bool tagUser(const QString &userId, qreal xOffset = -1, qreal yOffset = -1);
+    Q_INVOKABLE bool tagUser(const QString &userId, float xOffset, float yOffset);
     Q_INVOKABLE bool untagUser(const QString &userId);
-    Q_INVOKABLE bool tagText(const QString &text, qreal xOffset = -1, qreal yOffset = -1);
+    Q_INVOKABLE bool tagText(const QString &text, float xOffset, float yOffset);
     Q_INVOKABLE bool untagText(const QString &text);
     Q_INVOKABLE bool uploadComment(const QString &message);
     Q_INVOKABLE bool removeComment(const QString &commentIdentifier);
 
-public:
-    // property accessors.
+    // Accessors
     QString albumIdentifier() const;
-    FacebookObjectReferenceInterface *from() const;
+    FacebookObjectReferenceInterface * from() const;
     QDeclarativeListProperty<FacebookTagInterface> tags();
     QString name() const;
-    QVariantMap nameTags() const;
+    QDeclarativeListProperty<FacebookNameTagInterface> nameTags();
     QUrl icon() const;
     QUrl picture() const;
     QUrl source() const;
     int height() const;
     int width() const;
-    QVariantMap images() const;
+    QDeclarativeListProperty<FacebookImageInterface> images();
     QUrl link() const;
     QVariantMap place() const;
     QString createdTime() const;
     QString updatedTime() const;
     int position() const;
     bool liked() const;
-
 Q_SIGNALS:
     void albumIdentifierChanged();
     void fromChanged();
