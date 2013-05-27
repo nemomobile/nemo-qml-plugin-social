@@ -42,7 +42,18 @@
 #include <QtCore/QString>
 #include <QtCore/QUrl>
 
-#include <QtDeclarative/QDeclarativeListProperty>
+#include <QtGlobal>
+#if QT_VERSION_5
+#include <QtQml>
+#include <QQmlParserStatus>
+#include <QQmlListProperty>
+#define QDeclarativeParserStatus QQmlParserStatus
+#define QDeclarativeListProperty QQmlListProperty
+#else
+#include <qdeclarative.h>
+#include <QDeclarativeParserStatus>
+#include <QDeclarativeListProperty>
+#endif
 
 class FacebookObjectReferenceInterface;
 

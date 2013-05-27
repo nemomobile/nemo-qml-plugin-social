@@ -34,8 +34,19 @@
 
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QObject>
-#include <QtDeclarative/QDeclarativeParserStatus>
-#include <QtDeclarative/QDeclarativeListProperty>
+
+#include <QtGlobal>
+#if QT_VERSION_5
+#include <QtQml>
+#include <QQmlParserStatus>
+#include <QQmlListProperty>
+#define QDeclarativeParserStatus QQmlParserStatus
+#define QDeclarativeListProperty QQmlListProperty
+#else
+#include <qdeclarative.h>
+#include <QDeclarativeParserStatus>
+#include <QDeclarativeListProperty>
+#endif
 
 #include "filterinterface.h"
 #include "sorterinterface.h"
@@ -164,6 +175,10 @@ Q_SIGNALS:
 
 protected:
     SocialNetworkInterface(SocialNetworkInterfacePrivate &dd, QObject *parent = 0);
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QHash<int, QByteArray> roleNames() const;
+#endif
 
     // Utilities
     virtual QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath,
