@@ -1,18 +1,27 @@
 #include <QtCore/QDir>
-#include <QtGui/QApplication>
-#include <QtGui/QDesktopWidget>
-#include <QtDeclarative/QDeclarativeComponent>
-#include <QtDeclarative/QDeclarativeContext>
-#include <QtDeclarative/QDeclarativeEngine>
-#include <QtDeclarative/QDeclarativeItem>
-#include <QtDeclarative/QDeclarativeView>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+# include <QtQml>
+# include <QQuickItem>
+# include <QQuickView>
+# include <QGuiApplication>
+# define QDeclarativeView QQuickView
+#else
+# include <QtDeclarative>
+# include <QtDeclarative/QDeclarativeView>
+# include <QtGui/QApplication>
+#endif
 #include <QDebug>
 
 //static const char *IMPORT_PATH = "/opt/sdk/tests/nemo-qml-plugins/social/imports";
 
 int main(int argc, char *argv[])
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QGuiApplication app(argc, argv);
+#else
     QApplication app(argc, argv);
+#endif
     QDeclarativeView view;
 
     if (argc != 2) {
@@ -21,9 +30,8 @@ int main(int argc, char *argv[])
     }
 
     // TODO: manage better the difference between desktop and device
-    QString path = QString(DEPLOYMENT_PATH);
     view.engine()->addImportPath(PLUGIN_PATH);
-    view.setSource(path + QLatin1String("socialtest.qml"));
+    view.setSource(QUrl::fromLocalFile(QLatin1String("share/socialtest.qml")));
 
     if (view.status() == QDeclarativeView::Error) {
         qWarning() << "Unable to read main qml file";
