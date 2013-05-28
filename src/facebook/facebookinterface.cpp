@@ -157,7 +157,13 @@ QUrl FacebookInterfacePrivate::requestUrl(const QString &objectId, const QString
         retn.setPath(objectId);
     else
         retn.setPath(objectId + QLatin1String("/") + extraPath);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QUrlQuery query;
+    query.setQueryItems(queryItems);
+    retn.setQuery(query);
+#else
     retn.setQueryItems(queryItems);
+#endif
     return retn;
 }
 
@@ -225,7 +231,7 @@ QNetworkReply *FacebookInterfacePrivate::uploadImage(const QString &objectId, co
     request.setRawHeader("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
     request.setRawHeader("Keep-Alive", "300");
     request.setRawHeader("Connection", "keep-alive");
-    request.setRawHeader("Content-Type",QString("multipart/form-data; boundary="+multipartBoundary).toAscii());
+    request.setRawHeader("Content-Type",QString("multipart/form-data; boundary="+multipartBoundary).toLatin1());
     request.setHeader(QNetworkRequest::ContentLengthHeader, postData.size());
 
     return networkAccessManager->post(request, postData);
@@ -584,7 +590,7 @@ QNetworkReply *FacebookInterface::postRequest(const QString &objectIdentifier, c
     request.setRawHeader("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
     request.setRawHeader("Keep-Alive", "300");
     request.setRawHeader("Connection", "keep-alive");
-    request.setRawHeader("Content-Type",QString("multipart/form-data; boundary="+multipartBoundary).toAscii());
+    request.setRawHeader("Content-Type",QString("multipart/form-data; boundary="+multipartBoundary).toLatin1());
     request.setHeader(QNetworkRequest::ContentLengthHeader, postData.size());
 
     // perform POST request
@@ -979,8 +985,16 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
         d->continuationRequestActive = true;
         // grab the relevant parts of the continuation uri to create a new request.
         QUrl continuationUrl(continuationRequestUri);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        QUrlQuery query(continuationUrl);
+        if (query.queryItemValue(QLatin1String("access_token")).isEmpty()) {
+            query.addQueryItem(QLatin1String("access_token"), d->accessToken);
+            continuationUrl.setQuery(query);
+        }
+#else
         if (continuationUrl.queryItemValue(QLatin1String("access_token")).isEmpty())
             continuationUrl.addQueryItem(QLatin1String("access_token"), d->accessToken);
+#endif
         d->setCurrentReply(d->networkAccessManager->get(QNetworkRequest(continuationUrl)), d->currentNode()->identifier());
         if (d->outOfBandConnectionsLimit != -1) {
             d->currentReply->setProperty("specialLimit", d->outOfBandConnectionsLimit);
