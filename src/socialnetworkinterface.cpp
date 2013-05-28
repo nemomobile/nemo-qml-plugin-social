@@ -107,23 +107,22 @@ bool ArbitraryRequestHandler::request(int requestType, const QString &requestUri
 
     QUrl url(requestUri);
     url.setQueryItems(formattedQueryItems);
-
-    QNetworkReply *reply = 0;
+    QNetworkReply *arbitraryRequestReply = 0;
     switch (requestType) {
     case SocialNetworkInterface::Get:
-        reply = networkAccessManager->get(QNetworkRequest(url));
+        arbitraryRequestReply = networkAccessManager->get(QNetworkRequest(url));
         break;
     case SocialNetworkInterface::Post:
-        reply = networkAccessManager->post(QNetworkRequest(url),
+        arbitraryRequestReply = networkAccessManager->post(QNetworkRequest(url),
                                            QByteArray::fromBase64(postData.toLatin1()));
         break;
     default:
-        reply = networkAccessManager->deleteResource(QNetworkRequest(url));
+        arbitraryRequestReply = networkAccessManager->deleteResource(QNetworkRequest(url));
         break;
     }
 
-    if (reply) {
-        reply = reply;
+    if (arbitraryRequestReply) {
+        reply = arbitraryRequestReply;
         connect(reply, SIGNAL(error(QNetworkReply::NetworkError)),
                 this, SLOT(errorHandler(QNetworkReply::NetworkError)));
         connect(reply, SIGNAL(sslErrors(QList<QSslError>)),
