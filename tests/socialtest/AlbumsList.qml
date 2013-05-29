@@ -34,7 +34,7 @@ import org.nemomobile.social 1.0
 
 Item {
     id: container
-    property Facebook model
+    property alias model: view.model
     signal backClicked
     signal albumClicked(string albumId)
     anchors.fill: parent
@@ -62,7 +62,6 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
-        model: container.model
         delegate: MouseArea {
             id: albumDelegate
             onClicked: container.albumClicked(model.contentItem.identifier)

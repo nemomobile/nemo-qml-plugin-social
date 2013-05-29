@@ -106,7 +106,13 @@ bool ArbitraryRequestHandler::request(int requestType, const QString &requestUri
                                                                queryItems.value(key).toString()));
 
     QUrl url(requestUri);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QUrlQuery query;
+    query.setQueryItems(formattedQueryItems);
+    url.setQuery(query);
+#else
     url.setQueryItems(formattedQueryItems);
+#endif
     QNetworkReply *arbitraryRequestReply = 0;
     switch (requestType) {
     case SocialNetworkInterface::Get:
@@ -217,7 +223,9 @@ void SocialNetworkInterfacePrivate::init()
     headerData.insert(SocialNetworkInterface::ContentItemDataRole, "contentItemData" );
     headerData.insert(SocialNetworkInterface::ContentItemIdentifierRole, "contentItemIdentifier");
     headerData.insert(SocialNetworkInterface::SectionRole, "section");
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     q->setRoleNames(headerData);
+#endif
 
     // Construct the placeholder node.  This node is used as a placeholder
     // when the client sets a specific nodeIdentifier until the node can
@@ -759,6 +767,14 @@ SocialNetworkInterface::SocialNetworkInterface(SocialNetworkInterfacePrivate &dd
 SocialNetworkInterface::~SocialNetworkInterface()
 {
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+QHash<int, QByteArray> SocialNetworkInterface::roleNames() const
+{
+    Q_D(const SocialNetworkInterface);
+    return d->headerData;
+}
+#endif
 
 
 void SocialNetworkInterface::classBegin()

@@ -35,7 +35,7 @@ import org.nemomobile.social 1.0
 Item {
     id: container
     anchors.fill: parent
-    property Facebook model
+    property alias model: view.model
     signal backClicked
 
     Text {
@@ -61,7 +61,6 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
 
-        model: container.model
         delegate: Item {
             width: view.width
             height: 50
