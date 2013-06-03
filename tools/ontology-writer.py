@@ -82,12 +82,11 @@ def generate(ontology_file, structure_file):
     defaultKey = "#define " + formattingtools.ontologyKey("", prefix)
     defaultKey = formattingtools.addSpaces(defaultKey, 58) + " QLatin1String(\"" + name + "\")"
     keys.append(defaultKey)
-    for property in struct.properties:
+    for property in struct.ontologyProperties:
         splitted = formattingtools.split(property.name)
         key = "#define " + formattingtools.ontologyKey(splitted, prefix)
         key = formattingtools.addSpaces(key, 58) + " QLatin1String(\"" + property.key + "\")"
-        if (property.isOntology):
-            keys.append(key)
+        keys.append(key)
     entry = "\n".join(keys)
 
     # Write the new file

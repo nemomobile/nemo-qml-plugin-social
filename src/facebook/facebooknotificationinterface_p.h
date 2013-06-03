@@ -32,29 +32,20 @@
 #ifndef FACEBOOKNOTIFICATIONINTERFACE_P_H
 #define FACEBOOKNOTIFICATIONINTERFACE_P_H
 
-#include <QtCore/QObject>
-#include <QtCore/QList>
-#include <QtNetwork/QNetworkReply>
-
+#include "facebooknotificationinterface.h"
 #include "facebookinterface_p.h"
 #include "identifiablecontentiteminterface_p.h"
 
-class IdentifiableContentItemInterfacePrivate;
-class FacebookObjectReferenceInterface;
-class FacebookNotificationInterface;
-
-class FacebookNotificationInterfacePrivate : public IdentifiableContentItemInterfacePrivate
+class FacebookNotificationInterfacePrivate: public IdentifiableContentItemInterfacePrivate
 {
 public:
     explicit FacebookNotificationInterfacePrivate(FacebookNotificationInterface *q);
     void finishedHandler();
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-
+    FacebookInterfacePrivate::FacebookAction action;
     FacebookObjectReferenceInterface *from;
     FacebookObjectReferenceInterface *to;
     FacebookObjectReferenceInterface *application;
-
-    FacebookInterfacePrivate::FacebookAction action;
 private:
     Q_DECLARE_PUBLIC(FacebookNotificationInterface)
 };

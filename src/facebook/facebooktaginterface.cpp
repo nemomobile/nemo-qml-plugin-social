@@ -34,7 +34,6 @@
 #include "facebookontology_p.h"
 #include "contentiteminterface_p.h"
 // <<< include
-// Includes goes here
 // >>> include
 
 class FacebookTagInterfacePrivate: public ContentItemInterfacePrivate
@@ -42,12 +41,16 @@ class FacebookTagInterfacePrivate: public ContentItemInterfacePrivate
 public:
     explicit FacebookTagInterfacePrivate(FacebookTagInterface *q);
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+    QString userName;
+    QString text;
 private:
     Q_DECLARE_PUBLIC(FacebookTagInterface)
 };
 
 FacebookTagInterfacePrivate::FacebookTagInterfacePrivate(FacebookTagInterface *q)
     : ContentItemInterfacePrivate(q)
+// <<< custom
+// >>> custom
 {
 }
 
@@ -55,27 +58,44 @@ void FacebookTagInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &o
                                                             const QVariantMap &newData)
 {
     Q_Q(FacebookTagInterface);
-    QString oldIdentifier = oldData.value(FACEBOOK_ONTOLOGY_TAG_IDENTIFIER).toString();
-    QString newIdentifier = newData.value(FACEBOOK_ONTOLOGY_TAG_IDENTIFIER).toString();
-    QString oldName = oldData.value(FACEBOOK_ONTOLOGY_TAG_NAME).toString();
-    QString newName = newData.value(FACEBOOK_ONTOLOGY_TAG_NAME).toString();
-    float oldX = oldData.value(FACEBOOK_ONTOLOGY_TAG_X).toFloat();
-    float newX = newData.value(FACEBOOK_ONTOLOGY_TAG_X).toFloat();
-    float oldY = oldData.value(FACEBOOK_ONTOLOGY_TAG_Y).toFloat();
-    float newY = newData.value(FACEBOOK_ONTOLOGY_TAG_Y).toFloat();
-    QString oldCreatedTime = oldData.value(FACEBOOK_ONTOLOGY_TAG_CREATEDTIME).toString();
-    QString newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_TAG_CREATEDTIME).toString();
+    QVariant oldUserIdentifier = oldData.value(FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER);
+    QVariant newUserIdentifier = newData.value(FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER);
+    QVariant oldX = oldData.value(FACEBOOK_ONTOLOGY_TAG_X);
+    QVariant newX = newData.value(FACEBOOK_ONTOLOGY_TAG_X);
+    QVariant oldY = oldData.value(FACEBOOK_ONTOLOGY_TAG_Y);
+    QVariant newY = newData.value(FACEBOOK_ONTOLOGY_TAG_Y);
+    QVariant oldCreatedTime = oldData.value(FACEBOOK_ONTOLOGY_TAG_CREATEDTIME);
+    QVariant newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_TAG_CREATEDTIME);
 
-    if (newIdentifier != oldIdentifier)
-        emit q->identifierChanged();
-    if (newName != oldName)
-        emit q->nameChanged();
+    if (newUserIdentifier != oldUserIdentifier)
+        emit q->userIdentifierChanged();
     if (newX != oldX)
         emit q->xChanged();
     if (newY != oldY)
         emit q->yChanged();
     if (newCreatedTime != oldCreatedTime)
         emit q->createdTimeChanged();
+
+// <<< emitPropertyChangeSignals
+    QString newText;
+    QString newUserName;
+
+    if (newUserIdentifier.toString().isEmpty()) {
+        newText = newData.value(FACEBOOK_ONTOLOGY_TAG_USERNAME).toString();
+    } else {
+        newUserName = newData.value(FACEBOOK_ONTOLOGY_TAG_USERNAME).toString();
+    }
+
+    if (text != newText) {
+        text = newText;
+        emit q->textChanged();
+    }
+
+    if (userName != newUserName) {
+        userName = newUserName;
+        emit q->userNameChanged();
+    }
+// >>> emitPropertyChangeSignals
 
     // Call super class implementation
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
@@ -91,6 +111,9 @@ void FacebookTagInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &o
 FacebookTagInterface::FacebookTagInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookTagInterfacePrivate(this)), parent)
 {
+// <<< constructor
+    // TODO Implement initialization of custom attributes if needed
+// >>> constructor
 }
 
 /*! \reimp */
@@ -101,49 +124,71 @@ int FacebookTagInterface::type() const
 
 
 /*!
-    \qmlproperty QString FacebookTagInterface::identifier
+    \qmlproperty QString FacebookTag::userIdentifier
     Holds the identifier of the tagged entity
 */
-QString FacebookTagInterface::identifier() const
+QString FacebookTagInterface::userIdentifier() const
 {
     Q_D(const FacebookTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_TAG_IDENTIFIER).toString();
+    return d->data().value(FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER).toString();
 }
 
 /*!
-    \qmlproperty QString FacebookTagInterface::name
+    \qmlproperty QString FacebookTag::userName
     Holds the name of the tagged entity
 */
-QString FacebookTagInterface::name() const
+QString FacebookTagInterface::userName() const
 {
     Q_D(const FacebookTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_TAG_NAME).toString();
+    return d->userName;
 }
 
 /*!
-    \qmlproperty float FacebookTagInterface::x
+    \qmlproperty QString FacebookTag::text
+    Holds text that is used to tag something
+*/
+QString FacebookTagInterface::text() const
+{
+    Q_D(const FacebookTagInterface);
+    return d->text;
+}
+
+/*!
+    \qmlproperty float FacebookTag::x
     Holds the x position of the tagged entity or text in the photo.
     This coordinate is a percentage from the left edge of the photo.
 */
 float FacebookTagInterface::x() const
 {
     Q_D(const FacebookTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_TAG_X).toFloat();
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_TAG_X).toString();
+    bool ok;
+    float number = numberString.toFloat(&ok);
+    if (ok) {
+        return number;
+    }
+    return 0.;
 }
 
 /*!
-    \qmlproperty float FacebookTagInterface::y
+    \qmlproperty float FacebookTag::y
     Holds the y position of the tagged entity or text in the photo.
     This coordinate is a percentage from the top edge of the photo.
 */
 float FacebookTagInterface::y() const
 {
     Q_D(const FacebookTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_TAG_Y).toFloat();
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_TAG_Y).toString();
+    bool ok;
+    float number = numberString.toFloat(&ok);
+    if (ok) {
+        return number;
+    }
+    return 0.;
 }
 
 /*!
-    \qmlproperty QString FacebookTagInterface::createdTime
+    \qmlproperty QString FacebookTag::createdTime
     Holds the creation time of the tag in an ISO8601-formatted string.
 */
 QString FacebookTagInterface::createdTime() const

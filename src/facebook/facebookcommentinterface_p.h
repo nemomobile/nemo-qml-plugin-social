@@ -32,29 +32,20 @@
 #ifndef FACEBOOKCOMMENTINTERFACE_P_H
 #define FACEBOOKCOMMENTINTERFACE_P_H
 
-#include <QtCore/QObject>
-#include <QtCore/QList>
-#include <QtNetwork/QNetworkReply>
-
+#include "facebookcommentinterface.h"
 #include "facebookinterface_p.h"
 #include "identifiablecontentiteminterface_p.h"
 
-class IdentifiableContentItemInterfacePrivate;
-class FacebookObjectReferenceInterface;
-class FacebookCommentInterface;
-
-class FacebookCommentInterfacePrivate : public IdentifiableContentItemInterfacePrivate
+class FacebookCommentInterfacePrivate: public IdentifiableContentItemInterfacePrivate
 {
 public:
     explicit FacebookCommentInterfacePrivate(FacebookCommentInterface *q);
     void finishedHandler();
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-
-    FacebookObjectReferenceInterface *from;
-
     FacebookInterfacePrivate::FacebookAction action;
+    FacebookObjectReferenceInterface *from;
+    FacebookCommentInterface *parent;
     bool liked;
-
 private:
     Q_DECLARE_PUBLIC(FacebookCommentInterface)
 };

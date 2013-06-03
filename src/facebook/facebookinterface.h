@@ -80,11 +80,13 @@ public:
         Picture,
         Location,
         Comment,
+        Cover,
         User,
         Album,
         Photo,
         Event,
-        Notification
+        Notification,
+        Application
     };
 
 public:

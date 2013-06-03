@@ -34,7 +34,6 @@
 
 #include "contentiteminterface.h"
 
-#include <QtCore/QVariantMap>
 #include <QtCore/QString>
 
 /*
@@ -50,29 +49,22 @@
  */
 
 class FacebookLikeInterfacePrivate;
-class FacebookLikeInterface : public ContentItemInterface
+class FacebookLikeInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString targetIdentifier READ targetIdentifier NOTIFY targetIdentifierChanged)
     Q_PROPERTY(QString userIdentifier READ userIdentifier NOTIFY userIdentifierChanged)
     Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
-
 public:
     explicit FacebookLikeInterface(QObject *parent = 0);
 
-    // overrides.
+    // Overrides.
     int type() const;
-
-    // property accessors
-    QString targetIdentifier() const;
+    // Accessors
     QString userIdentifier() const;
     QString userName() const;
-
 Q_SIGNALS:
-    void targetIdentifierChanged();
     void userIdentifierChanged();
     void userNameChanged();
-
 private:
     Q_DECLARE_PRIVATE(FacebookLikeInterface)
 };

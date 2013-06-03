@@ -5,13 +5,23 @@
     "properties": [
         {
             "name": "id",
+            "alias": "user_identifier",
             "type": "QString",
             "doc": "Holds the identifier of the tagged entity"
         },
         {
             "name": "name",
+            "alias": "user_name",
             "type": "QString",
-            "doc": "Holds the name of the tagged entity"
+            "doc": "Holds the name of the tagged entity",
+            "custom": true
+        },
+        {
+            "name": "text",
+            "type": "QString",
+            "doc": "Holds text that is used to tag something",
+            "is_ontology": false,
+            "custom": true
         },
         {
             "name": "x",

@@ -1,0 +1,19 @@
+{
+    "name": "like",
+    "doc": "An entry representing a like",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "id",
+            "alias": "user_identifier",
+            "type": "QString",
+            "doc": "Holds the identifier of the user who liked an entry"
+        },
+        {
+            "name": "name",
+            "alias": "user_name",
+            "type": "QString",
+            "doc": "Holds the name of the user who liked an entry"
+        }
+    ]
+}

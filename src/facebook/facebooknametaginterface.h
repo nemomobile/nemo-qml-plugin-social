@@ -52,8 +52,8 @@ class FacebookNameTagInterfacePrivate;
 class FacebookNameTagInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString identifier READ identifier NOTIFY identifierChanged)
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString userIdentifier READ userIdentifier NOTIFY userIdentifierChanged)
+    Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
     Q_PROPERTY(QString nameTagType READ nameTagType NOTIFY nameTagTypeChanged)
     Q_PROPERTY(int offset READ offset NOTIFY offsetChanged)
     Q_PROPERTY(int length READ length NOTIFY lengthChanged)
@@ -63,14 +63,14 @@ public:
     // Overrides.
     int type() const;
     // Accessors
-    QString identifier() const;
-    QString name() const;
+    QString userIdentifier() const;
+    QString userName() const;
     QString nameTagType() const;
     int offset() const;
     int length() const;
 Q_SIGNALS:
-    void identifierChanged();
-    void nameChanged();
+    void userIdentifierChanged();
+    void userNameChanged();
     void nameTagTypeChanged();
     void offsetChanged();
     void lengthChanged();

@@ -1,0 +1,17 @@
+{
+    "name": "picture",
+    "doc": "An entry representing a picture",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "source",
+            "type": "QUrl",
+            "doc": "Holds the url to the image source of the picture."
+        },
+        {
+            "name": "is_silhouette",
+            "type": "bool",
+            "doc": "Whether the picture is a default, anonymous silhouette image."
+        }
+    ]
+}

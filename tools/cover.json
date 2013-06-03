@@ -5,6 +5,7 @@
     "properties": [
         {
             "name": "id",
+            "alias": "photo_identifier",
             "type": "QString",
             "doc": "Holds the identifier of the cover photo"
         },

@@ -83,13 +83,14 @@
 
 // <<< comment
 #define FACEBOOK_ONTOLOGY_COMMENT                          QLatin1String("comment")
-#define FACEBOOK_ONTOLOGY_COMMENT_ID                       QLatin1String("id")
-#define FACEBOOK_ONTOLOGY_COMMENT_TYPE                     QLatin1String("type")
 #define FACEBOOK_ONTOLOGY_COMMENT_FROM                     QLatin1String("from")
+#define FACEBOOK_ONTOLOGY_COMMENT_MESSAGE                  QLatin1String("message")
 #define FACEBOOK_ONTOLOGY_COMMENT_CREATEDTIME              QLatin1String("created_time")
 #define FACEBOOK_ONTOLOGY_COMMENT_LIKECOUNT                QLatin1String("like_count")
-#define FACEBOOK_ONTOLOGY_COMMENT_LIKED                    QLatin1String("user_likes")
-#define FACEBOOK_ONTOLOGY_COMMENT_MESSAGE                  QLatin1String("message")
+#define FACEBOOK_ONTOLOGY_COMMENT_USERLIKES                QLatin1String("user_likes")
+#define FACEBOOK_ONTOLOGY_COMMENT_PARENT                   QLatin1String("parent")
+#define FACEBOOK_ONTOLOGY_COMMENT_CANCOMMENT               QLatin1String("can_comment")
+#define FACEBOOK_ONTOLOGY_COMMENT_COMMENTCOUNT             QLatin1String("comment_count")
 // >>> comment
 
 // <<< photo
@@ -113,48 +114,40 @@
 // >>> photo
 
 // <<< picture
-#define FACEBOOK_ONTOLOGY_PICTURE_SOURCE                   QLatin1String("url")
+#define FACEBOOK_ONTOLOGY_PICTURE                          QLatin1String("picture")
+#define FACEBOOK_ONTOLOGY_PICTURE_SOURCE                   QLatin1String("source")
 #define FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE             QLatin1String("is_silhouette")
 // >>> picture
 
 // <<< user
 #define FACEBOOK_ONTOLOGY_USER                             QLatin1String("user")
-#define FACEBOOK_ONTOLOGY_USER_ID                          QLatin1String("id")
 #define FACEBOOK_ONTOLOGY_USER_NAME                        QLatin1String("name")
 #define FACEBOOK_ONTOLOGY_USER_FIRSTNAME                   QLatin1String("first_name")
 #define FACEBOOK_ONTOLOGY_USER_MIDDLENAME                  QLatin1String("middle_name")
 #define FACEBOOK_ONTOLOGY_USER_LASTNAME                    QLatin1String("last_name")
 #define FACEBOOK_ONTOLOGY_USER_GENDER                      QLatin1String("gender")
 #define FACEBOOK_ONTOLOGY_USER_LOCALE                      QLatin1String("locale")
-#define FACEBOOK_ONTOLOGY_USER_LANGUAGES                   QLatin1String("languages")
 #define FACEBOOK_ONTOLOGY_USER_LINK                        QLatin1String("link")
-#define FACEBOOK_ONTOLOGY_USER_USERNAME                    QLatin1String("username")
-#define FACEBOOK_ONTOLOGY_USER_AGERANGE                    QLatin1String("age_range")
+#define FACEBOOK_ONTOLOGY_USER_USERNAME                    QLatin1String("user_name")
 #define FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER        QLatin1String("third_party_id")
 #define FACEBOOK_ONTOLOGY_USER_INSTALLED                   QLatin1String("installed")
-#define FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET              QLatin1String("timezone")
+#define FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET              QLatin1String("timezone_offset")
 #define FACEBOOK_ONTOLOGY_USER_UPDATEDTIME                 QLatin1String("updated_time")
 #define FACEBOOK_ONTOLOGY_USER_VERIFIED                    QLatin1String("verified")
 #define FACEBOOK_ONTOLOGY_USER_BIO                         QLatin1String("bio")
 #define FACEBOOK_ONTOLOGY_USER_BIRTHDAY                    QLatin1String("birthday")
 #define FACEBOOK_ONTOLOGY_USER_COVER                       QLatin1String("cover")
-#define FACEBOOK_ONTOLOGY_USER_CURRENCY                    QLatin1String("currency")
-#define FACEBOOK_ONTOLOGY_USER_DEVICES                     QLatin1String("devices")
-#define FACEBOOK_ONTOLOGY_USER_EDUCATION                   QLatin1String("education")
 #define FACEBOOK_ONTOLOGY_USER_EMAIL                       QLatin1String("email")
 #define FACEBOOK_ONTOLOGY_USER_HOMETOWN                    QLatin1String("hometown")
 #define FACEBOOK_ONTOLOGY_USER_INTERESTEDIN                QLatin1String("interested_in")
 #define FACEBOOK_ONTOLOGY_USER_LOCATION                    QLatin1String("location")
 #define FACEBOOK_ONTOLOGY_USER_POLITICAL                   QLatin1String("political")
-#define FACEBOOK_ONTOLOGY_USER_PAYMENTPRICEPOINTS          QLatin1String("payment_price_points")
 #define FACEBOOK_ONTOLOGY_USER_PICTURE                     QLatin1String("picture")
 #define FACEBOOK_ONTOLOGY_USER_QUOTES                      QLatin1String("quotes")
 #define FACEBOOK_ONTOLOGY_USER_RELATIONSHIPSTATUS          QLatin1String("relationship_status")
 #define FACEBOOK_ONTOLOGY_USER_RELIGION                    QLatin1String("religion")
-#define FACEBOOK_ONTOLOGY_USER_SECURITYSETTINGS            QLatin1String("security_settings")
 #define FACEBOOK_ONTOLOGY_USER_SIGNIFICANTOTHER            QLatin1String("significant_other")
 #define FACEBOOK_ONTOLOGY_USER_WEBSITE                     QLatin1String("website")
-#define FACEBOOK_ONTOLOGY_USER_WORK                        QLatin1String("work")
 // >>> user
 
 // <<< image
@@ -165,15 +158,13 @@
 // >>> image
 
 // <<< like
-#define FACEBOOK_ONTOLOGY_LIKE_TARGETIDENTIFIER            QLatin1String("target_id")
+#define FACEBOOK_ONTOLOGY_LIKE                             QLatin1String("like")
 #define FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER              QLatin1String("id")
 #define FACEBOOK_ONTOLOGY_LIKE_USERNAME                    QLatin1String("name")
 // >>> like
 
 // <<< notification
 #define FACEBOOK_ONTOLOGY_NOTIFICATION                     QLatin1String("notification")
-#define FACEBOOK_ONTOLOGY_NOTIFICATION_ID                  QLatin1String("id")
-#define FACEBOOK_ONTOLOGY_NOTIFICATION_ID_PREFIX           QLatin1String("notif_")
 #define FACEBOOK_ONTOLOGY_NOTIFICATION_FROM                QLatin1String("from")
 #define FACEBOOK_ONTOLOGY_NOTIFICATION_TO                  QLatin1String("to")
 #define FACEBOOK_ONTOLOGY_NOTIFICATION_APPLICATION         QLatin1String("application")
@@ -184,10 +175,17 @@
 #define FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD              QLatin1String("unread")
 // >>> notification
 
+// <<< cover
+#define FACEBOOK_ONTOLOGY_COVER                            QLatin1String("cover")
+#define FACEBOOK_ONTOLOGY_COVER_PHOTOIDENTIFIER            QLatin1String("id")
+#define FACEBOOK_ONTOLOGY_COVER_SOURCE                     QLatin1String("source")
+#define FACEBOOK_ONTOLOGY_COVER_OFFSETY                    QLatin1String("offset_y")
+// >>> cover
+
 // <<< name_tag
 #define FACEBOOK_ONTOLOGY_NAME_TAG                         QLatin1String("name_tag")
-#define FACEBOOK_ONTOLOGY_NAME_TAG_IDENTIFIER              QLatin1String("id")
-#define FACEBOOK_ONTOLOGY_NAME_TAG_NAME                    QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_NAME_TAG_USERIDENTIFIER          QLatin1String("id")
+#define FACEBOOK_ONTOLOGY_NAME_TAG_USERNAME                QLatin1String("name")
 #define FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE             QLatin1String("type")
 #define FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET                  QLatin1String("offset")
 #define FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH                  QLatin1String("length")
@@ -195,13 +193,11 @@
 
 // <<< tag
 #define FACEBOOK_ONTOLOGY_TAG                              QLatin1String("tag")
-#define FACEBOOK_ONTOLOGY_TAG_IDENTIFIER                   QLatin1String("id")
-#define FACEBOOK_ONTOLOGY_TAG_NAME                         QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER               QLatin1String("id")
+#define FACEBOOK_ONTOLOGY_TAG_USERNAME                     QLatin1String("name")
 #define FACEBOOK_ONTOLOGY_TAG_X                            QLatin1String("x")
 #define FACEBOOK_ONTOLOGY_TAG_Y                            QLatin1String("y")
 #define FACEBOOK_ONTOLOGY_TAG_CREATEDTIME                  QLatin1String("created_time")
 // >>> tag
-
-
 
 #endif // FACEBOOKONTOLOGY_P_H

@@ -88,7 +88,6 @@ Item {
 
     Facebook {
         id: facebook
-        onCurrentUserIdentifierChanged: console.debug(currentUserIdentifier)
         accessToken: root.accessToken
 
         property QtObject notificationsFilter: ContentItemTypeFilter { type: Facebook.Notification; limit: 10 }

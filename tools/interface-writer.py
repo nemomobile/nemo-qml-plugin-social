@@ -100,6 +100,7 @@ def generate(structure_file):
 
     name = formattingtools.upperCamelCase(formattingtools.split(struct.name))
     className = "Facebook" + name + "Interface"
+    qmlClassName = "Facebook" + name
     shortClassName = "Facebook" + name
     prefix = struct.name.upper()
 
@@ -116,7 +117,7 @@ def generate(structure_file):
         header += "#include \"contentiteminterface.h\"\n"
     header += "\n"
     hasLists = False
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         if property.isList:
             hasLists = True
     if hasLists:
@@ -129,10 +130,11 @@ def generate(structure_file):
 
     # Get a list of the includes that will be used
     includeList = []
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         include = typehelper.include(property)
         if not include is None and not include in includeList:
-            includeList.append(include)
+            if include != "\"" + className.lower() + ".h\"":
+                includeList.append(include)
     for include in includeList:
         header += "#include " + include + "\n"
 
@@ -161,7 +163,7 @@ def generate(structure_file):
     header += "\n"
     header += "{\n"
     header += "    Q_OBJECT\n"
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         type = getType(property)
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
         header += "    Q_PROPERTY(" + type + " " + propertyName + " READ " + propertyName
@@ -209,7 +211,7 @@ def generate(structure_file):
         header += "\n"
     
     header += "    // Accessors\n"
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         type = getType(property)
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
         header += "    " + type + " " + propertyName + "()"
@@ -217,12 +219,15 @@ def generate(structure_file):
             header += " const"
         header += ";\n"
     header += "Q_SIGNALS:\n"
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
         header += "    void " + propertyName + "Changed();\n"
     header += "private:\n"
     header += "    Q_DECLARE_PRIVATE(" + className + ")\n"
     header += "};\n"
+    if len(struct.extraEnd) > 0:
+        header += struct.extraEnd
+        header += "\n"
     header += "\n"
     header += "#endif // " + className.upper() + "_H\n"
 
@@ -239,7 +244,7 @@ def generate(structure_file):
     patcherDataSource = minipatcher.extract(className.lower() + ".cpp", "// <<<", "// >>>")
 
     haveCustom = False
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         if property.custom:
             haveCustom = True
 
@@ -262,7 +267,7 @@ def generate(structure_file):
     if hasLists:
         private += "#include <QtCore/QList>\n"
     #includesListde = []
-    #for property in struct.properties:
+    #for property in struct.interfaceProperties:
         #if property.custom:
             #if not property.type.lower() in includesListde:
                 #includesListde.append(property.type.lower())
@@ -294,7 +299,7 @@ const QVariantMap &newData);\n"
     # Add the custom attributes
     if struct.identifiable:
         private += "    FacebookInterfacePrivate::FacebookAction action;\n"
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
         propertyDefinition = getType(property, listPrivate = property.isList)
         if propertyDefinition[-1] != "*" and propertyDefinition[-1] != "&":
@@ -304,7 +309,7 @@ const QVariantMap &newData);\n"
             private += "    " + propertyDefinition + ";\n"
     private += "private:\n"
     private += "    Q_DECLARE_PUBLIC(" + className + ")\n"
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         if property.isList:
             type = getType(property)
             private += "    static void " + property.name + "_append(" + type + " *list,\n"
@@ -402,23 +407,23 @@ const QVariantMap &newData);\n"
     
     unknownProperties = []
     
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         type = getType(property)
         splittedPropertyName = formattingtools.split(property.name)
         propertyName = formattingtools.camelCase(splittedPropertyName)
         upperPropertyName = formattingtools.upperCamelCase(splittedPropertyName)
 
-        if len(typehelper.convert(type)) > 0 and not property.custom:
-            source += "    " + type + " old" + upperPropertyName + " = "
+        if not property.custom:
+            source += "    QVariant old" + upperPropertyName + " = "
             source += "oldData.value(" + formattingtools.ontologyKey(splittedPropertyName, prefix)
-            source += ")." + typehelper.convert(type) + ";\n"
-            source += "    " + type + " new" + upperPropertyName + " = "
+            source += ");\n"
+            source += "    QVariant new" + upperPropertyName + " = "
             source += "newData.value(" + formattingtools.ontologyKey(splittedPropertyName, prefix)
-            source += ")." + typehelper.convert(type) + ";\n"
+            source += ");\n"
         else:
             unknownProperties.append(property.name)
     source += "\n"
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         if not property.name in unknownProperties:
             splittedPropertyName = formattingtools.split(property.name)
             propertyName = formattingtools.camelCase(splittedPropertyName)
@@ -458,7 +463,7 @@ const QVariantMap &newData);\n"
     
     # Lists
     
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         if property.isList:
             type = getType(property)
             propertyName = formattingtools.camelCase(formattingtools.split(property.name))
@@ -584,6 +589,7 @@ const QVariantMap &newData);\n"
     for method in struct.methods:
         
         signature = "bool " + className + "::" + method.name + "("
+        docSignature = "bool " + qmlClassName + "::" + method.name + "("
         parameterList = []
         for parameter in method.parameters:
             parameterName = getParameterType(parameter)
@@ -593,9 +599,11 @@ const QVariantMap &newData);\n"
             parameterList.append(parameterName)
         signature += ", ".join(parameterList)
         signature += ")"
+        docSignature += ", ".join(parameterList)
+        docSignature += ")"
         
         source += "/*!\n"
-        source += "    \\qmlmethod " + signature + "\n"
+        source += "    \\qmlmethod " + docSignature + "\n"
         source += indent(method.doc, 1)
         source += "*/\n"
         source += "\n"
@@ -613,12 +621,12 @@ const QVariantMap &newData);\n"
     
     
     
-    for property in struct.properties:
+    for property in struct.interfaceProperties:
         type = getType(property)
         splittedPropertyName = formattingtools.split(property.name)
         propertyName = formattingtools.camelCase(splittedPropertyName)
         source += "/*!\n"
-        source += "    \qmlproperty " + type + " " + className + "::" + propertyName + "\n"
+        source += "    \qmlproperty " + type + " " + qmlClassName + "::" + propertyName + "\n"
         source += indent(property.doc, 1) + "\n"
         source += "*/\n"
         source += type + " " + className + "::" + propertyName + "()"
@@ -629,9 +637,9 @@ const QVariantMap &newData);\n"
         if not property.isList:
             source += "    Q_D(const " + className + ");\n"
         if not property.custom:
-            source += "    return d->data().value("
-            source += formattingtools.ontologyKey(splittedPropertyName, prefix)
-            source += ")." + typehelper.convert(type) + ";\n"
+            line = "d->data().value(" 
+            line += formattingtools.ontologyKey(splittedPropertyName, prefix) + ")"
+            source += indent(typehelper.convert(type, line), 1) + "\n"
         else:
             if property.isList:
                 source += "    return QDeclarativeListProperty<" + property.type + ">(\n"

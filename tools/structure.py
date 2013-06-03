@@ -45,6 +45,7 @@ class Property(Variable):
         self.doc = ""
         self.custom = False
         self.isOntology = True
+        self.isInterfaceProperty = True
         self.isList = False
     
 class Parameter(Variable):
@@ -63,7 +64,8 @@ class FacebookObject:
         self.identifiable = False
         self.name = ""
         self.doc = ""
-        self.properties = []
+        self.ontologyProperties = []
+        self.interfaceProperties = []
         self.methods = []
         self.extraPublic = ""
         self.extraProtected = ""
@@ -72,6 +74,7 @@ class FacebookObject:
         self.extraProtectedP = ""
         self.extraPrivateP = ""
         self.extraSource = ""
+        self.extraEnd = ""
 
 def extract(file):
     try:
@@ -105,6 +108,8 @@ def extract(file):
             property.name = "_".join(realSplittedName)
         else:
             property.key = property.name
+        if "alias" in propertyAttributes:
+            property.name = propertyAttributes["alias"]
         property.type = propertyAttributes["type"]
         if "is_const" in propertyAttributes:
             property.isConst = propertyAttributes["is_const"]
@@ -119,6 +124,8 @@ def extract(file):
             property.custom = True
         if "is_ontology" in propertyAttributes:
             property.isOntology = propertyAttributes["is_ontology"]
+        if "is_interface_property" in propertyAttributes:
+            property.isInterfaceProperty = propertyAttributes["is_interface_property"]
         if "is_list" in propertyAttributes:
             property.isList = propertyAttributes["is_list"]
         # A list should be stored in a specific attribute
@@ -130,7 +137,10 @@ def extract(file):
                 property.isReference = False
                 property.isConst = False
         property.doc = propertyAttributes["doc"]
-        object.properties.append(property)
+        if property.isOntology:
+            object.ontologyProperties.append(property)
+        if property.isInterfaceProperty:
+            object.interfaceProperties.append(property)
 
     if "extra_public" in data:
         object.extraPublic = data["extra_public"]
@@ -146,6 +156,8 @@ def extract(file):
         object.extraPrivateP = data["extra_private_p"]
     if "extra_source" in data:
         object.extraSource = data["extra_source"]
+    if "extra_end" in data:
+        object.extraEnd = data["extra_end"]
 
     if "methods" in data:
         for methodAttributes in data["methods"]:

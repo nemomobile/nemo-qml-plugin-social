@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
 #
 # You may use this file under the terms of the BSD license as follows:
@@ -27,37 +28,39 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 
+# Regenerate all the Facebook*Interface based on the .json
+# files that are provided.
 
+# Move the ontology file
+mv ../src/facebook/facebookontology_p.h .
 
-def include(property):
-    type = property.type
-    if type in ["int", "float", "double"]:
-        return None
-    if type in ["QString", "QVariant", "QUrl", "QVariantMap"]:
-        return "<QtCore/" + type + ">"
-    if property.isPointer or property.isList:
-        return "\"" + type.lower() + ".h\""
+for file in `ls -1 *.json`; do
+    # Generate ontologies
+    ./ontology-writer.py facebookontology_p.h $file
+   
+    headerfile=facebook${file/.json/}interface.h
+    sourcefile=facebook${file/.json/}interface.cpp
+    privatefile=facebook${file/.json/}interface_p.h
+    
+    
+    # Move source and header files
+    mv ../src/facebook/$headerfile .
+    mv ../src/facebook/$sourcefile .
+    if [ -f ../src/facebook/$privatefile ]
+    then
+        mv ../src/facebook/$privatefile .
+    fi
+    
+    ./interface-writer.py $file
+    
+    # Move the files back
+    mv $headerfile ../src/facebook/
+    mv $sourcefile ../src/facebook/
+    
+    if [ -f $privatefile ]
+    then
+        mv $privatefile ../src/facebook/
+    fi
+done
 
-def convert(type, line):
-    if type in ["int", "float", "double"]:
-        data = "QString numberString = " + line + ".toString();\n"
-        data += "bool ok;\n"
-        data += type + " number = numberString.to" + type[0].upper() + type[1:]
-        data += "(&ok);\n"
-        data += "if (ok) {\n"
-        data += "    return number;\n"
-        data += "}\n"
-        if type == "int":
-            data += "return -1;"
-        else:
-            data += "return 0.;"
-        return data
-    if type == "bool":
-        return "return " + line + ".toString() == QLatin1String(\"true\");"
-    if type in ["QString"]:
-        return "return " + line + ".to" + type[1].upper() + type[2:] + "();"
-    if type == "QUrl":
-        return "return QUrl(" + line + ".toString());"
-    if type == "QVariantMap":
-        return "return " + line + ".toMap();"
-    return ""
+mv facebookontology_p.h ../src/facebook/

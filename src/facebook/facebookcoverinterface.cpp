@@ -29,44 +29,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebookimageinterface.h"
+#include "facebookcoverinterface.h"
 #include "facebookinterface.h"
 #include "facebookontology_p.h"
 #include "contentiteminterface_p.h"
 // <<< include
+// Includes goes here
 // >>> include
 
-class FacebookImageInterfacePrivate: public ContentItemInterfacePrivate
+class FacebookCoverInterfacePrivate: public ContentItemInterfacePrivate
 {
 public:
-    explicit FacebookImageInterfacePrivate(FacebookImageInterface *q);
+    explicit FacebookCoverInterfacePrivate(FacebookCoverInterface *q);
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
 private:
-    Q_DECLARE_PUBLIC(FacebookImageInterface)
+    Q_DECLARE_PUBLIC(FacebookCoverInterface)
 };
 
-FacebookImageInterfacePrivate::FacebookImageInterfacePrivate(FacebookImageInterface *q)
+FacebookCoverInterfacePrivate::FacebookCoverInterfacePrivate(FacebookCoverInterface *q)
     : ContentItemInterfacePrivate(q)
 {
 }
 
-void FacebookImageInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+void FacebookCoverInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                               const QVariantMap &newData)
 {
-    Q_Q(FacebookImageInterface);
-    QVariant oldSource = oldData.value(FACEBOOK_ONTOLOGY_IMAGE_SOURCE);
-    QVariant newSource = newData.value(FACEBOOK_ONTOLOGY_IMAGE_SOURCE);
-    QVariant oldWidth = oldData.value(FACEBOOK_ONTOLOGY_IMAGE_WIDTH);
-    QVariant newWidth = newData.value(FACEBOOK_ONTOLOGY_IMAGE_WIDTH);
-    QVariant oldHeight = oldData.value(FACEBOOK_ONTOLOGY_IMAGE_HEIGHT);
-    QVariant newHeight = newData.value(FACEBOOK_ONTOLOGY_IMAGE_HEIGHT);
+    Q_Q(FacebookCoverInterface);
+    QVariant oldPhotoIdentifier = oldData.value(FACEBOOK_ONTOLOGY_COVER_PHOTOIDENTIFIER);
+    QVariant newPhotoIdentifier = newData.value(FACEBOOK_ONTOLOGY_COVER_PHOTOIDENTIFIER);
+    QVariant oldSource = oldData.value(FACEBOOK_ONTOLOGY_COVER_SOURCE);
+    QVariant newSource = newData.value(FACEBOOK_ONTOLOGY_COVER_SOURCE);
+    QVariant oldOffsetY = oldData.value(FACEBOOK_ONTOLOGY_COVER_OFFSETY);
+    QVariant newOffsetY = newData.value(FACEBOOK_ONTOLOGY_COVER_OFFSETY);
 
+    if (newPhotoIdentifier != oldPhotoIdentifier)
+        emit q->photoIdentifierChanged();
     if (newSource != oldSource)
         emit q->sourceChanged();
-    if (newWidth != oldWidth)
-        emit q->widthChanged();
-    if (newHeight != oldHeight)
-        emit q->heightChanged();
+    if (newOffsetY != oldOffsetY)
+        emit q->offsetYChanged();
 
     // Call super class implementation
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
@@ -75,56 +76,50 @@ void FacebookImageInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
 //-------------------------------
 
 /*!
-    \qmltype FacebookImage
-    \instantiates FacebookImageInterface
-    An entry representing a image size for a photo
+    \qmltype FacebookCover
+    \instantiates FacebookCoverInterface
+    The cover of an user
 */
-FacebookImageInterface::FacebookImageInterface(QObject *parent)
-    : ContentItemInterface(*(new FacebookImageInterfacePrivate(this)), parent)
+FacebookCoverInterface::FacebookCoverInterface(QObject *parent)
+    : ContentItemInterface(*(new FacebookCoverInterfacePrivate(this)), parent)
 {
 }
 
 /*! \reimp */
-int FacebookImageInterface::type() const
+int FacebookCoverInterface::type() const
 {
-    return FacebookInterface::Image;
+    return FacebookInterface::Cover;
 }
 
 
 /*!
-    \qmlproperty QUrl FacebookImage::source
-    Holds the source of the image
+    \qmlproperty QString FacebookCover::photoIdentifier
+    Holds the identifier of the cover photo
 */
-QUrl FacebookImageInterface::source() const
+QString FacebookCoverInterface::photoIdentifier() const
 {
-    Q_D(const FacebookImageInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_IMAGE_SOURCE).toString());
+    Q_D(const FacebookCoverInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_COVER_PHOTOIDENTIFIER).toString();
 }
 
 /*!
-    \qmlproperty int FacebookImage::width
-    Holds the width of the image
+    \qmlproperty QString FacebookCover::source
+    Holds an URL to the photo
 */
-int FacebookImageInterface::width() const
+QString FacebookCoverInterface::source() const
 {
-    Q_D(const FacebookImageInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_IMAGE_WIDTH).toString();
-    bool ok;
-    int number = numberString.toInt(&ok);
-    if (ok) {
-        return number;
-    }
-    return -1;
+    Q_D(const FacebookCoverInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_COVER_SOURCE).toString();
 }
 
 /*!
-    \qmlproperty int FacebookImage::height
-    Holds the height of the image
+    \qmlproperty int FacebookCover::offsetY
+    Holds the vertical offset for the cover
 */
-int FacebookImageInterface::height() const
+int FacebookCoverInterface::offsetY() const
 {
-    Q_D(const FacebookImageInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_IMAGE_HEIGHT).toString();
+    Q_D(const FacebookCoverInterface);
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_COVER_OFFSETY).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {

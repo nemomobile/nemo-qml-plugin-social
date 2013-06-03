@@ -96,6 +96,10 @@ methods are passed as lists for the "properties" and "methods" field.
 * extra_private (string)
     This field contains code that should be added in the header, with a private scope.
     
+* extra_end (string)
+    This field contains code that should be added to the end of the header, like Qt 
+    declarations.
+    
 * extra_public_p (string)
     This field contains code that should be added in the private header, with a public scope.
     Additionnal attributes can be declared in that field.
@@ -155,6 +159,15 @@ and be available in the QML context.
     Ontology keys are macros that corresponds to the name of the property in the Facebook graph
     API. If you define a property that do not exist in the Facebook graph API, you should disable
     the key that is automatically generated and associated to it, by setting this field to false.
+* is_interface_property (boolean)
+    Interface properties are the properties that should be exported in the interface. Some 
+    properties might not be exported, even if an ontology is available, and if they are available
+    in the Facebook API. Setting this field to false will hide the property.
+* alias (string)
+    In order to have a consistant API, it might be required to provide a different variable name
+    that the one used in Facebook API. Setting alias will use that name as the variable, while
+    still using the name entered in the "name" field to generate metadata.
+    
     
 === Methods description ===
 

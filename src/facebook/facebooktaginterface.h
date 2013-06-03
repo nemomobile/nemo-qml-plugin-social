@@ -52,8 +52,9 @@ class FacebookTagInterfacePrivate;
 class FacebookTagInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString identifier READ identifier NOTIFY identifierChanged)
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString userIdentifier READ userIdentifier NOTIFY userIdentifierChanged)
+    Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
+    Q_PROPERTY(QString text READ text NOTIFY textChanged)
     Q_PROPERTY(float x READ x NOTIFY xChanged)
     Q_PROPERTY(float y READ y NOTIFY yChanged)
     Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
@@ -63,14 +64,16 @@ public:
     // Overrides.
     int type() const;
     // Accessors
-    QString identifier() const;
-    QString name() const;
+    QString userIdentifier() const;
+    QString userName() const;
+    QString text() const;
     float x() const;
     float y() const;
     QString createdTime() const;
 Q_SIGNALS:
-    void identifierChanged();
-    void nameChanged();
+    void userIdentifierChanged();
+    void userNameChanged();
+    void textChanged();
     void xChanged();
     void yChanged();
     void createdTimeChanged();

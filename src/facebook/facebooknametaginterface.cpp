@@ -55,21 +55,21 @@ void FacebookNameTagInterfacePrivate::emitPropertyChangeSignals(const QVariantMa
                                                                 const QVariantMap &newData)
 {
     Q_Q(FacebookNameTagInterface);
-    QString oldIdentifier = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_IDENTIFIER).toString();
-    QString newIdentifier = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_IDENTIFIER).toString();
-    QString oldName = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_NAME).toString();
-    QString newName = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_NAME).toString();
-    QString oldNameTagType = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE).toString();
-    QString newNameTagType = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE).toString();
-    int oldOffset = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET).toInt();
-    int newOffset = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET).toInt();
-    int oldLength = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH).toInt();
-    int newLength = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH).toInt();
+    QVariant oldUserIdentifier = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_USERIDENTIFIER);
+    QVariant newUserIdentifier = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_USERIDENTIFIER);
+    QVariant oldUserName = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_USERNAME);
+    QVariant newUserName = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_USERNAME);
+    QVariant oldNameTagType = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE);
+    QVariant newNameTagType = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE);
+    QVariant oldOffset = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET);
+    QVariant newOffset = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET);
+    QVariant oldLength = oldData.value(FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH);
+    QVariant newLength = newData.value(FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH);
 
-    if (newIdentifier != oldIdentifier)
-        emit q->identifierChanged();
-    if (newName != oldName)
-        emit q->nameChanged();
+    if (newUserIdentifier != oldUserIdentifier)
+        emit q->userIdentifierChanged();
+    if (newUserName != oldUserName)
+        emit q->userNameChanged();
     if (newNameTagType != oldNameTagType)
         emit q->nameTagTypeChanged();
     if (newOffset != oldOffset)
@@ -101,27 +101,27 @@ int FacebookNameTagInterface::type() const
 
 
 /*!
-    \qmlproperty QString FacebookNameTagInterface::identifier
+    \qmlproperty QString FacebookNameTag::userIdentifier
     Holds the identifier of the tagged entity
 */
-QString FacebookNameTagInterface::identifier() const
+QString FacebookNameTagInterface::userIdentifier() const
 {
     Q_D(const FacebookNameTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_IDENTIFIER).toString();
+    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_USERIDENTIFIER).toString();
 }
 
 /*!
-    \qmlproperty QString FacebookNameTagInterface::name
+    \qmlproperty QString FacebookNameTag::userName
     Holds the name of the tagged entity
 */
-QString FacebookNameTagInterface::name() const
+QString FacebookNameTagInterface::userName() const
 {
     Q_D(const FacebookNameTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_NAME).toString();
+    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_USERNAME).toString();
 }
 
 /*!
-    \qmlproperty QString FacebookNameTagInterface::nameTagType
+    \qmlproperty QString FacebookNameTag::nameTagType
     Holds the type of the taggeed entity
 */
 QString FacebookNameTagInterface::nameTagType() const
@@ -131,22 +131,34 @@ QString FacebookNameTagInterface::nameTagType() const
 }
 
 /*!
-    \qmlproperty int FacebookNameTagInterface::offset
+    \qmlproperty int FacebookNameTag::offset
     Holds the offset in the name for a tag
 */
 int FacebookNameTagInterface::offset() const
 {
     Q_D(const FacebookNameTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET).toInt();
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET).toString();
+    bool ok;
+    int number = numberString.toInt(&ok);
+    if (ok) {
+        return number;
+    }
+    return -1;
 }
 
 /*!
-    \qmlproperty int FacebookNameTagInterface::length
+    \qmlproperty int FacebookNameTag::length
     Holds the length of a tag
 */
 int FacebookNameTagInterface::length() const
 {
     Q_D(const FacebookNameTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH).toInt();
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH).toString();
+    bool ok;
+    int number = numberString.toInt(&ok);
+    if (ok) {
+        return number;
+    }
+    return -1;
 }
 

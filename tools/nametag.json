@@ -5,11 +5,13 @@
     "properties": [
         {
             "name": "id",
+            "alias": "user_identifier",
             "type": "QString",
             "doc": "Holds the identifier of the tagged entity"
         },
         {
             "name": "name",
+            "alias": "user_name",
             "type": "QString",
             "doc": "Holds the name of the tagged entity"
         },

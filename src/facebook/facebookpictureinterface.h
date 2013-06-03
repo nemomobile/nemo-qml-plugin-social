@@ -34,8 +34,6 @@
 
 #include "contentiteminterface.h"
 
-#include <QtCore/QVariantMap>
-#include <QtCore/QString>
 #include <QtCore/QUrl>
 
 /*
@@ -51,27 +49,22 @@
  */
 
 class FacebookPictureInterfacePrivate;
-class FacebookPictureInterface : public ContentItemInterface
+class FacebookPictureInterface: public ContentItemInterface
 {
     Q_OBJECT
     Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
     Q_PROPERTY(bool isSilhouette READ isSilhouette NOTIFY isSilhouetteChanged)
-
 public:
     explicit FacebookPictureInterface(QObject *parent = 0);
 
-    // overrides.
+    // Overrides.
     int type() const;
-    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-
-    // property accessors
+    // Accessors
     QUrl source() const;
     bool isSilhouette() const;
-
 Q_SIGNALS:
     void sourceChanged();
     void isSilhouetteChanged();
-
 private:
     Q_DECLARE_PRIVATE(FacebookPictureInterface)
 };
