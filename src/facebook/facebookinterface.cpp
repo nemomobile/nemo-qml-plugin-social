@@ -154,9 +154,9 @@ QUrl FacebookInterfacePrivate::requestUrl(const QString &objectId, const QString
     retn.setScheme("https");
     retn.setHost("graph.facebook.com");
     if (extraPath.isEmpty())
-        retn.setPath(objectId);
+        retn.setPath(QLatin1String("/") + objectId);
     else
-        retn.setPath(objectId + QLatin1String("/") + extraPath);
+        retn.setPath(QLatin1String("/") + objectId + QLatin1String("/") + extraPath);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QUrlQuery query;
     query.setQueryItems(queryItems);
