@@ -323,8 +323,8 @@ bool FacebookAlbumInterface::reload(const QStringList &whichFields)
 bool FacebookAlbumInterface::like()
 {
     Q_D(FacebookAlbumInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("likes"));
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("likes"));
 
     if (!requestMade)
         return false;
@@ -346,8 +346,8 @@ bool FacebookAlbumInterface::like()
 bool FacebookAlbumInterface::unlike()
 {
     Q_D(FacebookAlbumInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Delete,
-                               identifier(), QLatin1String("likes"));
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
+                                  identifier(), QLatin1String("likes"));
 
     if (!requestMade)
         return false;
@@ -377,9 +377,9 @@ bool FacebookAlbumInterface::uploadComment(const QString &message)
     QVariantMap postData;
     postData.insert("message", message);
 
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("comments"),
-                               QStringList(), postData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("comments"),
+                                  QStringList(), postData);
 
     if (!requestMade)
         return false;
@@ -402,7 +402,8 @@ bool FacebookAlbumInterface::uploadComment(const QString &message)
 bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
 {
     Q_D(FacebookAlbumInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Delete, commentIdentifier);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
+                                  commentIdentifier);
 
     if (!requestMade)
         return false;
@@ -440,9 +441,9 @@ bool FacebookAlbumInterface::uploadPhoto(const QUrl &source, const QString &mess
     if (!message.isEmpty())
         postData.insert("message", message);
 
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("photos"),
-                               QStringList(), postData, extraData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("photos"),
+                                  QStringList(), postData, extraData);
 
     if (!requestMade)
         return false;
@@ -465,7 +466,7 @@ bool FacebookAlbumInterface::uploadPhoto(const QUrl &source, const QString &mess
 bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
 {
     Q_D(FacebookAlbumInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Delete, photoIdentifier);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete, photoIdentifier);
 
     if (!requestMade)
         return false;

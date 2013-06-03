@@ -651,10 +651,13 @@ void FacebookInterface::updateInternalData(QList<CacheEntry*> data)
         endRemoveRows();
     }
 
-    // update the internal data
-    beginInsertRows(parent, 0, sortedData.count());
-    d->internalData = sortedData;
-    endInsertRows();
+    if (sortedData.count() != 0) {
+        // update the internal data
+        beginInsertRows(parent, 0, sortedData.count());
+        d->internalData = sortedData;
+        endInsertRows();
+    }
+
     emit countChanged();
 }
 

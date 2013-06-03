@@ -106,15 +106,6 @@ Q_SIGNALS:
 protected:
     explicit IdentifiableContentItemInterface(IdentifiableContentItemInterfacePrivate &dd,
                                               QObject *parent = 0);
-    // TODO: this method should be migrated to private class as well
-    enum RequestType { Get = 0, Post, Delete };
-    bool request(// sets dd->reply() - caller takes ownership and must call dd->deleteReply()
-                 RequestType requestType,
-                 const QString &objectIdentifier,
-                 const QString &extraPath = QString(),
-                 const QStringList &whichFields = QStringList(), // only valid for GET  requests
-                 const QVariantMap &postData = QVariantMap(),    // only valid for POST requests
-                 const QVariantMap &extraData = QVariantMap());  // social-network-specific.
 private:
     Q_DECLARE_PRIVATE(IdentifiableContentItemInterface)
     Q_PRIVATE_SLOT(d_func(), void finishedHandler())
