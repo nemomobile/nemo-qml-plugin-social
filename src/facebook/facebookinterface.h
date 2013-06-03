@@ -62,6 +62,8 @@ class FacebookInterface : public SocialNetworkInterface
     Q_OBJECT
 
     Q_PROPERTY(QString accessToken READ accessToken WRITE setAccessToken NOTIFY accessTokenChanged)
+    Q_PROPERTY(QString currentUserIdentifier READ currentUserIdentifier
+               NOTIFY currentUserIdentifierChanged)
 
     Q_ENUMS(ContentItemType)
 
@@ -88,9 +90,11 @@ public:
     // properties
     QString accessToken() const;
     void setAccessToken(const QString &token);
+    QString currentUserIdentifier() const;
 
 Q_SIGNALS:
     void accessTokenChanged();
+    void currentUserIdentifierChanged();
 
     // SocialNetworkInterface
 public:
@@ -108,7 +112,7 @@ protected:
 
     // private API for all Facebook adapters to use
 private:
-    QString currentUserIdentifier() const;
+    void updateCurrentUserIdentifier();
     FacebookObjectReferenceInterface *objectReference(QObject *parent, int type, QString identifier, QString name);
     QVariantMap facebookContentItemData(ContentItemInterface *contentItem);
     void setFacebookContentItemData(ContentItemInterface *contentItem, const QVariantMap &data);
@@ -131,6 +135,7 @@ private:
     Q_PRIVATE_SLOT(d_func(), void finishedHandler())
     Q_PRIVATE_SLOT(d_func(), void errorHandler(QNetworkReply::NetworkError))
     Q_PRIVATE_SLOT(d_func(), void sslErrorsHandler(const QList<QSslError>&))
+    Q_PRIVATE_SLOT(d_func(), void updateCurrentUserIdentifierHandler(bool, const QVariantMap&))
 };
 
 #endif // FACEBOOKINTERFACE_H

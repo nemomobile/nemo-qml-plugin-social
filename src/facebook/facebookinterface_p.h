@@ -79,6 +79,7 @@ public:
     void connectFinishedAndErrors();
 
     // Slots
+    void updateCurrentUserIdentifierHandler(bool isError, const QVariantMap &data);
     void finishedHandler();
     void errorHandler(QNetworkReply::NetworkError err);
     void sslErrorsHandler(const QList<QSslError> &errs);
