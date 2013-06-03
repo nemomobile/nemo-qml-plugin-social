@@ -413,8 +413,8 @@ bool FacebookPhotoInterface::reload(const QStringList &whichFields)
 bool FacebookPhotoInterface::like()
 {
     Q_D(FacebookPhotoInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("likes"));
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("likes"));
 
     if (!requestMade)
         return false;
@@ -436,8 +436,8 @@ bool FacebookPhotoInterface::like()
 bool FacebookPhotoInterface::unlike()
 {
     Q_D(FacebookPhotoInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Delete,
-                               identifier(), QLatin1String("likes"));
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
+                                  identifier(), QLatin1String("likes"));
 
     if (!requestMade)
         return false;
@@ -471,9 +471,9 @@ bool FacebookPhotoInterface::tagUser(const QString &userId, qreal xOffset, qreal
     if (yOffset != -1)
         postData.insert("y", QString::number(yOffset));
 
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("tags"),
-                               QStringList(), postData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("tags"),
+                                  QStringList(), postData);
 
     if (!requestMade)
         return false;
@@ -513,9 +513,9 @@ bool FacebookPhotoInterface::untagUser(const QString &userId)
     if (tempPendingTagToRemoveIndex == -1)
         qWarning() << Q_FUNC_INFO << "Unknown tag specified for removal";
 
-    bool requestMade = request(IdentifiableContentItemInterface::Delete,
-                               identifier(), QLatin1String("tags"),
-                               QStringList(), QVariantMap(), extraData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
+                                  identifier(), QLatin1String("tags"),
+                                  QStringList(), QVariantMap(), extraData);
 
     if (!requestMade)
         return false;
@@ -550,9 +550,9 @@ bool FacebookPhotoInterface::tagText(const QString &text, qreal xOffset, qreal y
     if (yOffset != -1)
         postData.insert("y", QString::number(yOffset));
 
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("tags"),
-                               QStringList(), postData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("tags"),
+                                  QStringList(), postData);
 
     if (!requestMade)
         return false;
@@ -592,9 +592,9 @@ bool FacebookPhotoInterface::untagText(const QString &text)
     if (tempPendingTagToRemoveIndex == -1)
         qWarning() << Q_FUNC_INFO << "Unknown tag specified for removal";
 
-    bool requestMade = request(IdentifiableContentItemInterface::Delete,
-                               identifier(), QLatin1String("tags"),
-                               QStringList(), QVariantMap(), extraData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
+                                  identifier(), QLatin1String("tags"),
+                                  QStringList(), QVariantMap(), extraData);
 
     if (!requestMade)
         return false;
@@ -625,9 +625,9 @@ bool FacebookPhotoInterface::uploadComment(const QString &message)
     QVariantMap postData;
     postData.insert("message", message);
 
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("comments"),
-                               QStringList(), postData);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("comments"),
+                                  QStringList(), postData);
 
     if (!requestMade)
         return false;
@@ -650,7 +650,8 @@ bool FacebookPhotoInterface::uploadComment(const QString &message)
 bool FacebookPhotoInterface::removeComment(const QString &commentIdentifier)
 {
     Q_D(FacebookPhotoInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Delete, commentIdentifier);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
+                                  commentIdentifier);
 
     if (!requestMade)
         return false;

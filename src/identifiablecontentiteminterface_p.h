@@ -45,11 +45,20 @@ class ContentItemInterfacePrivate;
 class IdentifiableContentItemInterfacePrivate : public ContentItemInterfacePrivate
 {
 public:
+    enum RequestType { Get = 0, Post, Delete };
     explicit IdentifiableContentItemInterfacePrivate(IdentifiableContentItemInterface *q);
     virtual ~IdentifiableContentItemInterfacePrivate();
 
     QNetworkReply *reply(); // returns currentReply
     void deleteReply();     // disconnect()s and then deleteLater()s currentReply, sets to null.  DOES NOT SET STATE.
+
+    // sets reply() - caller takes ownership and must call deleteReply()
+    bool request(RequestType requestType,
+                 const QString &objectIdentifier,
+                 const QString &extraPath = QString(),
+                 const QStringList &whichFields = QStringList(), // only valid for GET  requests
+                 const QVariantMap &postData = QVariantMap(),    // only valid for POST requests
+                 const QVariantMap &extraData = QVariantMap());  // social-network-specific.
 
     virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     virtual void initializationComplete();

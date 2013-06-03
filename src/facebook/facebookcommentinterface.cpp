@@ -275,8 +275,8 @@ bool FacebookCommentInterface::reload(const QStringList &whichFields)
 bool FacebookCommentInterface::like()
 {
     Q_D(FacebookCommentInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Post,
-                               identifier(), QLatin1String("likes"));
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  identifier(), QLatin1String("likes"));
 
     if (!requestMade)
         return false;
@@ -297,8 +297,8 @@ bool FacebookCommentInterface::like()
 bool FacebookCommentInterface::unlike()
 {
     Q_D(FacebookCommentInterface);
-    bool requestMade = request(IdentifiableContentItemInterface::Delete,
-                               identifier(), QLatin1String("likes"));
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete,
+                                  identifier(), QLatin1String("likes"));
 
     if (!requestMade)
         return false;
