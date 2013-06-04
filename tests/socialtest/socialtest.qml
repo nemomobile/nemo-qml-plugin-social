@@ -64,6 +64,11 @@ Item {
     property string accessToken // provided by main.cpp
     property int whichActive: 0
 
+    function back(which) {
+        facebook.previousNode(which)
+        whichActive = which
+    }
+
     function makeActive(which, nodeId) {
         facebook.nodeIdentifier = nodeId
         switch (which) {
@@ -90,6 +95,8 @@ Item {
             break
         }
         whichActive = which
+        facebook.populate()
+        facebook.nextNode()
     }
 
     Facebook {
@@ -176,21 +183,21 @@ Item {
         id: notificationsList
         visible: whichActive == 1
         model: visible ? facebook : null
-        onBackClicked: makeActive(0, facebook.currentUserIdentifier)
+        onBackClicked: back(0)
     }
 
     FriendsList {
         id: friendsList
         visible: whichActive == 2
         model: visible ? facebook : null
-        onBackClicked: makeActive(0, facebook.currentUserIdentifier)
+        onBackClicked: back(0)
     }
 
     AlbumsList {
         id: albumsList
         visible: whichActive == 3
         model: visible ? facebook : null
-        onBackClicked: makeActive(0, facebook.currentUserIdentifier)
+        onBackClicked: back(0)
         onAlbumClicked: makeActive(4, albumId)
     }
 
@@ -198,11 +205,8 @@ Item {
         id: photosGrid
         visible: whichActive == 4
         model: visible ? facebook : null
-        onBackClicked: makeActive(3, facebook.currentUserIdentifier)
-        onPhotoClicked: {
-            photoCommentsList.backAlbumId = model.node.identifier
-            makeActive(5, photoId)
-        }
+        onBackClicked: back(3)
+        onPhotoClicked: makeActive(5, photoId)
     }
 
     PhotoCommentsList {
@@ -210,10 +214,7 @@ Item {
         property string backAlbumId
         visible: whichActive == 5
         model: visible ? facebook : null
-        onBackClicked: {
-            makeActive(4, backAlbumId) // back to photos page
-            facebook.nodeIdentifier = backAlbumId // shouldn't need this... force
-        }
+        onBackClicked: back(4)
 
     }
 

@@ -46,32 +46,391 @@
 
 #include <QtDebug>
 
+#include <algorithm>
+
 /*
-    CacheEntry:
+    SocialNetworkInterface
 
-    The data in the model is actually a list of cache entries.
-    Each entry consists of the QVariantMap of data for the object,
-    and a (lazily constructed) ContentItem ptr.
+    The SocialNetworkInterface is a conveinent way to represent data
+    from a social network and query that social network for data.
 
-    Specific implementations of the SocialNetwork interface should
-    use \c SocialNetworkInterfacePrivate::createUncachedEntry() to
-    create cache entries for data associated with a particular node,
-    within their implementation of the \c populateDataForNode()
-    functions.
+    SocialNetworkInterface, often called SNI, is a QML mode (inheriting
+    from QAbstractListModel), that can be used to display data in
+    ListView or GridView. It is built to mirror most mobile applications
+    behaviour.
 
-    Once they have constructed cache entries for the related data
-    objects, the implementation should call
-    \c SocialNetworkInterfacePrivate::populateCache().
+    The SNI have a list of nodes, each node representing a page, and also
+    something to display. A node contains the identifier of an entity, as
+    well as some filters that indicates what are the data related to that
+    entity to query. It then provides access to that node in the QML context,
+    via SocialNetworkInterface::node(), and access to the related content
+    via the data set in the model.
+
+    When setting the identifier and filters to use for creating a new node,
+    the user have to call SocialNetworkInterface::populate() to create a new
+    node in the SNI. That node will be append to the other nodes, and SNI will
+    load the data of that node in background. It will inform about the state of
+    the loading using SocialNetworkInterface::status().
+
+    In order to navigate between nodes, SocialNetworkInterface::previousNode()
+    and SocialNetworkInterface::nextNode() should be used.
 */
+
+/*
+    CacheEntry
+
+    A CacheEntry represents an entry in the cache. These entries
+    represents entities that have an identifier, and that inherits
+    from IdentifiableContentItemInterface.
+
+    Each cache entry contains the identifier that is associated to
+    the entity, the data, provided as QVariantMap, that is downloaded
+    from the social network, the ContentItem pointer that is associated
+    to the data, and a refCount, that is used to count the number of use
+    of this cache entry.
+
+    The ContentItem pointer is lazily constructed, and will be
+    constructed only when it is needed. The refCount is used to know
+    when a CacheEntry should be removed from the cache. It is increased
+    when a node uses the entity, and decreased when a node is destroyed.
+    If the refCount is 0, then it should be removed.
+
+    CacheEntries are explicitely shared, so a modification to a CacheEntry
+    will modify all the copies. Basically, it behaves like a pointer.
+    CacheEntries can also be compared, and are considered equal if they
+    share the same identifier, data and item.
+*/
+
+/*
+    Node
+
+    A Node represents one "page". A node is defined by an identifier, and
+    a list of filters. It often defines a page in the application display.
+
+    A Node consists of an identifier, and a set of filters that defines the
+    node. It also have a CacheEntry, that contains the cached version of the
+    node if it exists, or nothing if it is yet to be retrieved. It also
+    contains a list of CacheEntry, that is the data in the model that is
+    contained in a defined Node (page). This data is often called
+    "related data"
+
+    Remark: the identifier for a Node and for a CacheEntry might be different:
+    in Facebook, you can use "me" to replace the identifier of the current user,
+    so the initial Node might have "me" as identifier. However, the retrieved
+    data will contain the identifier of current user, so the identifier of the
+    CacheEntry associated to the Node will not be "me".
+
+    Node are also explicitely shared. They can also be compared, and are
+    considered equal if they have the same identifier and filters.
+
+    When a CacheEntry is set as the data of a Node, or as related data, it's
+    refcout is automatically increased, and decreased if is replaced.
+ */
+
+/*
+    SorterFunctor
+
+    The sorter functor is used to adapt a SorterInterface to a function, that
+    can be used by std::sort or std::stable_sort. It simply takes a pointer to a
+    SorterInterface as constructor, and provides an operator() method that is
+    suited for sorting.
+*/
+
+/*
+    Caching system
+
+    The caching system is rather simple. It is a QHash that associates an
+    identifier, that is represented by a QString, to a CacheEntry.
+
+    Each "page" in an application is represented by a Node, and a QStack of Node
+    represents the whole set of pages. As said in the documentation describing
+    Node, each Node also contains a list of CacheEntry, either to represent the
+    node, or to represent related data.
+
+    While a CacheEntry is used by a Node, it's refcount is increased. If it is no longer
+    used, often when a node is removed from the node stack, it's refcount is decreased.
+    If a refcount for a CacheEntry drops to zero, it means that it is no longer used,
+    and is removed from the cache.
+
+    When the user makes a request for a Node (by setting an identifier and a set of
+    filters), the Node stack is searched. If a Node already exists in the stack, then it
+    is simply fetched and appended to the stack, without loading anything from the social
+    network. If only the node data exists for a cached Node, then the other part (related
+    data) is fetched. If nothing was found in the node stack, or if a Node that contains
+    neither a valid CacheEntry as node nor related data is found, the the social network
+    is queried for those two missing informations.
+*/
+
+/*
+    Using the caching system and implementing SocialNetworkInterface
+
+    The cache is rather fragile. If someone mess with the refcounting or with the
+    insertion and removal, it might creates segmentation faults, or memory leaks.
+    The best way is to never use methods and attributes that are private inside of
+    SocialNetworkInterfacePrivate, and to never use CacheEntry::ref() and
+    CacheEntry::deref().
+
+    In order to implement a SocialNetworkInterface, the following methods should be implemented:
+    - populateDataForLastNode()
+    - populateRelatedDataforLastNode()
+    - validateCacheEntryForLastNode()
+
+    The first method is used to initiate a request to the data of the last node. That
+    node is often freshly pushed to the stack using SocialNetworkInterface::populate().
+
+    The second method is used to initiate a request to the related data of the last node.
+
+    Finally, the last method is used when a query is in progress. Sometimes, the cached
+    values are only partial, and this method should be used to validate if the data
+    that is cached, and that is going to be used for the last node contains enough
+    information. If not, SNI will reload the node in order to get more data.
+
+    A set of private methods, available through the D-pointer, can be used:
+
+    - setStatus and setError can be used to make status and error management easier.
+      As usual setters, they set the data, and emit the corresponding signals.
+
+    - lastNode() is very useful in order to get the last node, that is the node
+      that is being populated.
+
+    - createCacheEntry() is used to create a CacheEntry, if the entry do not exist
+      in the cache. If it already exists, the entry from the cache is retrived. It
+      is useful for populating related data and node.
+
+    - setLastNodeCacheEntry() and setLastNodeData() are used to set the data of the
+      last node.
+
+    - atLastNode() is used to inform if the SocialNetworkInterface is currently
+      displaying the last node. And if it is the case, updateNodeAndContent() can
+      be used to automatically update all the attributes that influences the display.
+*/
+
+// TODO XXX: CacheEntry::ref and deref should be made private and friend with some classes
+// to prevent misuse.
+
+CacheEntryPrivate::CacheEntryPrivate()
+    : QSharedData()
+{
+    item = 0;
+    refCount = 0;
+}
+
+CacheEntryPrivate::~CacheEntryPrivate()
+{
+    if (item) {
+        item->deleteLater();
+        item = 0;
+    }
+}
+
+CacheEntry::CacheEntry()
+    : d_ptr(new CacheEntryPrivate())
+{
+}
+
 CacheEntry::CacheEntry(const QVariantMap &data, ContentItemInterface *item)
-    : data(data), item(item), refcount(0)
+    : d_ptr(new CacheEntryPrivate())
+{
+    Q_D(CacheEntry);
+    d->data = data;
+    d->item = item;
+}
+
+CacheEntry::CacheEntry(const QVariantMap &data, const QString &identifier,
+                       ContentItemInterface *item)
+    : d_ptr(new CacheEntryPrivate())
+{
+    Q_D(CacheEntry);
+    d->data = data;
+    d->identifier = identifier;
+    d->item = item;
+}
+
+CacheEntry::CacheEntry(const CacheEntry &other)
+    : d_ptr(other.d_ptr)
 {
 }
 
 CacheEntry::~CacheEntry()
 {
-    if (item) {
-        delete item;
+}
+
+bool CacheEntry::operator==(const CacheEntry &other) const
+{
+    Q_D(const CacheEntry);
+    return (d->item == other.item() && d->identifier == other.identifier()
+            && d->data == other.data());
+}
+
+bool CacheEntry::operator!=(const CacheEntry &other) const
+{
+    return !(*this == other);
+}
+
+bool CacheEntry::isNull() const
+{
+    Q_D(const CacheEntry);
+    return d->data.isEmpty() && (d->item == 0);
+}
+
+int CacheEntry::refcount() const
+{
+    Q_D(const CacheEntry);
+    return d->refCount;
+}
+
+void CacheEntry::ref()
+{
+    Q_D(CacheEntry);
+    d->refCount ++;
+}
+
+void CacheEntry::deref()
+{
+    Q_D(CacheEntry);
+    d->refCount --;
+}
+
+QString CacheEntry::identifier() const
+{
+    Q_D(const CacheEntry);
+    return d->identifier;
+}
+
+QVariantMap CacheEntry::data() const
+{
+    Q_D(const CacheEntry);
+    return d->data;
+}
+
+void CacheEntry::setData(const QVariantMap &data)
+{
+    Q_D(CacheEntry);
+    d->data = data;
+}
+
+const ContentItemInterface * CacheEntry::item() const
+{
+    Q_D(const CacheEntry);
+    return d->item;
+}
+
+ContentItemInterface * CacheEntry::item()
+{
+    Q_D(CacheEntry);
+    return d->item;
+}
+
+void CacheEntry::setItem(ContentItemInterface *item)
+{
+    Q_D(CacheEntry);
+    d->item = item;
+}
+
+const IdentifiableContentItemInterface * CacheEntry::identifiableItem() const
+{
+    Q_D(const CacheEntry);
+    return d->item->asIdentifiable();
+}
+
+IdentifiableContentItemInterface * CacheEntry::identifiableItem()
+{
+    Q_D(CacheEntry);
+    return d->item->asIdentifiable();
+}
+
+void CacheEntry::deleteItem()
+{
+    Q_D(CacheEntry);
+    d->item->deleteLater();
+    d->item = 0;
+}
+
+Node::Node():
+    d_ptr(new NodePrivate())
+{
+}
+
+Node::Node(const QString &identifier, const QSet<FilterInterface *> &filters):
+    d_ptr(new NodePrivate())
+{
+    Q_D(Node);
+    d->identifier = identifier;
+    d->filters = filters;
+    d->cacheEntry = CacheEntry();
+}
+
+Node::Node(const Node &other):
+    d_ptr(other.d_ptr)
+{
+}
+
+Node::~Node()
+{
+}
+
+bool Node::operator==(const Node &other) const
+{
+    Q_D(const Node);
+    return (d->identifier == other.identifier()) && (d->filters == other.filters());
+}
+
+bool Node::operator!=(const Node &other) const
+{
+    return !(*this == other);
+}
+
+bool Node::isNull() const
+{
+    Q_D(const Node);
+    return d->identifier.isEmpty();
+}
+
+QString Node::identifier() const
+{
+    Q_D(const Node);
+    return d->identifier;
+}
+
+QSet<FilterInterface *> Node::filters() const
+{
+    Q_D(const Node);
+    return d->filters;
+}
+
+CacheEntry Node::cacheEntry() const
+{
+    Q_D(const Node);
+    return d->cacheEntry;
+}
+
+void Node::setCacheEntry(const CacheEntry &cacheEntry)
+{
+    Q_D(Node);
+    if (!d->cacheEntry.isNull()) {
+        d->cacheEntry.deref();
+    }
+    d->cacheEntry = cacheEntry;
+    d->cacheEntry.ref();
+}
+
+QList<CacheEntry> Node::data() const
+{
+    Q_D(const Node);
+    return d->data;
+}
+
+void Node::setData(const QList<CacheEntry> &data)
+{
+    Q_D(Node);
+    foreach (CacheEntry cacheEntry, d->data) {
+        cacheEntry.deref();
+    }
+
+    d->data = data;
+
+    foreach (CacheEntry cacheEntry, d->data) {
+        cacheEntry.ref();
     }
 }
 
@@ -191,26 +550,227 @@ void ArbitraryRequestHandler::sslErrorsHandler(const QList<QSslError> &sslErrors
     isError = true;
 }
 
+
+SorterFunctor::SorterFunctor(SorterInterface *sorter):
+    m_sorter(sorter)
+{
+}
+
+bool SorterFunctor::operator()(const CacheEntry &first, const CacheEntry &second) const
+{
+    return m_sorter->firstLessThanSecond(first.data(), second.data());
+}
+
 SocialNetworkInterfacePrivate::SocialNetworkInterfacePrivate(SocialNetworkInterface *q)
-    : q_ptr(q)
-    , networkAccessManager(0)
-    , placeHolderNode(0)
+    : networkAccessManager(0)
+    , q_ptr(q)
     , initialized(false)
-    , repopulatingCurrentNode(false)
-    , error(SocialNetworkInterface::NoError)
+    , populatePending(false)
     , status(SocialNetworkInterface::Initializing)
-    , currentNodePosition(-1)
-    , nodeStackSize(5)
+    , error(SocialNetworkInterface::NoError)
+    , node(0)
+    , hasNextNode(false)
+    , hasPreviousNode(false)
+    , nodeStackIndex(-1)
     , arbitraryRequestHandler(0)
 {
 }
 
 SocialNetworkInterfacePrivate::~SocialNetworkInterfacePrivate()
 {
+    Q_Q(SocialNetworkInterface);
     // remove all cache entries.
-    QList<IdentifiableContentItemInterface*> cacheEntries = nodeContent.keys();
-    foreach (IdentifiableContentItemInterface *nodePtr, cacheEntries)
-        purgeDoomedNode(nodePtr);
+    nodeStack.clear();
+    if (!internalData.isEmpty()) {
+        q->beginRemoveRows(QModelIndex(), 0, internalData.count() - 1);
+        internalData.clear();
+        q->endRemoveRows();
+    }
+}
+
+QHash<int, QByteArray> SocialNetworkInterfacePrivate::roleNames()
+{
+    QHash<int, QByteArray> roles;
+    roles.insert(SocialNetworkInterface::ContentItemRole, "contentItem");
+    roles.insert(SocialNetworkInterface::ContentItemTypeRole, "contentItemType");
+    roles.insert(SocialNetworkInterface::ContentItemDataRole, "contentItemData" );
+    roles.insert(SocialNetworkInterface::ContentItemIdentifierRole, "contentItemIdentifier");
+    roles.insert(SocialNetworkInterface::SectionRole, "section");
+    return roles;
+}
+
+void SocialNetworkInterfacePrivate::setStatus(SocialNetworkInterface::Status newStatus)
+{
+    Q_Q(SocialNetworkInterface);
+    if (status != newStatus) {
+        status = newStatus;
+        emit q->statusChanged();
+    }
+}
+
+void SocialNetworkInterfacePrivate::setError(SocialNetworkInterface::ErrorType newError,
+                                             const QString &newErrorMessage)
+{
+    Q_Q(SocialNetworkInterface);
+    if (error != newError) {
+        error = newError;
+        emit q->errorChanged();
+    }
+    if (errorMessage != newErrorMessage) {
+        errorMessage = newErrorMessage;
+        emit q->errorMessageChanged();
+    }
+}
+
+Node SocialNetworkInterfacePrivate::lastNode() const
+{
+    if (nodeStack.isEmpty()) {
+        return Node();
+    }
+    return nodeStack.top();
+}
+
+CacheEntry SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &data,
+                                                           const QString &identifier)
+{
+    Q_Q(SocialNetworkInterface);
+    // Check if there is already a cached entry that corresponds
+    if (!identifier.isEmpty()) {
+        if (cache.contains(identifier)) {
+            // TODO: maybe do an update here
+            CacheEntry entry = cache.value(identifier);
+            entry.setData(data);
+            if (entry.item()) {
+                entry.deleteItem();
+                entry.setItem(q->contentItemFromData(q, data));
+            }
+            return cache.value(identifier);
+        }
+    }
+
+    if (!identifier.isEmpty()) {
+        CacheEntry cacheEntry (data, identifier);
+        cache.insert(identifier, cacheEntry);
+
+        return cacheEntry;
+    } else {
+        return CacheEntry(data);
+    }
+}
+
+void SocialNetworkInterfacePrivate::setLastNodeCacheEntry(const CacheEntry &cacheEntry)
+{
+    if (!nodeStack.top().cacheEntry().isNull()) {
+        qWarning() << Q_FUNC_INFO << "Data for the last node is already set";
+        return;
+    }
+
+    nodeStack.top().setCacheEntry(cacheEntry);
+}
+
+void SocialNetworkInterfacePrivate::setLastNodeData(const QList<CacheEntry> &data)
+{
+    nodeStack.top().setData(data);
+}
+
+bool SocialNetworkInterfacePrivate::atLastNode() const
+{
+    return (nodeStackIndex == nodeStack.count() - 1);
+}
+
+void SocialNetworkInterfacePrivate::updateNodeAndContent()
+{
+    Q_Q(SocialNetworkInterface);
+    // Update next and previous
+    bool newHasPreviousNode = true;
+    bool newHasNextNode = true;
+    if (nodeStackIndex == -1) {
+        newHasPreviousNode = false;
+    }
+
+    if (nodeStackIndex == nodeStack.count() - 1) {
+        newHasNextNode = false;
+    }
+
+    if (hasPreviousNode != newHasPreviousNode) {
+        hasPreviousNode = newHasPreviousNode;
+        emit q->hasPreviousNodeChanged();
+    }
+
+    if (hasNextNode != newHasNextNode) {
+        hasNextNode = newHasNextNode;
+        emit q->hasNextNodeChanged();
+    }
+
+    // If we are at the first place holder position
+    if (nodeStackIndex == -1) {
+
+        // We should set the node to be empty
+        if (node) {
+            node = 0;
+            emit q->nodeChanged();
+        }
+
+        // The model should be empty as well
+        if (!internalData.isEmpty()) {
+            q->beginRemoveRows(QModelIndex(), 0, internalData.count() - 1);
+            internalData.clear();
+            emit q->countChanged();
+            q->endRemoveRows();
+        }
+        return;
+    }
+
+    // If the current node is not created
+    if (!currentNode().cacheEntry().identifiableItem()
+        && !currentNode().cacheEntry().data().isEmpty()) {
+        ContentItemInterface *item
+                = q->contentItemFromData(const_cast<SocialNetworkInterface*>(q),
+                                         currentNode().cacheEntry().data());
+        // Update the cache.
+        currentNode().cacheEntry().setItem(item);
+    }
+
+    if (node != currentNode().cacheEntry().identifiableItem()) {
+        // Create a node if not created
+
+        node = currentNode().cacheEntry().identifiableItem();
+        emit q->nodeChanged();
+    }
+
+    bool modelShouldBeChanged = false;
+    bool sameCount = false;
+    if (internalData.count() != currentNode().data().count()) {
+        modelShouldBeChanged = true;
+    }
+
+    if (!modelShouldBeChanged) {
+        foreach (CacheEntry data, currentNode().data()) {
+            if (!internalData.contains(data)) {
+                modelShouldBeChanged = true;
+                sameCount = true;
+                break;
+            }
+        }
+    }
+
+    if (modelShouldBeChanged) {
+        if (internalData.count() > 0) {
+            q->beginRemoveRows(QModelIndex(), 0, internalData.count() - 1);
+            internalData.clear();
+            q->endRemoveRows();
+        }
+
+        if (currentNode().data().count() > 0) {
+            q->beginInsertRows(QModelIndex(), 0, currentNode().data().count() - 1);
+            internalData = q->filteredData(currentNode().data());
+            q->endInsertRows();
+        }
+
+        if (!sameCount) {
+            emit q->countChanged();
+        }
+    }
 }
 
 void SocialNetworkInterfacePrivate::init()
@@ -218,22 +778,9 @@ void SocialNetworkInterfacePrivate::init()
     Q_Q(SocialNetworkInterface);
     networkAccessManager = new QNetworkAccessManager(q);
 
-    headerData.insert(SocialNetworkInterface::ContentItemRole, "contentItem");
-    headerData.insert(SocialNetworkInterface::ContentItemTypeRole, "contentItemType");
-    headerData.insert(SocialNetworkInterface::ContentItemDataRole, "contentItemData" );
-    headerData.insert(SocialNetworkInterface::ContentItemIdentifierRole, "contentItemIdentifier");
-    headerData.insert(SocialNetworkInterface::SectionRole, "section");
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    q->setRoleNames(headerData);
+    q->setRoleNames(roleNames());
 #endif
-
-    // Construct the placeholder node.  This node is used as a placeholder
-    // when the client sets a specific nodeIdentifier until the node can
-    // be retrieved from the social network.
-    placeHolderNode = new IdentifiableContentItemInterface(q);
-    placeHolderNode->classBegin();
-    placeHolderNode->componentComplete();
-
 }
 
 /*! \internal */
@@ -328,392 +875,60 @@ void SocialNetworkInterfacePrivate::sorterDestroyedHandler(QObject *object)
     sorters.removeAll(sorter);
 }
 
-/*
-    Returns the current node which is the central content item.
-    The model is populated with data related to the node.
-    The current node is always owned by the SocialNetwork base class;
-    it might be deleted at any time (e.g., if the cache entry gets purged).
-*/
-IdentifiableContentItemInterface *SocialNetworkInterfacePrivate::currentNode() const
+Node SocialNetworkInterfacePrivate::currentNode() const
 {
-    // caller does NOT take ownership.  We can (and will) delete it whenever we like.
-
-    if (currentNodePosition >= 0 && currentNodePosition < nodeStack.size())
-        return nodeStack.at(currentNodePosition);
-    return 0;
+    return nodeStack.at(nodeStackIndex);
 }
 
-/*! \internal */
-QString SocialNetworkInterfacePrivate::currentNodeIdentifier() const
+void SocialNetworkInterfacePrivate::checkCacheEntryRefcount(const CacheEntry &entry)
 {
-    if (currentNodePosition >= 0 && currentNodePosition < nodeStack.size())
-        return nodeStack.at(currentNodePosition)->identifier();
-    return QString();
+    if (cache.contains(entry.identifier()) && entry.refcount() == 0) {
+        cache.remove(entry.identifier());
+    }
 }
 
-/*! \internal */
-void SocialNetworkInterfacePrivate::purgeDoomedNode(IdentifiableContentItemInterface *n)
+bool SocialNetworkInterfacePrivate::deleteLastNode()
 {
-    QList<CacheEntry*> cacheData = nodeContent.values(n);
-    foreach (CacheEntry *currData, cacheData)
-        removeEntryFromNodeContent(n, currData);
-    CacheEntry *nodeCacheEntry = findCacheEntry(n, false);
-    if (nodeCacheEntry)
-        derefCacheEntry(nodeCacheEntry);
+    if (cache.isEmpty()) {
+        qWarning() << Q_FUNC_INFO << "The node stack is empty";
+    }
+
+    Node node = nodeStack.pop();
+    node.cacheEntry().deref();
+
+    foreach (CacheEntry entry, node.data()) {
+        entry.deref();
+    }
+
+    checkCacheEntryRefcount(node.cacheEntry());
+    foreach (CacheEntry entry, node.data()) {
+        checkCacheEntryRefcount(entry);
+    }
+    return true;
 }
 
-/*! \internal */
-void SocialNetworkInterfacePrivate::maybePurgeDoomedNodes(int count, int direction, IdentifiableContentItemInterface *makingSpaceFor)
+void SocialNetworkInterfacePrivate::itemDataChangedHandler()
 {
-    // Removes \a count nodes from the node stack, to make space
-    // for the given node \a makingSpaceFor.  The nodes
-    // will be removed from the top (most recent) of the stack
-    // if direction == 1, and from the bottom (least recent)
-    // of the stack if direction == 0.
-    // Also purges the associated cached content data, if they
-    // don't also appear elsewhere in the stack.
-
-    if (direction != 0 && direction != 1) {
-        qWarning() << Q_FUNC_INFO << "Error: invalid direction specified!";
+    Q_Q(SocialNetworkInterface);
+    IdentifiableContentItemInterface *item
+            = qobject_cast<IdentifiableContentItemInterface *>(q->sender());
+    if (!item) {
         return;
     }
 
-    if (count > nodeStack.size()) {
-        qWarning() << Q_FUNC_INFO << "Error: not that many nodes in the stack!";
-        return;
-    }
+    QString identifier = item->identifier();
+    if (cache.contains(identifier)) {
+        // Check data and update if needed
+        CacheEntry cacheEntry = cache.value(identifier);
 
-    // XXX TODO: this is a terrible algorithm, that iterates over the nodeStack way too many times.
-    for (int i = count; i > 0; --i) {
-        // remove the ToS (or BoS) node.
-        IdentifiableContentItemInterface *doomedNode = direction > 0 ? nodeStack.takeLast()
-                                                                     : nodeStack.takeFirst();
-        if (direction == 0) {
-            // the current node position needs to be reduced, as all nodes' positions shift down.
-            currentNodePosition--;
-        }
-
-        // determine whether we need to purge the doomed node.
-        if (!nodeStack.contains(doomedNode) && doomedNode != makingSpaceFor) {
-            // the node doesn't appear anywhere else in the navigation breadcrumb trail,
-            // and it isn't the node which we're making space for.
-            // so we have to delete it and purge our cache of content items for the node.
-            purgeDoomedNode(doomedNode);
-        }
-    }
-}
-
-/*! \internal */
-void SocialNetworkInterfacePrivate::pushPlaceHolderNode()
-{
-    pushNode(placeHolderNode);
-}
-
-/*! \internal */
-void SocialNetworkInterfacePrivate::pushNode(IdentifiableContentItemInterface *node)
-{
-    // the caller is responsible for emitting dataChanged() etc.
-
-    if (node == 0) {
-        qWarning() << Q_FUNC_INFO << "Attempted to push null node!";
-        return;
-    }
-
-    if (currentNodePosition >= nodeStack.size()) {
-        qWarning() << Q_FUNC_INFO << "Current node not on stack!";
-        return;
-    }
-
-    IdentifiableContentItemInterface *currentNode = 0;
-    if (currentNodePosition >= 0)
-        currentNode = nodeStack.at(currentNodePosition);
-
-    if (currentNode == node && currentNode != placeHolderNode)
-        return; // nothing to do.
-
-    // Check to see if we need to replace the placeholder or current node.
-    if (currentNode == placeHolderNode || repopulatingCurrentNode) {
-        // this will happen when the node data that the
-        // derived type requested is received.
-        repopulatingCurrentNode = false;
-        if (currentNodePosition != (nodeStack.size() - 1)) {
-            qWarning() << Q_FUNC_INFO << "Error: placeholder node not the ToS!";
-        } else {
-            nodeStack.removeLast();
-            nodeStack.append(node);
-        }
-        return;
-    }
-
-    // Otherwise, we're pushing a new navigable node to the nodeStack.
-    if (currentNodePosition != (nodeStack.size()-1)) {
-        // current navigation position is not the top of stack
-        // ie, they pushed a bunch of nodes, then they called
-        // SNI::previousNode() one or more times, and now they
-        // are pushing a node.  This node becomes the new top
-        // of stack.  Purge any cache entries beyond the current
-        // position if applicable.
-        maybePurgeDoomedNodes(currentNodePosition+1, 1, node);
-    } else if (nodeStack.size() == nodeStackSize) {
-        // current node position is already top of stack, and
-        // we've reached our max for cached navigation steps.
-        maybePurgeDoomedNodes(1, 0, node); // purge the bottom (least recently used) node.
-    }
-
-    nodeStack.append(node);
-    currentNodePosition = nodeStack.size() - 1; // end up pointing to ToS.
-}
-
-/*! \internal */
-void SocialNetworkInterfacePrivate::nextNode()
-{
-    // the caller is responsible for emitting dataChanged() etc.
-
-    if (currentNodePosition == -1 || nodeStack.size() == 0) {
-        qWarning() << Q_FUNC_INFO << "No nodes in cache!";
-        return;
-    }
-
-    if (currentNodePosition == (nodeStack.size() - 1)) {
-        qWarning() << Q_FUNC_INFO << "Already at last node in cache!";
-        return;
-    }
-
-    currentNodePosition ++;
-}
-
-/*! \internal */
-void SocialNetworkInterfacePrivate::prevNode()
-{
-    // the caller is responsible for emitting dataChanged() etc.
-
-    if (currentNodePosition == -1 || nodeStack.size() == 0) {
-        qWarning() << Q_FUNC_INFO << "No nodes in cache!";
-        return;
-    }
-
-    if (currentNodePosition == 0) {
-        qWarning() << Q_FUNC_INFO << "Already at first node in cache!";
-        return;
-    }
-
-    currentNodePosition --;
-}
-
-/*! \internal */
-IdentifiableContentItemInterface *SocialNetworkInterfacePrivate::findCachedNode(const QString &nodeIdentifier)
-{
-    for (int i = 0; i < nodeStack.size(); ++i) {
-        if (nodeStack.at(i)->identifier() == nodeIdentifier) {
-            return nodeStack.at(i);
-        }
-    }
-
-    return 0;
-}
-
-/*! \internal */
-QList<CacheEntry*> SocialNetworkInterfacePrivate::cachedContent(IdentifiableContentItemInterface *node, bool *ok) const
-{
-    // Types derived from SocialNetworkInterface should call this to retrieve cached content for the node
-
-    if (!nodeContent.contains(node)) {
-        *ok = false;
-        return QList<CacheEntry*>();
-    }
-
-    *ok = true;
-    return nodeContent.values(node);
-}
-
-/*! \internal */
-CacheEntry *SocialNetworkInterfacePrivate::findCacheEntry(const QVariantMap &data, bool create)
-{
-    // have to do a slow search.  avoid this if possible.
-    foreach (CacheEntry *e, cache) {
-        if (e->data == data)
-            return e;
-    }
-
-    if (!create)
-        return 0;
-
-    // no such cache entry.  create it, but DON'T append it to the cache.
-    // we append it to the cache (and take ownership of it) when they call
-    // addEntryToNodeContent().
-    CacheEntry *newEntry = new CacheEntry(data);
-    return newEntry;
-}
-
-/*! \internal */
-CacheEntry *SocialNetworkInterfacePrivate::findCacheEntry(ContentItemInterface *item, bool create)
-{
-    if (cachedItems.contains(item))
-        return cachedItems.value(item);
-
-    if (!create)
-        return 0;
-
-    // no such cache entry.  create it, but DON'T append it to the cache.
-    // we append it to the cache (and take ownership of it) when they call
-    // addEntryToNodeContent().
-    CacheEntry *newEntry = new CacheEntry(item->data(), item);
-    return newEntry;
-}
-
-/*! \internal */
-void SocialNetworkInterfacePrivate::addEntryToNodeContent(IdentifiableContentItemInterface *item, CacheEntry *entry)
-{
-    if (!nodeContent.contains(item) && currentNode() != item) {
-        qWarning() << Q_FUNC_INFO << "No such node:" << item;
-        return;
-    }
-
-    if (nodeContent.find(item, entry) != nodeContent.end()) {
-        qWarning() << Q_FUNC_INFO << "Entry:" << entry << "already cached as content for node:" << item;
-        return;
-    }
-
-    entry->refcount++;
-    if (entry->refcount == 1) {
-        // new cache entry.
-        cache.append(entry);
-        if (entry->item && !cachedItems.contains(entry->item)) {
-            cachedItems.insert(entry->item, entry);
-        }
-    }
-
-    nodeContent.insert(item, entry);
-}
-
-/*! \internal */
-void SocialNetworkInterfacePrivate::removeEntryFromNodeContent(IdentifiableContentItemInterface *item, CacheEntry *entry)
-{
-    if (entry == 0)
-        return;
-
-    int removeCount = nodeContent.remove(item, entry);
-    if (removeCount == 0) {
-        qWarning() << Q_FUNC_INFO << "Entry:" << entry << "is not cached as content for node:" << item;
-        return;
-    } else if (removeCount > 1) {
-        qWarning() << Q_FUNC_INFO << "Entry:" << entry << "was cached" << removeCount << "times as content for node:" << item;
-    }
-
-    derefCacheEntry(entry);
-}
-
-/*! \internal */
-void SocialNetworkInterfacePrivate::updateCacheEntry(CacheEntry *entry, ContentItemInterface *item, const QVariantMap &data) const
-{
-    if (item) {
-        if (entry->item) {
-            qWarning() << Q_FUNC_INFO << "Warning: modifying instantiated item for existing cache entry"; // probably an error.
-            cachedItems.remove(entry->item);
-        }
-        entry->item = item;
-        cachedItems.insert(item, entry);
-    }
-    if (data != QVariantMap()) {
-        entry->data = data;
-    }
-}
-
-/*! \internal */
-void SocialNetworkInterfacePrivate::derefCacheEntry(CacheEntry *entry)
-{
-    if (entry->refcount == 0)
-        qWarning() << Q_FUNC_INFO << "Entry:" << entry << "has not been referenced in the cache";
-
-    entry->refcount--;
-    if (entry->refcount <= 0) {
-        cache.removeAll(entry);
-        if (entry->item) {
-            cachedItems.remove(entry->item);
-        }
-        delete entry;
-    }
-}
-
-/*
-    This function should be called by specific implementations of the
-    SocialNetwork interface, to create a cache entry for the current
-    node whose data is the given \a data, as part of the implementation
-    for the \c populateDataForNode() functions.
-
-    After the cache entries for the current node have all been created,
-    the implementation should then call
-    \c SocialNetworkInterfacePrivate::populateCache().
-*/
-CacheEntry *SocialNetworkInterfacePrivate::createUncachedEntry(const QVariantMap &data)
-{
-    // this function should be called by SocialNetworkInterface derived-types when
-    // they retrieve data from the service during populateDataForNode().
-    // After creating an uncached entry for each related content data object they receive
-    // from the service, they should call populateCache().
-    CacheEntry *newEntry = new CacheEntry(data);
-    return newEntry;
-}
-
-/*
-    This function should be called by specific implementations of the
-    SocialNetwork interface, to populate the cache for the current
-    node \a n with the cache entries \a c, as part of the implementation
-    for the \c populateDataForNode() functions.
-
-    This function will set \a ok to true if the node \a n is the current
-    node as expected, and the cache could be populated.
-*/
-void SocialNetworkInterfacePrivate::populateCache(IdentifiableContentItemInterface *node, const QList<CacheEntry*> cacheEntries, bool *ok)
-{
-    // Types derived from SocialNetworkInterface should call this to populate the cache
-    // NOTE: we don't have any limits on cache size.  XXX TODO: something sensible?
-
-    if (currentNode() != node) {
-        // the populated node is not the current node... this is an error.
-        qWarning() << Q_FUNC_INFO << "Attempted to populate cache for non-current node!";
-        *ok = false;
-        return;
-    }
-
-    *ok = true;
-
-    QList<CacheEntry*> existingGoodEntries;
-    QList<CacheEntry*> newCacheEntries;
-    if (nodeContent.contains(node)) {
-        // updating existing cache entry.
-        QList<CacheEntry*> oldData = nodeContent.values(node);
-        QList<CacheEntry*> doomedData;
-        foreach (CacheEntry *currData, oldData) {
-            if (cacheEntries.contains(currData)) {
-                existingGoodEntries.append(currData);
-            } else {
-                doomedData.append(currData);
+        if (cacheEntry.item() == item) {
+            if (cacheEntry.data() != item->data()) {
+                cacheEntry.setData(item->data());
             }
         }
-
-        // purge old entries from the cache
-        foreach (CacheEntry *doomedContent, doomedData) {
-            // not contained in the updated cache.
-            removeEntryFromNodeContent(node, doomedContent);
-        }
-
-        // add new entries to the cache
-        foreach (CacheEntry *newEntry, cacheEntries) {
-            if (!existingGoodEntries.contains(newEntry)) {
-                newCacheEntries.append(newEntry);
-            }
-        }
-    } else {
-        // new cache entry.
-        newCacheEntries = cacheEntries;
-    }
-
-    // populate the cache for the node n from the content c.
-    foreach (CacheEntry *currData, newCacheEntries) {
-        addEntryToNodeContent(node, currData);
     }
 }
+
 
 //----------------------------------------------------
 
@@ -768,8 +983,7 @@ SocialNetworkInterface::~SocialNetworkInterface()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 QHash<int, QByteArray> SocialNetworkInterface::roleNames() const
 {
-    Q_D(const SocialNetworkInterface);
-    return d->headerData;
+    return SocialNetworkInterfacePrivate::roleNames();
 }
 #endif
 
@@ -785,6 +999,13 @@ void SocialNetworkInterface::componentComplete()
     Q_D(SocialNetworkInterface);
     // If you override this implementation, you MUST set d->initialized=true.
     d->initialized = true;
+    d->setStatus(Idle);
+
+    if (d->populatePending) {
+        populate();
+        d->populatePending = false;
+        return;
+    }
 }
 
 /*!
@@ -800,24 +1021,15 @@ void SocialNetworkInterface::componentComplete()
 void SocialNetworkInterface::nextNode()
 {
     Q_D(SocialNetworkInterface);
-    IdentifiableContentItemInterface *oldNode = d->currentNode();
-    d->nextNode();
-    IdentifiableContentItemInterface *newNode = d->currentNode();
-    if (oldNode != newNode) {
-        bool hasCachedContent = false;
-        QList<CacheEntry*> data = d->cachedContent(newNode, &hasCachedContent);
-        if (hasCachedContent) {
-            // call derived class data update:
-            //   perform filtering/sorting based on the defined stuff.
-            //   and then emit dataChanged() etc signals.
-            updateInternalData(data);
-        } else {
-            // call derived class data populate:
-            //   d->populateCache() etc once it's finished retrieving.
-            //   and then updateInternalData() itself.
-            populateDataForNode(newNode);
-        }
+
+    d->nodeStackIndex ++;
+    if (d->nodeStackIndex >= d->nodeStack.count()) {
+        d->nodeStackIndex = d->nodeStack.count() - 1;
+        qWarning() << Q_FUNC_INFO << "Already at last node in cache !";
+        return;
     }
+
+    d->updateNodeAndContent();
 }
 
 /*!
@@ -833,24 +1045,15 @@ void SocialNetworkInterface::nextNode()
 void SocialNetworkInterface::previousNode()
 {
     Q_D(SocialNetworkInterface);
-    IdentifiableContentItemInterface *oldNode = d->currentNode();
-    d->prevNode();
-    IdentifiableContentItemInterface *newNode = d->currentNode();
-    if (oldNode != newNode) {
-        bool hasCachedContent = false;
-        QList<CacheEntry*> data = d->cachedContent(newNode, &hasCachedContent);
-        if (hasCachedContent) {
-            // call derived class data update:
-            //   perform filtering/sorting based on the defined stuff.
-            //   and then emit dataChanged() etc signals.
-            updateInternalData(data);
-        } else {
-            // call derived class data populate:
-            //   d->populateCache() etc once it's finished retrieving.
-            //   and then updateInternalData() itself.
-            populateDataForNode(newNode);
-        }
+    if (d->nodeStackIndex <= -1) {
+        d->nodeStackIndex = -1;
+        qWarning() << Q_FUNC_INFO << "Already at first node in cache !";
+        return;
     }
+
+
+    d->nodeStackIndex --;
+    d->updateNodeAndContent();
 }
 
 /*!
@@ -940,53 +1143,15 @@ QString SocialNetworkInterface::errorMessage() const
 QString SocialNetworkInterface::nodeIdentifier() const
 {
     Q_D(const SocialNetworkInterface);
-    if (d->pendingCurrentNodeIdentifier.isEmpty())
-        return d->currentNodeIdentifier();  // normal case.
-    return d->pendingCurrentNodeIdentifier; // status == Fetching, not sure if it's real yet.
+    return d->nodeIdentifier;
 }
 
 void SocialNetworkInterface::setNodeIdentifier(const QString &contentItemIdentifier)
 {
     Q_D(SocialNetworkInterface);
-    IdentifiableContentItemInterface *cachedNode = d->findCachedNode(contentItemIdentifier);
-    if (d->currentNode() && contentItemIdentifier == d->currentNode()->identifier()) {
-        // resetting the current node.  This tells us to reload the node, clear its cache and repopulate.
-        d->repopulatingCurrentNode = true;
-        d->pendingCurrentNodeIdentifier = contentItemIdentifier;
-        populateDataForNode(contentItemIdentifier); // "unseen node" without pushing placeholder.
-    } else if (!cachedNode) {
-        // Unseen node.
-        // call derived class data populate:
-        //   d->populateCache() etc once it's finished retrieving.
-        //   d->pushNode(newNodePtr).
-        //   and then updateInternalData() itself.
-        d->pendingCurrentNodeIdentifier = contentItemIdentifier;
-        d->pushPlaceHolderNode();
-        emit nodeChanged();
-        populateDataForNode(contentItemIdentifier); // XXX TODO: do we really want to trigger populate?  or wait for user to call populate?
-    } else {
-        // We've seen this node before and have it cached.
-        bool hasCachedContent = false;
-        QList<CacheEntry*> data = d->cachedContent(cachedNode, &hasCachedContent);
-        if (hasCachedContent) {
-            // call derived class data update:
-            //   perform filtering/sorting based on the defined stuff.
-            //   and then emit dataChanged() etc signals.
-            d->pushNode(cachedNode);
-            emit nodeChanged();
-            updateInternalData(data);
-        } else {
-            // Despite having no content cached, we still call the same codepath.
-            // This will happen if the given node has no related data.
-            // ie, if the cached node was found in the nodeStack but not in nodeContent.
-            // XXX TODO: reload the content from network, in case more has arrived?
-            // call derived class data update:
-            //   perform filtering/sorting based on the defined stuff.
-            //   and then emit dataChanged() etc signals.
-            d->pushNode(cachedNode);
-            emit nodeChanged();
-            updateInternalData(data);
-        }
+    if (d->nodeIdentifier != contentItemIdentifier) {
+        d->nodeIdentifier = contentItemIdentifier;
+        emit nodeIdentifierChanged();
     }
 }
 
@@ -1004,7 +1169,7 @@ void SocialNetworkInterface::setNodeIdentifier(const QString &contentItemIdentif
 IdentifiableContentItemInterface *SocialNetworkInterface::node() const
 {
     Q_D(const SocialNetworkInterface);
-    return d->currentNode();
+    return d->node;
 }
 
 /*!
@@ -1017,6 +1182,18 @@ QVariantMap SocialNetworkInterface::relevanceCriteria() const
 {
     Q_D(const SocialNetworkInterface);
     return d->relevanceCriteria;
+}
+
+bool SocialNetworkInterface::hasNextNode() const
+{
+    Q_D(const SocialNetworkInterface);
+    return d->hasNextNode;
+}
+
+bool SocialNetworkInterface::hasPreviousNode() const
+{
+    Q_D(const SocialNetworkInterface);
+    return d->hasPreviousNode;
 }
 
 void SocialNetworkInterface::setRelevanceCriteria(const QVariantMap &relevanceCriteria)
@@ -1098,50 +1275,42 @@ int SocialNetworkInterface::columnCount(const QModelIndex &index) const
 QVariant SocialNetworkInterface::data(const QModelIndex &index, int role) const
 {
     Q_D(const SocialNetworkInterface);
-    if (!index.isValid() || index.row() >= d->internalData.count() || index.row() < 0)
+    if (!index.isValid() || index.row() >= d->internalData.count() || index.row() < 0) {
         return QVariant();
+    }
 
-    CacheEntry *cacheEntry = d->internalData.at(index.row());
+    CacheEntry cacheEntry = d->internalData.at(index.row());
 
     switch (role) {
     case ContentItemTypeRole:
-        return QVariant::fromValue(cacheEntry->data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt());
+        return QVariant::fromValue(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt());
     case ContentItemDataRole:
-        return QVariant::fromValue(cacheEntry->data);
+        return QVariant::fromValue(cacheEntry.data());
     case ContentItemIdentifierRole:
-        return QVariant::fromValue(cacheEntry->data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString());
+        return QVariant::fromValue(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString());
     case ContentItemRole:
         {
-            if (cacheEntry->item)
-                return QVariant::fromValue(cacheEntry->item);
-            // instantiate the item.
-            ContentItemInterface *newItem = contentItemFromData(const_cast<SocialNetworkInterface*>(this), cacheEntry->data);
-            d->updateCacheEntry(cacheEntry, newItem); // update the cache.
+            if (cacheEntry.item()) {
+                return QVariant::fromValue(cacheEntry.item());
+            }
+            // Method here ?
+            // Instantiate the item.
+            // Should be exported into a specific method
+            ContentItemInterface *newItem = contentItemFromData(const_cast<SocialNetworkInterface*>(this),
+                                                                cacheEntry.data());
+            connect(newItem, SIGNAL(dataChanged()), this, SLOT(itemDataChangedHandler()));
+
+            // Update the cache.
+            cacheEntry.setItem(newItem);
             return QVariant::fromValue(newItem);
         }
         break;
     case SectionRole:
-        return dataSection(cacheEntry->data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt(), cacheEntry->data);
+        return dataSection(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt(),
+                           cacheEntry.data());
     default:
         return QVariant();
     }
-}
-
-QVariant SocialNetworkInterface::headerData(int section, Qt::Orientation orientation, int role) const
-{
-    Q_D(const SocialNetworkInterface);
-    // Not a table model, so perhaps this is wrong.
-
-    if (orientation != Qt::Horizontal)
-        return QVariant();
-
-    if (role == Qt::DisplayRole) {
-        if (section < d->headerData.size()) {
-            return d->headerData.value(section);
-        }
-    }
-
-    return QVariant();
 }
 
 /*!
@@ -1193,7 +1362,81 @@ void SocialNetworkInterface::setContentItemData(ContentItemInterface *contentIte
 */
 void SocialNetworkInterface::populate()
 {
-    qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
+    Q_D(SocialNetworkInterface);
+
+    switch (d->status) {
+    case Initializing:
+        // Should queue the populate and wait for initialized complete
+        d->populatePending = true;
+        return;
+    case Busy:
+        qWarning() << Q_FUNC_INFO << "Cannot populate: another populate is already running";
+        return;
+    case Invalid:
+        qWarning() << Q_FUNC_INFO
+                   << "The social network is not in a valid state, no operation can be complete";
+        return;
+    default:
+        break;
+    }
+
+    Node node (d->nodeIdentifier, d->filters.toSet());
+    if (node.isNull()) {
+        qWarning() << Q_FUNC_INFO << "The node is null. It should not be added";
+        return;
+    }
+
+    if (!d->nodeStack.isEmpty()) {
+        if (node == d->lastNode()) {
+            qWarning() << Q_FUNC_INFO
+                       << "The node being added is already the last one.";
+            return;
+        }
+    }
+
+    bool callPopulateNodeData = false;
+    bool callPopulateNodeRelatedData = false;
+
+    // Check if there is already a node corresponding to that node
+    int cachedNodeIndex = d->nodeStack.indexOf(node);
+    if (cachedNodeIndex != -1) {
+        const Node &cachedNode = d->nodeStack.at(cachedNodeIndex);
+
+        node.setCacheEntry(cachedNode.cacheEntry());
+        node.setData(cachedNode.data());
+
+        d->setStatus(SocialNetworkInterface::Idle);
+    } else if (d->cache.contains(d->nodeIdentifier)) {
+        if (validateCacheEntryForLastNode(d->cache.value(d->nodeIdentifier).data())) {
+            node.setCacheEntry(d->cache.value(d->nodeIdentifier));
+            callPopulateNodeRelatedData = true;
+        } else {
+            callPopulateNodeData = true;
+        }
+        d->setStatus(SocialNetworkInterface::Busy);
+    } else {
+        d->setStatus(SocialNetworkInterface::Busy);
+        callPopulateNodeData = true;
+    }
+
+    while (d->nodeStack.count() > d->nodeStackIndex + 1) {
+        d->deleteLastNode();
+    }
+    d->nodeStack.append(node);
+
+    if (callPopulateNodeData) {
+        populateDataForLastNode();
+    }
+
+    if (callPopulateNodeRelatedData) {
+        populateRelatedDataforLastNode();
+    }
+}
+
+bool SocialNetworkInterface::isInitialized() const
+{
+    Q_D(const SocialNetworkInterface);
+    return d->initialized;
 }
 
 /*
@@ -1205,7 +1448,8 @@ void SocialNetworkInterface::populate()
     be retrieved, to minimise network usage.  The \c extraData parameter is
     implementation specific, and may be used to modify the behaviour of the request.
 */
-QNetworkReply *SocialNetworkInterface::getRequest(const QString &, const QString &, const QStringList &, const QVariantMap &)
+QNetworkReply *SocialNetworkInterface::getRequest(const QString &, const QString &,
+                                                  const QStringList &, const QVariantMap &)
 {
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
     return 0;
@@ -1219,7 +1463,8 @@ QNetworkReply *SocialNetworkInterface::getRequest(const QString &, const QString
     The \c extraData parameter is implementation specific, and may be used to
     modify the behaviour of the request.
 */
-QNetworkReply *SocialNetworkInterface::postRequest(const QString &, const QString &, const QVariantMap &, const QVariantMap &)
+QNetworkReply *SocialNetworkInterface::postRequest(const QString &, const QString &,
+                                                   const QVariantMap &, const QVariantMap &)
 {
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
     return 0;
@@ -1233,7 +1478,8 @@ QNetworkReply *SocialNetworkInterface::postRequest(const QString &, const QStrin
     \c extraPath parameter.  The \c extraData parameter is implementation specific,
     and may be used to modify the behaviour of the request.
 */
-QNetworkReply *SocialNetworkInterface::deleteRequest(const QString &, const QString &, const QVariantMap &)
+QNetworkReply *SocialNetworkInterface::deleteRequest(const QString &, const QString &,
+                                                     const QVariantMap &)
 {
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
     return 0;
@@ -1256,58 +1502,44 @@ QString SocialNetworkInterface::dataSection(int type, const QVariantMap &data) c
     role for a specific model index is requested via the model data() function, to
     instantiate the content item from the content item data lazily.
 */
-ContentItemInterface *SocialNetworkInterface::contentItemFromData(QObject *, const QVariantMap &) const
+ContentItemInterface *SocialNetworkInterface::contentItemFromData(QObject *parent,
+                                                                  const QVariantMap &data) const
 {
+    Q_UNUSED(parent)
+    Q_UNUSED(data)
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
     return 0;
 }
 
-/*
-    Specific implementations of the SocialNetwork interface MUST implement this
-    function.  It must be implemented so that:
-    1) the provided data should have non-filters-matching-entries removed
-    2) the filtered data should then be sorted according to the sorters
-    3) the d->internalData list should be set
-    4) finally, dataChanged() and any other model signals should be emitted
-*/
-void SocialNetworkInterface::updateInternalData(QList<CacheEntry*>)
+QList<CacheEntry> SocialNetworkInterface::filteredData(const QList<CacheEntry> &data)
 {
-    qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
+    Q_D(SocialNetworkInterface);
+    QList<CacheEntry> sortedData = data;
+    foreach (SorterInterface *sorter, d->sorters) {
+        SorterFunctor functor (sorter);
+        std::stable_sort(sortedData.begin(), sortedData.end(), functor);
+    }
+
+    return sortedData;
 }
 
-/*
-    Specific implementations of the SocialNetwork interface MUST implement this
-    function.  It must be implemented so that:
-    0) the current model data should be set to empty
-    1) the related content data should be requested from the service, according to the filters
-    2) when received, the related content data should be used to populate the cache via d->populateCache()
-    3) finally, updateInternalData() should be called, passing in the new cache data.
-*/
-void SocialNetworkInterface::populateDataForNode(IdentifiableContentItemInterface *)
+void SocialNetworkInterface::populateDataForLastNode()
 {
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
+    return;
 }
 
-/*
-    Specific implementations of the SocialNetwork interface MUST implement this
-    function.  It must be implemented so that:
-    0) the current model data should be set to empty
-    1) the given node is requested from the service
-    2) when received, the node should be pushed to the nodeStack via d->pushNode(n)
-    3) the related content data should be requested from the service, according to the filters
-    4) when received, the related content data should be used to populate the cache via d->populateCache()
-    5) finally, updateInternalData() should be called, passing in the new cache data.
-*/
-void SocialNetworkInterface::populateDataForNode(const QString &)
+void SocialNetworkInterface::populateRelatedDataforLastNode()
 {
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
+    return;
 }
 
-bool SocialNetworkInterface::isInitialized() const
+bool SocialNetworkInterface::validateCacheEntryForLastNode(const QVariantMap &cacheEntryData)
 {
-    Q_D(const SocialNetworkInterface);
-    // Helper function for ContentItemInterface
-    return d->initialized;
+    Q_UNUSED(cacheEntryData)
+    qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
+    return true;
 }
 
 #include "moc_socialnetworkinterface.cpp"

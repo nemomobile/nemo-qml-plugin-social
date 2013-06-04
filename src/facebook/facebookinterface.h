@@ -101,17 +101,19 @@ Q_SIGNALS:
 
     // SocialNetworkInterface
 public:
-    void componentComplete();
-    Q_INVOKABLE void populate();
+//    void componentComplete();
+//    Q_INVOKABLE void populate();
 protected:
     QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply *postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply *deleteRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &extraData);
     QString dataSection(int type, const QVariantMap &data) const;
-    void updateInternalData(QList<CacheEntry*> data);
-    void populateDataForNode(IdentifiableContentItemInterface *currentNode);
-    void populateDataForNode(const QString &unseenNodeIdentifier);
+    //void updateInternalData(QList<CacheEntry*> data);
+    //void populateDataForNode(IdentifiableContentItemInterface *currentNode);
+    //void populateDataForNode(const QString &unseenNodeIdentifier);
     ContentItemInterface *contentItemFromData(QObject *parent, const QVariantMap &data) const;
+    void populateDataForLastNode();
+    void populateRelatedDataforLastNode();
 
     // private API for all Facebook adapters to use
 private:

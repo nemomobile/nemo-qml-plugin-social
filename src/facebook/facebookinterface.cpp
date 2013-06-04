@@ -80,11 +80,9 @@ QVariant FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(const QString &key, const QVarian
 FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
     : SocialNetworkInterfacePrivate(q)
     , currentUserIdentifier(FACEBOOK_ME)
-    , populatePending(false)
-    , populateDataForUnseenPending(false)
     , continuationRequestActive(false)
     , outOfBandConnectionsLimit(-1)
-    , internalStatus(FacebookInterfacePrivate::Idle)
+    , internalStatus(Idle)
     , currentReply(0)
 {
 }
@@ -145,6 +143,129 @@ int FacebookInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
     foreach (const QString &datakey, data.keys())
         qWarning() << "        " << datakey << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(datakey, data);
     return FacebookInterface::Unknown;
+}
+
+void FacebookInterfacePrivate::populateRelatedDataForLastNode(const QVariantMap &relatedData,
+                                                              const QUrl &requestUrl)
+{
+    Q_Q(FacebookInterface);
+    // We receive the related data and transform it into ContentItems.
+    // Finally, we populate the cache for the node and update the internal model data.
+
+    int currentCount = 0;
+    QString continuationRequestUri;
+    QList<CacheEntry> relatedContent;
+    if (continuationRequestActive) {
+        // We are continuing a request, and thus don't overwrite the existing
+        // cache entries, but instead append to them.
+        relatedContent = lastNode().data();
+        currentCount = relatedContent.size();
+    }
+
+    // Construct related content items from the request results.
+    QStringList keys = relatedData.keys();
+    foreach (const QString &key, keys) {
+#if 0
+qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(key, relatedData);
+#endif
+        // TODO: manage limits better
+//        if (d->outOfBandConnectionsLimit != -1 && currentCount >= d->outOfBandConnectionsLimit) {
+//            // we've already obtained enough data.
+//            break;
+//        }
+
+        if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_DATA) {
+            // contains a list of objects, whose type should be described by the request uri
+            QString reqPath = requestUrl.path();
+            if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES)) {
+                addCacheEntryFromData(relatedData, FacebookInterface::Like, relatedContent);
+            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS)) {
+                addCacheEntryFromData(relatedData, FacebookInterface::Comment, relatedContent);
+            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS)) {
+                addCacheEntryFromData(relatedData, FacebookInterface::PhotoTag, relatedContent);
+            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS)) {
+                addCacheEntryFromData(relatedData, FacebookInterface::Photo, relatedContent);
+            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS)) {
+                addCacheEntryFromData(relatedData, FacebookInterface::Album, relatedContent);
+            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS)) {
+                addCacheEntryFromData(relatedData, FacebookInterface::User, relatedContent);
+            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS)) {
+                addCacheEntryFromData(relatedData, FacebookInterface::Notification, relatedContent);
+            } else {
+                qWarning() << Q_FUNC_INFO << "Informative: Unsupported data retrieved via edge:" << reqPath;
+            }
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES) {
+            QVariantMap likesObject = relatedData.value(key).toMap();
+            addCacheEntryFromData(likesObject, FacebookInterface::Like, relatedContent);
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS) {
+            QVariantMap commentsObject = relatedData.value(key).toMap();
+            addCacheEntryFromData(commentsObject, FacebookInterface::Comment, relatedContent);
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS) {
+            QVariantMap tagsObject = relatedData.value(key).toMap();
+            addCacheEntryFromData(tagsObject, FacebookInterface::PhotoTag, relatedContent);
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS) {
+            QVariantMap photosObject = relatedData.value(key).toMap();
+            addCacheEntryFromData(photosObject, FacebookInterface::Photo, relatedContent);
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS) {
+            QVariantMap albumsObject = relatedData.value(key).toMap();
+            //QVariantList albumsData = albumsObject.value(FACEBOOK_ONTOLOGY_CONNECTIONS_DATA).toList();
+            addCacheEntryFromData(albumsObject, FacebookInterface::Album, relatedContent);
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS) {
+            QVariantMap friendsObject = relatedData.value(key).toMap();
+            addCacheEntryFromData(friendsObject, FacebookInterface::User, relatedContent);
+        } else if (key == FACEBOOK_ONTOLOGY_METADATA_PAGING) {
+            QVariantMap pagingObject = relatedData.value(key).toMap();
+            continuationRequestUri = pagingObject.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toString();
+        } else if (key == FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER
+                || key == FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTPICTURE) {
+            // can ignore this data - it's for the current node, which we already know.
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_SUMMARY) {
+            // can ignore this data - it just summarises how many unread notifications we have.
+        } else {
+            qWarning() << Q_FUNC_INFO << "Informative: Unsupported data retrieved:" << key;
+        }
+    }
+
+    // We don't need to sort it here, as sorting is done in-memory during updateInternalData().
+    // XXX TODO: make the entire filter/sort codepath more efficient, by guaranteeing that whatever
+    // comes out of the cache must be sorted/filtered already?  Requires invalidating the entire
+    // cache on filter/sorter change, however... hrm...
+
+    setLastNodeData(relatedContent);
+
+    // Update the model data.
+    //updateInternalData(relatedContent);
+    if (atLastNode()) {
+        updateNodeAndContent();
+    }
+
+    // If we need to request more (paged) data, do so.
+    if (continuationRequestUri.isEmpty()) {
+        // there are no more results / result pages to retrieve.
+        continuationRequestActive = false;
+        setStatus(SocialNetworkInterface::Idle);
+    } else {
+        // there are more results to retrieve.  Start a continuation request.
+        continuationRequestActive = true;
+        // grab the relevant parts of the continuation uri to create a new request.
+        QUrl continuationUrl(continuationRequestUri);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        QUrlQuery query(continuationUrl);
+        if (query.queryItemValue(QLatin1String("access_token")).isEmpty()) {
+            query.addQueryItem(QLatin1String("access_token"), accessToken);
+            continuationUrl.setQuery(query);
+        }
+#else
+        if (continuationUrl.queryItemValue(QLatin1String("access_token")).isEmpty())
+            continuationUrl.addQueryItem(QLatin1String("access_token"), accessToken);
+#endif
+        setCurrentReply(networkAccessManager->get(QNetworkRequest(continuationUrl)),
+                        lastNode().identifier());
+//        if (d->outOfBandConnectionsLimit != -1) {
+//            d->currentReply->setProperty("specialLimit", d->outOfBandConnectionsLimit);
+//        }
+        connectFinishedAndErrors();
+    }
 }
 
 /*! \internal */
@@ -291,7 +412,7 @@ void FacebookInterfacePrivate::finishedHandler()
         qWarning() << Q_FUNC_INFO << "network request finished but no reply!";
         return;
     }
-
+    // TODO: remove the use of property, use the stack instead, it should contain all the info
     if (currentReply->property("whichNodeIdentifier").toString() != q->nodeIdentifier()) {
         // the data we've received is not for the current node.
         // The client must have changed the node while the request was in process.
@@ -306,18 +427,17 @@ void FacebookInterfacePrivate::finishedHandler()
 
     QByteArray replyData = currentReply->readAll();
     QUrl requestUrl = currentReply->request().url();
-    QVariant specialLimitVar = currentReply->property("specialLimit");
+//    QVariant specialLimitVar = currentReply->property("specialLimit");
     deleteReply();
     bool ok = false;
     QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok) {
         responseData.insert("response", replyData);
-        error = SocialNetworkInterface::RequestError;
-        errorMessage = QLatin1String("Error populating node: response is invalid.  Perhaps the requested object id was incorrect?  Response: ") + QString::fromLatin1(replyData.constData());
-        status = SocialNetworkInterface::Error;
-        emit q->statusChanged();
-        emit q->errorChanged();
-        emit q->errorMessageChanged();
+        setError(SocialNetworkInterface::RequestError,
+                 QLatin1String("Error populating node: response is invalid. \
+                                Perhaps the requested object id was incorrect?  Response: ")
+                               + QString::fromLatin1(replyData.constData()));
+        setStatus(SocialNetworkInterface::Error);
         return;
     }
 
@@ -330,99 +450,109 @@ void FacebookInterfacePrivate::finishedHandler()
         }
         qWarning() << Q_FUNC_INFO << "error response:" << errorResponse << "while getting:" << requestUrl.toString();
 
-        error = SocialNetworkInterface::RequestError;
-        errorMessage = QLatin1String("Error populating node: response is error.  Response: ") + QString::fromLatin1(replyData.constData());
-        status = SocialNetworkInterface::Error;
-        emit q->statusChanged();
+        setError(SocialNetworkInterface::RequestError,
+                 QLatin1String("Error populating node: response is error.  Response: ")
+                 + QString::fromLatin1(replyData.constData()));
+        setStatus(SocialNetworkInterface::Error);
         emit q->errorChanged();
         emit q->errorMessageChanged();
         return;
     }
 
-    // Try to get the current user identifier
-    if (currentUserIdentifier == FACEBOOK_ME && (requestUrl.path().startsWith(QLatin1String("/me"))
-                                             || requestUrl.path().startsWith(FACEBOOK_ME))) {
-        if (responseData.contains(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER)) {
-            QVariant id = responseData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER);
-            if (currentUserIdentifier != id.toString()) {
-                currentUserIdentifier = id.toString();
-                emit q->currentUserIdentifierChanged();
+//    // some forms of requests require manual limit checking because
+//    // Facebook refuses to observe "limit" parameters in some cases
+//    // eg, Notifications.  Its paging API is completely broken too.
+//    int specialLimit = -1;
+//    if (specialLimitVar.isValid()) {
+//        specialLimit = specialLimitVar.toInt();
+//    }
+
+//    if (internalStatus == FacebookInterfacePrivate::PopulatingUnseenNode) {
+//        // This one is tricky, because we don't know the type of the current node.
+//        q->continuePopulateDataForUnseenNode(responseData);
+//    } else if (internalStatus == FacebookInterfacePrivate::PopulatingSeenNode) {
+//        // This one should be simpler because each of the requested fields/connections is a property.
+//        outOfBandConnectionsLimit = specialLimit;
+//        q->continuePopulateDataForSeenNode(responseData, requestUrl);
+//    } else {
+//        qWarning() << Q_FUNC_INFO << "Error: network reply finished while in unexpectant state!  Received:" << responseData;
+//    }
+
+    switch (internalStatus) {
+    case PopulatingNodeData:
+        {
+            // TODO: some objects might need a second populating step
+            // Create a cache entry associated to the retrieved data
+            QString identifier;
+            if (responseData.contains(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER)) {
+                identifier = responseData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
             }
+            CacheEntry cacheEntry = createCacheEntry(responseData, identifier);
+            setLastNodeCacheEntry(cacheEntry);
+            if (atLastNode()) {
+                updateNodeAndContent();
+            }
+            q->populateRelatedDataforLastNode();
         }
-    }
+        break;
+    case PopulatingNodeModelData:
+        populateRelatedDataForLastNode(responseData, requestUrl);
+        break;
 
-    // some forms of requests require manual limit checking because
-    // Facebook refuses to observe "limit" parameters in some cases
-    // eg, Notifications.  Its paging API is completely broken too.
-    int specialLimit = -1;
-    if (specialLimitVar.isValid()) {
-        specialLimit = specialLimitVar.toInt();
-    }
-
-    if (internalStatus == FacebookInterfacePrivate::PopulatingUnseenNode) {
-        // This one is tricky, because we don't know the type of the current node.
-        q->continuePopulateDataForUnseenNode(responseData);
-    } else if (internalStatus == FacebookInterfacePrivate::PopulatingSeenNode) {
-        // This one should be simpler because each of the requested fields/connections is a property.
-        outOfBandConnectionsLimit = specialLimit;
-        q->continuePopulateDataForSeenNode(responseData, requestUrl);
-    } else {
-        qWarning() << Q_FUNC_INFO << "Error: network reply finished while in unexpectant state!  Received:" << responseData;
+    default:
+        break;
     }
 }
 
 /*! \internal */
 void FacebookInterfacePrivate::errorHandler(QNetworkReply::NetworkError err)
 {
-    Q_Q(FacebookInterface);
-    if (err == QNetworkReply::UnknownContentError) {
-        // ignore this.  It's not actually an error, Facebook just formats some responses strangely.
-        return;
-    }
-    errorMessage = networkErrorString(err);
+    // TODO: fix that
+    qDebug() << "Error";
+//    Q_Q(FacebookInterface);
+//    if (err == QNetworkReply::UnknownContentError) {
+//        // ignore this.  It's not actually an error, Facebook just formats some responses strangely.
+//        return;
+//    }
+//    errorMessage = networkErrorString(err);
 
-    qWarning() << Q_FUNC_INFO << "Error: network error occurred:" << err << ":" << errorMessage;
+//    qWarning() << Q_FUNC_INFO << "Error: network error occurred:" << err << ":" << errorMessage;
 
-    error = SocialNetworkInterface::RequestError;
-    status = SocialNetworkInterface::Error;
+//    error = SocialNetworkInterface::RequestError;
+//    status = SocialNetworkInterface::Error;
 
-    if ((internalStatus == FacebookInterfacePrivate::PopulatingUnseenNode
-            || internalStatus == FacebookInterfacePrivate::PopulatingSeenNode)
-            && repopulatingCurrentNode) {
-        // failed repopulating, either at "get node" step, or at "get related data" step.
-        repopulatingCurrentNode = false;
-    }
+//    if ((internalStatus == FacebookInterfacePrivate::PopulatingUnseenNode
+//            || internalStatus == FacebookInterfacePrivate::PopulatingSeenNode)
+//            && repopulatingCurrentNode) {
+//        // failed repopulating, either at "get node" step, or at "get related data" step.
+//        repopulatingCurrentNode = false;
+//    }
 
-    if (continuationRequestActive) {
-        // failed during a continuation request.  This shouldn't be a huge deal,
-        // since we have been populating the cache as we received more data anyway
-        continuationRequestActive = false;
-    }
+//    if (continuationRequestActive) {
+//        // failed during a continuation request.  This shouldn't be a huge deal,
+//        // since we have been populating the cache as we received more data anyway
+//        continuationRequestActive = false;
+//    }
 
-    emit q->statusChanged();
-    emit q->errorChanged();
-    emit q->errorMessageChanged();
+//    emit q->statusChanged();
+//    emit q->errorChanged();
+//    emit q->errorMessageChanged();
 }
 
 /*! \internal */
 void FacebookInterfacePrivate::sslErrorsHandler(const QList<QSslError> &errs)
 {
-    Q_Q(FacebookInterface);
-    errorMessage = QLatin1String("SSL error: ");
+    QString newErrorMessage = QLatin1String("SSL error: ");
     if (errs.isEmpty()) {
-        errorMessage += QLatin1String("unknown SSL error");
+        newErrorMessage += QLatin1String("unknown SSL error");
     } else {
         foreach (const QSslError &sslE, errs)
-            errorMessage += sslE.errorString() + QLatin1String("; ");
-        errorMessage.chop(2);
+            newErrorMessage += sslE.errorString() + QLatin1String("; ");
+        newErrorMessage.chop(2);
     }
 
-    error = SocialNetworkInterface::RequestError;
-    status = SocialNetworkInterface::Error;
-
-    emit q->statusChanged();
-    emit q->errorChanged();
-    emit q->errorMessageChanged();
+    setStatus(SocialNetworkInterface::Error);
+    setError(SocialNetworkInterface::RequestError, newErrorMessage);
 }
 
 /*! \internal */
@@ -432,6 +562,19 @@ void FacebookInterfacePrivate::deleteReply()
         currentReply->disconnect();
         currentReply->deleteLater();
         currentReply = 0;
+    }
+}
+
+void FacebookInterfacePrivate::addCacheEntryFromData(const QVariantMap &data, int type,
+                                                     QList<CacheEntry> &list)
+{
+    QVariantList itemsList = data.value(FACEBOOK_ONTOLOGY_CONNECTIONS_DATA).toList();
+    foreach (const QVariant &variant, itemsList) {
+        QVariantMap variantMap = variant.toMap();
+        QString identifier = variantMap.value(FACEBOOK_ONTOLOGY_METADATA_ID).toString();
+        variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, type);
+        variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, identifier);
+        list.append(createCacheEntry(variantMap, identifier));
     }
 }
 
@@ -544,63 +687,19 @@ void FacebookInterface::setAccessToken(const QString &token)
     }
 }
 
-QString FacebookInterface::currentUserIdentifier() const
-{
-    Q_D(const FacebookInterface);
-    // returns the object identifier associated with the "me" node, if loaded.
-    return d->currentUserIdentifier;
-}
-
-/*! \reimp */
-void FacebookInterface::componentComplete()
-{
-    Q_D(FacebookInterface);
-    // must set d->initialized to true.
-    d->initialized = true;
-
-    // now that we're initialized, perform any pending operations.
-    if (d->populatePending) {
-        populate();
-    } else if (d->populateDataForUnseenPending) {
-        populateDataForNode(d->pendingCurrentNodeIdentifier);
-    }
-}
-
-/*! \reimp */
-void FacebookInterface::populate()
-{
-    Q_D(FacebookInterface);
-    // if no central node identifier is set by the client,
-    // we load the "me" node by default.
-
-    if (!d->initialized) {
-        d->populatePending = true;
-        return;
-    }
-
-    if (!node()) {
-        if (nodeIdentifier().isEmpty()) {
-            setNodeIdentifier(FACEBOOK_ME);
-        } else {
-            populateDataForNode(nodeIdentifier());
-        }
-    } else {
-        populateDataForNode(node());
-    }
-}
-
 /*! \reimp */
 QNetworkReply *FacebookInterface::getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData)
 {
     Q_D(FacebookInterface);
-    if (!d->initialized) {
+    if (!isInitialized()) {
         qWarning() << Q_FUNC_INFO << "cannot complete get request: not initialized";
         return 0;
     }
 
     QVariantMap modifiedExtraData = extraData;
-    if (!extraData.contains(QLatin1String("metadata")))
-        modifiedExtraData.insert(QLatin1String("metadata"), QLatin1String("1")); // request "type" field.
+    // TODO: we need to get rid of the use of metadata
+    //if (!extraData.contains(QLatin1String("metadata")))
+        //modifiedExtraData.insert(QLatin1String("metadata"), QLatin1String("1")); // request "type" field.
     QUrl geturl = d->requestUrl(objectIdentifier, extraPath, whichFields, modifiedExtraData);
     return d->networkAccessManager->get(QNetworkRequest(geturl));
 }
@@ -609,7 +708,7 @@ QNetworkReply *FacebookInterface::getRequest(const QString &objectIdentifier, co
 QNetworkReply *FacebookInterface::postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData)
 {
     Q_D(FacebookInterface);
-    if (!d->initialized) {
+    if (!isInitialized()) {
         qWarning() << Q_FUNC_INFO << "cannot complete post request: not initialized";
         return 0;
     }
@@ -650,7 +749,7 @@ QNetworkReply *FacebookInterface::postRequest(const QString &objectIdentifier, c
 QNetworkReply *FacebookInterface::deleteRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &extraData)
 {
     Q_D(FacebookInterface);
-    if (!d->initialized) {
+    if (!isInitialized()) {
         qWarning() << Q_FUNC_INFO << "cannot complete delete request: not initialized";
         return 0;
     }
@@ -670,460 +769,12 @@ QString FacebookInterface::dataSection(int type, const QVariantMap &data) const
     return SocialNetworkInterface::dataSection(type, data);
 }
 
-/*! \reimp */
-void FacebookInterface::updateInternalData(QList<CacheEntry*> data)
-{
-    Q_D(FacebookInterface);
-    qWarning() << Q_FUNC_INFO << "filtering/sorting not implemented.  TODO!";
-
-    // XXX TODO: filter the data in a better manner than linear searches...
-    QList<CacheEntry*> filteredData;
-    for (int i = 0; i < d->filters.size(); ++i) {
-        FilterInterface *currFilter = d->filters.at(i);
-        for (int j = 0; j < data.size(); ++j) {
-            CacheEntry *currEntry = data.at(j);
-            if ((!currEntry->item && currFilter->matches(currEntry->data))
-                    || (currEntry->item && currFilter->matches(currEntry->item))) {
-                filteredData.append(currEntry);
-            }
-        }
-    }
-
-    // XXX TODO: sort the filtered data
-    QList<CacheEntry*> sortedData = filteredData;
-
-    // clear the internal data
-    QModelIndex parent;
-    if (d->internalData.count()) {
-        beginRemoveRows(parent, 0, d->internalData.count());
-        d->internalData = QList<CacheEntry*>();
-        endRemoveRows();
-    }
-
-    if (sortedData.count() != 0) {
-        // update the internal data
-        beginInsertRows(parent, 0, sortedData.count());
-        d->internalData = sortedData;
-        endInsertRows();
-    }
-
-    emit countChanged();
-}
-
 /*! \internal */
-void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface *whichNode)
+QString FacebookInterface::currentUserIdentifier() const
 {
-    Q_D(FacebookInterface);
-    if (!whichNode) {
-        qWarning() << Q_FUNC_INFO << "Cannot retrieve related content for null node!";
-        return;
-    }
-
-    // XXX NOTE: Hard-coded Connections Ontology!
-    // Here the ontology of connections for each type we are interested in, is hardcoded.
-    // This should, perhaps, be updated to load them dynamically, or something...
-    // But for now, this is good enough.
-
-    QList<int> connectionTypes;
-    QList<QStringList> connectionWhichFields;
-    QList<int> connectionLimits;
-
-    QList<FilterInterface*> allFilters = d->filters;
-    if (allFilters.isEmpty()) {
-        // if none are specified, fetch all possible connections for the node type.
-        int nodeType = whichNode->type();
-        switch (nodeType) {
-
-            case FacebookInterface::Comment: {
-                connectionTypes << FacebookInterface::Like;
-                connectionWhichFields << QStringList();
-                connectionLimits << -1;
-            }
-            break;
-
-            case FacebookInterface::Photo: {
-                connectionTypes << FacebookInterface::Like
-                                << FacebookInterface::Comment
-                                << FacebookInterface::PhotoTag;
-                connectionWhichFields << QStringList()
-                                      << QStringList()
-                                      << QStringList();
-                connectionLimits << -1 << -1 << -1;
-            }
-            break;
-
-            case FacebookInterface::Album: {
-                connectionTypes << FacebookInterface::Like
-                                << FacebookInterface::Comment
-                                << FacebookInterface::Photo;
-                connectionWhichFields << QStringList()
-                                      << QStringList()
-                                      << QStringList();
-                connectionLimits << -1 << -1 << -1;
-            }
-            break;
-
-            case FacebookInterface::User: {
-                connectionTypes << FacebookInterface::Like
-                                << FacebookInterface::Photo
-                                << FacebookInterface::Album
-                                << FacebookInterface::Notification
-                                << FacebookInterface::User; // friends... TODO: friends vs subscribers vs...
-                connectionWhichFields << QStringList()
-                                      << QStringList()
-                                      << QStringList()
-                                      << QStringList()
-                                      << QStringList();
-                connectionLimits << -1 << -1 << -1 << -1 << -1;
-            }
-            break;
-
-            default: break;
-        }
-    } else {
-        // otherwise, just fetch the ones specified by the filters.
-        foreach (FilterInterface *currFilter, allFilters) {
-            // XXX TODO: support "created since / updated since" filter (for Notifications at least)
-            ContentItemTypeFilterInterface *citf = qobject_cast<ContentItemTypeFilterInterface*>(currFilter);
-            if (!citf) {
-                qWarning() << Q_FUNC_INFO << "Unsupported filter specified - the Facebook adapter only supports ContentItemType filters!";
-                continue;
-            }
-
-            if (!connectionTypes.contains(citf->type())) {
-                connectionTypes.append(citf->type());
-                connectionWhichFields.append(citf->whichFields());
-                connectionLimits.append(citf->limit());
-            }
-        }
-    }
-
-    // generate appropriate query string, using the Field Expansion query syntax of the Facebook OpenGraph API
-    // eg: with currentNode = Photo; connectionTypes == comments,likes,tags; whichFields = id,name; limit = 10:
-    // GET https://graph.facebook.com/<photo_id>/fields=comments.limit(10).fields(id,name),likes.limit(10).fields(id,name),tags.fields(id,name).limit(10)
-
-    // XXX TODO: in the future, each of the Facebook-specific IdentifiableContentItemType classes should
-    // provide private helper functions for the FacebookInterface to build the appropriate query.
-    // e.g: QString FacebookAlbumInterface::relatedDataQuery(types, limits, whichfields);
-    // That way we can provide "special case" code for every type in a neat, modular fashion.
-    if (connectionTypes.size() == 1 && connectionTypes.at(0) == FacebookInterface::Photo
-            && connectionLimits.at(0) == -1 && whichNode->type() == FacebookInterface::Album) {
-        // special case code for FacebookAlbum "populate all photos" request
-        QVariantMap extraData;
-        extraData.insert(QLatin1String("limit"), QLatin1String("25"));
-        d->setCurrentReply(getRequest(whichNode->identifier(), FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS, QStringList(), extraData), whichNode->identifier());
-        d->connectFinishedAndErrors();
-    } else if (connectionTypes.size() == 1 && connectionTypes.at(0) == FacebookInterface::Notification
-            && whichNode->type() == FacebookInterface::User) {
-        // special case code for FacebookUser "populate notifications" request
-        QVariantMap extraData;
-        int specialLimit = 25;
-        if (connectionLimits.at(0) == -1) {
-            extraData.insert(QLatin1String("limit"), QLatin1String("25")); // get only 25 by default
-        } else {
-            specialLimit = connectionLimits.at(0);
-            extraData.insert(QLatin1String("limit"), QString::number(connectionLimits.at(0)));
-        }
-        extraData.insert(QLatin1String("include_read"), QLatin1String("true"));
-        d->setCurrentReply(getRequest(whichNode->identifier(), FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS, QStringList(), extraData), whichNode->identifier());
-        d->currentReply->setProperty("specialLimit", specialLimit); // we have to handle limit specially for notifications :-/
-        d->connectFinishedAndErrors();
-    } else {
-        // generic query
-        QString totalFieldsQuery;
-        for (int i = 0; i < connectionTypes.size(); ++i) {
-            bool addExtra = false;
-            bool append = false;
-            FacebookInterface::ContentItemType cit = static_cast<FacebookInterface::ContentItemType>(connectionTypes.at(i));
-            switch (cit) {
-                case FacebookInterface::NotInitialized:  qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: NotInitialized";  break;
-                case FacebookInterface::Unknown:         qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: NotInitialized";  break;
-                case FacebookInterface::ObjectReference: qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: ObjectReference"; break;
-                case FacebookInterface::Like:     addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);    break;
-                case FacebookInterface::PhotoTag:      addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS);     break;
-                case FacebookInterface::Location: addExtra = true; append = false; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_LOCATIONS); break; // not supported?
-                case FacebookInterface::Comment:  addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS); break;
-                case FacebookInterface::User:     addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS);  break; // subscriptions etc?
-                case FacebookInterface::Album:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS);   break;
-                case FacebookInterface::Photo:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS);   break;
-                case FacebookInterface::Event:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_EVENTS);   break;
-                case FacebookInterface::Notification: addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS);   break;
-                case FacebookInterface::Post: addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_FEED);   break;
-                default: break;
-            }
-
-            QString whichFieldsString;
-            QStringList whichFields = connectionWhichFields.at(i);
-            if (!whichFields.isEmpty())
-                whichFieldsString = QLatin1String(".fields(") + whichFields.join(",") + QLatin1String(")");
-
-            QString limitString;
-            int limit = connectionLimits.at(i);
-            if (limit == -1)
-                limitString = QLatin1String(".limit(0)");
-            else if (limit > 0)
-                limitString = QLatin1String(".limit(") + QString::number(limit) + QLatin1String(")");
-
-            if (append && addExtra && !limitString.isEmpty())
-                totalFieldsQuery.append(limitString);
-            if (append && addExtra && !whichFieldsString.isEmpty())
-                totalFieldsQuery.append(whichFieldsString);
-            if (append)
-                totalFieldsQuery.append(QLatin1String(","));
-        }
-
-        totalFieldsQuery.chop(1); // remove trailing comma.
-        QVariantMap extraData;
-        extraData.insert("fields", totalFieldsQuery);
-
-        // now start the request.
-        d->setCurrentReply(getRequest(whichNode->identifier(), QString(), QStringList(), extraData), whichNode->identifier());
-        d->connectFinishedAndErrors();
-    }
-}
-
-/*! \reimp */
-void FacebookInterface::populateDataForNode(IdentifiableContentItemInterface *currentNode)
-{
-    Q_D(FacebookInterface);
-    if (currentNode == d->placeHolderNode) {
-        // actually populating an unseen / pending node.
-        return; // should have been queued as pending anyway.
-    }
-
-    d->status = SocialNetworkInterface::Busy;
-    d->internalStatus = FacebookInterfacePrivate::PopulatingSeenNode;
-    emit statusChanged();
-
-    // clear the internal data
-    if (d->internalData.count()) {
-        QModelIndex parent;
-        beginRemoveRows(parent, 0, d->internalData.count());
-        d->internalData = QList<CacheEntry*>();
-        endRemoveRows();
-        emit countChanged();
-    }
-
-    // retrieve the related content
-    retrieveRelatedContent(currentNode);
-
-    // continued in continuePopulateDataForSeenNode().
-}
-
-#define FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(data, type)                                \
-    do {                                                                                    \
-        QVariantList itemsList = data.value(FACEBOOK_ONTOLOGY_CONNECTIONS_DATA).toList();   \
-        foreach (const QVariant &currVar, itemsList) {                                      \
-            QVariantMap currMap = currVar.toMap();                                          \
-            currMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, type);                    \
-            currMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,                             \
-                    currMap.value(FACEBOOK_ONTOLOGY_METADATA_ID).toString());               \
-            relatedContent.append(d->createUncachedEntry(currMap));                         \
-        }                                                                                   \
-    } while (0)
-
-/*! \internal */
-void FacebookInterface::continuePopulateDataForSeenNode(const QVariantMap &relatedData, const QUrl &requestUrl)
-{
-    Q_D(FacebookInterface);
-    // We receive the related data and transform it into ContentItems.
-    // Finally, we populate the cache for the node and update the internal model data.
-
-    int currentCount = 0;
-    QString continuationRequestUri;
-    QList<CacheEntry *> relatedContent;
-    if (d->continuationRequestActive) {
-        // we are continuing a request, and thus don't overwrite the existing
-        // cache entries, but instead append to them.
-        bool ok = true;
-        relatedContent = d->cachedContent(d->currentNode(), &ok);
-        currentCount = relatedContent.size();
-        if (!ok) {
-            qWarning() << Q_FUNC_INFO << "Clobbering cached content in continuation request for node:" << d->currentNode()->identifier();
-        }
-    }
-
-    // construct related content items from the request results.
-    QStringList keys = relatedData.keys();
-    foreach (const QString &key, keys) {
-#if 0
-qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(key, relatedData);
-#endif
-        if (d->outOfBandConnectionsLimit != -1 && currentCount >= d->outOfBandConnectionsLimit) {
-            // we've already obtained enough data.
-            break;
-        }
-
-        if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_DATA) {
-            // contains a list of objects, whose type should be described by the request uri
-            QString reqPath = requestUrl.path();
-            if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Like);
-            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Comment);
-            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::PhotoTag);
-            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Photo);
-            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Album);
-            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::User);
-            } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Notification);
-            } else {
-                qWarning() << Q_FUNC_INFO << "Informative: Unsupported data retrieved via edge:" << reqPath;
-            }
-        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES) {
-            QVariantMap likesObject = relatedData.value(key).toMap();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(likesObject, FacebookInterface::Like);
-        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS) {
-            QVariantMap commentsObject = relatedData.value(key).toMap();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(commentsObject, FacebookInterface::Comment);
-        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS) {
-            QVariantMap tagsObject = relatedData.value(key).toMap();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(tagsObject, FacebookInterface::PhotoTag);
-        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS) {
-            QVariantMap photosObject = relatedData.value(key).toMap();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(photosObject, FacebookInterface::Photo);
-        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS) {
-            QVariantMap albumsObject = relatedData.value(key).toMap();
-            QVariantList albumsData = albumsObject.value(FACEBOOK_ONTOLOGY_CONNECTIONS_DATA).toList();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(albumsObject, FacebookInterface::Album);
-        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS) {
-            QVariantMap friendsObject = relatedData.value(key).toMap();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(friendsObject, FacebookInterface::User);
-        } else if (key == FACEBOOK_ONTOLOGY_METADATA_PAGING) {
-            QVariantMap pagingObject = relatedData.value(key).toMap();
-            continuationRequestUri = pagingObject.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toString();
-        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_FEED) {
-            QVariantMap feedObject = relatedData.value(key).toMap();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(feedObject, FacebookInterface::Post);
-        } else if (key == FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER
-                || key == FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTPICTURE) {
-            // can ignore this data - it's for the current node, which we already know.
-        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_SUMMARY) {
-            // can ignore this data - it just summarises how many unread notifications we have.
-        } else {
-            qWarning() << Q_FUNC_INFO << "Informative: Unsupported data retrieved:" << key;
-        }
-    }
-
-    // We don't need to sort it here, as sorting is done in-memory during updateInternalData().
-    // XXX TODO: make the entire filter/sort codepath more efficient, by guaranteeing that whatever
-    // comes out of the cache must be sorted/filtered already?  Requires invalidating the entire
-    // cache on filter/sorter change, however... hrm...
-
-    bool ok = false;
-    d->populateCache(d->currentNode(), relatedContent, &ok);
-    if (!ok) {
-        qWarning() << Q_FUNC_INFO << "Error: Unable to populate the cache for the current node:" << d->currentNode()->identifier();
-    }
-
-    // Update the model data.
-    updateInternalData(relatedContent);
-
-    // If we need to request more (paged) data, do so.
-    if (continuationRequestUri.isEmpty()) {
-        // there are no more results / result pages to retrieve.
-        d->continuationRequestActive = false;
-        d->status = SocialNetworkInterface::Idle;
-        emit statusChanged();
-    } else {
-        // there are more results to retrieve.  Start a continuation request.
-        d->continuationRequestActive = true;
-        // grab the relevant parts of the continuation uri to create a new request.
-        QUrl continuationUrl(continuationRequestUri);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-        QUrlQuery query(continuationUrl);
-        if (query.queryItemValue(QLatin1String("access_token")).isEmpty()) {
-            query.addQueryItem(QLatin1String("access_token"), d->accessToken);
-            continuationUrl.setQuery(query);
-        }
-#else
-        if (continuationUrl.queryItemValue(QLatin1String("access_token")).isEmpty())
-            continuationUrl.addQueryItem(QLatin1String("access_token"), d->accessToken);
-#endif
-        d->setCurrentReply(d->networkAccessManager->get(QNetworkRequest(continuationUrl)), d->currentNode()->identifier());
-        if (d->outOfBandConnectionsLimit != -1) {
-            d->currentReply->setProperty("specialLimit", d->outOfBandConnectionsLimit);
-        }
-        d->connectFinishedAndErrors();
-    }
-}
-
-/*! \reimp */
-void FacebookInterface::populateDataForNode(const QString &unseenNodeIdentifier)
-{
-    Q_D(FacebookInterface);
-    // This function should be implemented so that:
-    // 0) the current model data should be set to empty
-    // 1) the given node is requested from the service, with the given fields loaded
-    // 2) when received, the node should be pushed to the nodeStack via d->pushNode(n)
-    // 3) the related content data should be requested from the service, according to the filters
-    // 4) when received, the related content data should be used to populate the cache via d->populateCache()
-    // 5) finally, updateInternalData() should be called, passing in the new cache data.
-
-    if (unseenNodeIdentifier != d->pendingCurrentNodeIdentifier) {
-        qWarning() << Q_FUNC_INFO << "populating data for unseen node which isn't the pending current node!";
-        return; // this is an error in the implementation of SocialNetworkInterface.
-    }
-
-    if (!d->initialized) {
-        // we should delay this until we are initialized
-        d->populateDataForUnseenPending = true;
-        return;
-    }
-
-    d->status = SocialNetworkInterface::Busy;
-    d->internalStatus = FacebookInterfacePrivate::PopulatingUnseenNode;
-    emit statusChanged();
-
-    // clear the internal data
-    if (d->internalData.count()) {
-        QModelIndex parent;
-        beginRemoveRows(parent, 0, d->internalData.count());
-        d->internalData = QList<CacheEntry*>();
-        endRemoveRows();
-        emit countChanged();
-    }
-
-    // get the unseen node data.
-    d->setCurrentReply(getRequest(unseenNodeIdentifier, QString(), QStringList(), QVariantMap()), unseenNodeIdentifier);
-    d->connectFinishedAndErrors();
-
-    // continued in continuePopulateDataForUnseenNode().
-}
-
-/*! \internal */
-void FacebookInterface::continuePopulateDataForUnseenNode(const QVariantMap &nodeData)
-{
-    Q_D(FacebookInterface);
-
-    // having retrieved the node data, we construct the node, push it, and request
-    // the related data required according to the filters.
-    ContentItemInterface *convertedNode = contentItemFromData(this, nodeData);
-    IdentifiableContentItemInterface *newCurrentNode = qobject_cast<IdentifiableContentItemInterface*>(convertedNode);
-    if (!newCurrentNode) {
-        if (convertedNode)
-            convertedNode->deleteLater();
-        d->status = SocialNetworkInterface::Error;
-        d->error = SocialNetworkInterface::DataUpdateError;
-        d->errorMessage = QLatin1String("Error retrieving node with identifier: ") + d->pendingCurrentNodeIdentifier;
-        emit statusChanged();
-        emit errorChanged();
-        emit errorMessageChanged();
-        return;
-    }
-
-    // push the retrieved node to the nodeStack.
-    d->pushNode(newCurrentNode);
-    d->pendingCurrentNodeIdentifier = QString();
-    emit nodeChanged();
-
-    // now that we have retrieved the node, now retrieve the related content.
-    d->internalStatus = FacebookInterfacePrivate::PopulatingSeenNode;
-    retrieveRelatedContent(newCurrentNode);
+    Q_D(const FacebookInterface);
+    // returns the object identifier associated with the "me" node, if loaded.
+    return d->currentUserIdentifier;
 }
 
 /*! \reimp */
@@ -1218,6 +869,116 @@ ContentItemInterface *FacebookInterface::contentItemFromData(QObject *parent, co
     }
 
     return 0;
+}
+
+void FacebookInterface::populateDataForLastNode()
+{
+    Q_D(FacebookInterface);
+    const Node &node = d->lastNode();
+    d->internalStatus = FacebookInterfacePrivate::PopulatingNodeData;
+
+    if (node.isNull()) {
+        qWarning() << Q_FUNC_INFO << "Cannot retrieve related content for null node!";
+        return;
+    }
+
+    d->setCurrentReply(getRequest(node.identifier(), QString(), QStringList(), QVariantMap()),
+                       node.identifier());
+    d->connectFinishedAndErrors();
+}
+
+void FacebookInterface::populateRelatedDataforLastNode()
+{
+    Q_D(FacebookInterface);
+    QList<int> connectionTypes;
+    QList<QStringList> connectionWhichFields;
+    QList<int> connectionLimits;
+    d->internalStatus = FacebookInterfacePrivate::PopulatingNodeModelData;
+    d->continuationRequestActive = false;
+
+    QString identifier = d->lastNode().identifier();
+    QList<FilterInterface*> allFilters = d->lastNode().filters().toList();
+    if (allFilters.isEmpty()) {
+        // if none are specified, the node is received
+        d->setStatus(SocialNetworkInterface::Idle);
+        return;
+    } else {
+        // otherwise, just fetch the ones specified by the filters.
+        foreach (FilterInterface *filter, allFilters) {
+            // XXX TODO: support "created since / updated since" filter (for Notifications at least)
+            ContentItemTypeFilterInterface *contentItemTypeFilter
+                    = qobject_cast<ContentItemTypeFilterInterface*>(filter);
+            if (!contentItemTypeFilter) {
+                qWarning() << Q_FUNC_INFO << "Unsupported filter specified - the Facebook adapter only supports ContentItemType filters!";
+                continue;
+            }
+
+            if (!connectionTypes.contains(contentItemTypeFilter->type())) {
+                connectionTypes.append(contentItemTypeFilter->type());
+                connectionWhichFields.append(contentItemTypeFilter->whichFields());
+                connectionLimits.append(contentItemTypeFilter->limit());
+            }
+        }
+    }
+
+    // generate appropriate query string, using the Field Expansion query syntax of the Facebook OpenGraph API
+    // eg: with currentNode = Photo; connectionTypes == comments,likes,tags; whichFields = id,name; limit = 10:
+    // GET https://graph.facebook.com/<photo_id>/fields=comments.limit(10).fields(id,name),likes.limit(10).fields(id,name),tags.fields(id,name).limit(10)
+
+    // XXX TODO: in the future, each of the Facebook-specific IdentifiableContentItemType classes should
+    // provide private helper functions for the FacebookInterface to build the appropriate query.
+    // e.g: QString FacebookAlbumInterface::relatedDataQuery(types, limits, whichfields);
+    // That way we can provide "special case" code for every type in a neat, modular fashion.
+    // generic query
+    QString totalFieldsQuery;
+    for (int i = 0; i < connectionTypes.size(); ++i) {
+        bool addExtra = false;
+        bool append = false;
+        FacebookInterface::ContentItemType cit = static_cast<FacebookInterface::ContentItemType>(connectionTypes.at(i));
+        switch (cit) {
+            case FacebookInterface::NotInitialized:  qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: NotInitialized";  break;
+            case FacebookInterface::Unknown:         qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: NotInitialized";  break;
+            case FacebookInterface::ObjectReference: qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: ObjectReference"; break;
+            case FacebookInterface::Like:     addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);    break;
+            case FacebookInterface::PhotoTag:      addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS);     break;
+            case FacebookInterface::UserPicture:  addExtra = false; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_PICTURE);  break;
+            case FacebookInterface::Location: addExtra = true; append = false; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_LOCATIONS); break; // not supported?
+            case FacebookInterface::Comment:  addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS); break;
+            case FacebookInterface::User:     addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS);  break; // subscriptions etc?
+            case FacebookInterface::Album:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS);   break;
+            case FacebookInterface::Photo:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS);   break;
+            case FacebookInterface::Event:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_EVENTS);   break;
+            case FacebookInterface::Notification: addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS);   break;
+            default: break;
+        }
+
+        QString whichFieldsString;
+        QStringList whichFields = connectionWhichFields.at(i);
+        if (!whichFields.isEmpty())
+            whichFieldsString = QLatin1String(".fields(") + whichFields.join(",") + QLatin1String(")");
+
+        QString limitString;
+        int limit = connectionLimits.at(i);
+        if (limit == -1)
+            limitString = QLatin1String(".limit(0)");
+        else if (limit > 0)
+            limitString = QLatin1String(".limit(") + QString::number(limit) + QLatin1String(")");
+
+        if (append && addExtra && !limitString.isEmpty())
+            totalFieldsQuery.append(limitString);
+        if (append && addExtra && !whichFieldsString.isEmpty())
+            totalFieldsQuery.append(whichFieldsString);
+        if (append)
+            totalFieldsQuery.append(QLatin1String(","));
+    }
+
+    totalFieldsQuery.chop(1); // remove trailing comma.
+    QVariantMap extraData;
+    extraData.insert("fields", totalFieldsQuery);
+
+    // now start the request.
+    d->setCurrentReply(getRequest(identifier, QString(), QStringList(), extraData), identifier);
+    d->connectFinishedAndErrors();
 }
 
 /*! \internal */

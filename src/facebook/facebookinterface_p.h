@@ -54,17 +54,17 @@ public:
     QString accessToken;
     QString currentUserIdentifier;
 
-    bool populatePending;
-    bool populateDataForUnseenPending;
     bool continuationRequestActive;
 
     int outOfBandConnectionsLimit;
 
     enum InternalStatus {
         Idle = 0,
-        PopulatingSeenNode,
-        PopulatingUnseenNode,
-        Other
+        PopulatingNodeData,
+        PopulatingNodeAdditionalData,
+        PopulatingNodeModelData//,
+        //PopulatingUnseenNode,
+        //Other
     };
     InternalStatus internalStatus; // used for state machine in reply finished.
 
@@ -75,7 +75,7 @@ public:
     QNetworkReply *uploadImage(const QString &objectId, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
 
     int detectTypeFromData(const QVariantMap &data) const;
-
+    void populateRelatedDataForLastNode(const QVariantMap &relatedData, const QUrl &requestUrl);
     void connectFinishedAndErrors();
 
     // Slots
@@ -103,6 +103,7 @@ public:
         DeleteAlbumAction
     };
 private:
+    inline void addCacheEntryFromData(const QVariantMap &data, int type, QList<CacheEntry> &list);
     Q_DECLARE_PUBLIC(FacebookInterface)
 };
 

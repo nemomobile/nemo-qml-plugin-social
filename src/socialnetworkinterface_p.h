@@ -37,8 +37,11 @@
 #include "filterinterface.h"
 #include "sorterinterface.h"
 
+#include <QtCore/QExplicitlySharedDataPointer>
 #include <QtCore/QVariantMap>
 #include <QtCore/QList>
+#include <QtCore/QStack>
+#include <QtCore/QSet>
 #include <QtCore/QString>
 
 #include <QtNetwork/QSslError>
@@ -50,18 +53,88 @@ class FilterInterface;
 class SorterInterface;
 
 class SocialNetworkInterfacePrivate;
+
+class CacheEntry;
+struct CacheEntryPrivate: public QSharedData
+{
+    explicit CacheEntryPrivate();
+    virtual ~CacheEntryPrivate();
+    // The data received from SNI
+    QVariantMap data;
+    // If the item is identifiable, store the identifier
+    QString identifier;
+    // The initialized item (lazily constructed)
+    ContentItemInterface *item;
+    // Ref when used (in a model or in a node)
+    // If ref == 0 when cleaning, it is removed
+    // from cache
+    int refCount;
+};
+
 class CacheEntry
 {
 public:
+    explicit CacheEntry();
     explicit CacheEntry(const QVariantMap &data, ContentItemInterface *item = 0);
+    explicit CacheEntry(const QVariantMap &data, const QString &identifier,
+                        ContentItemInterface *item = 0);
+    CacheEntry(const CacheEntry &other);
     virtual ~CacheEntry();
-
-    QVariantMap data;
-    ContentItemInterface *item;
-
+    bool operator==(const CacheEntry &other) const;
+    bool operator!=(const CacheEntry &other) const;
+    bool isNull() const;
+    int refcount() const;
+    void ref();
+    void deref();
+    QString identifier() const;
+    QVariantMap data() const;
+    void setData(const QVariantMap &data);
+    const ContentItemInterface * item() const;
+    ContentItemInterface * item();
+    void setItem(ContentItemInterface *item);
+    const IdentifiableContentItemInterface * identifiableItem() const;
+    IdentifiableContentItemInterface * identifiableItem();
+    void deleteItem();
+protected:
+    QExplicitlySharedDataPointer<CacheEntryPrivate> d_ptr;
 private:
-    int refcount; // TODO: This can be made public (SfietKonstantin)
-    friend class SocialNetworkInterfacePrivate;
+    Q_DECLARE_PRIVATE(CacheEntry)
+};
+
+struct NodePrivate: public QSharedData
+{
+    // The identifier associated to the node
+    // It might be different from the one associated to the cache entry
+    QString identifier;
+    // The filters associated to the node
+    QSet<FilterInterface *> filters;
+    // A cache entry that describes the node
+    CacheEntry cacheEntry;
+    // A list of cache entries, that represents the data displayed in the model
+    // for this node
+    QList<CacheEntry> data;
+};
+
+class Node
+{
+public:
+    explicit Node();
+    explicit Node(const QString &identifier, const QSet<FilterInterface *> &filters);
+    Node(const Node &other);
+    virtual ~Node();
+    bool operator==(const Node &other) const;
+    bool operator!=(const Node &other) const;
+    bool isNull() const;
+    QString identifier() const;
+    QSet<FilterInterface *> filters() const;
+    CacheEntry cacheEntry() const;
+    void setCacheEntry(const CacheEntry &cacheEntry);
+    QList<CacheEntry> data() const;
+    void setData(const QList<CacheEntry> &data);
+protected:
+    QExplicitlySharedDataPointer<NodePrivate> d_ptr;
+private:
+    Q_DECLARE_PRIVATE(Node)
 };
 
 class ArbitraryRequestHandler : public QObject
@@ -88,32 +161,59 @@ public Q_SLOTS:
     void sslErrorsHandler(const QList<QSslError> &sslErrors);
 };
 
+class SorterFunctor
+{
+public:
+    explicit SorterFunctor(SorterInterface *sorter);
+    bool operator()(const CacheEntry &first, const CacheEntry &second) const;
+private:
+    SorterInterface *m_sorter;
+};
+
 class SocialNetworkInterfacePrivate
 {
 public:
     explicit SocialNetworkInterfacePrivate(SocialNetworkInterface *q);
     virtual ~SocialNetworkInterfacePrivate();
+    void setStatus(SocialNetworkInterface::Status newStatus);
+    void setError(SocialNetworkInterface::ErrorType newError, const QString &newErrorMessage);
 
-    SocialNetworkInterface * const q_ptr;
+    // Populating methods
+    Node lastNode() const;
+    CacheEntry createCacheEntry(const QVariantMap &data, const QString &nodeIdentifier = QString());
+    void setLastNodeCacheEntry(const CacheEntry &cacheEntry);
+    void setLastNodeData(const QList<CacheEntry> &data);
+
+    // Display helpers
+    bool atLastNode() const;
+    void updateNodeAndContent();
+
     QNetworkAccessManager *networkAccessManager;
-    IdentifiableContentItemInterface *placeHolderNode;
 
+
+protected:
+    SocialNetworkInterface * const q_ptr;
+private:
+    void init();
+
+    // Initialization management
     bool initialized;
-    bool repopulatingCurrentNode;
+    bool populatePending;
 
-    QString errorMessage;
-    SocialNetworkInterface::ErrorType error;
+    // Data displayed by the model
     SocialNetworkInterface::Status status;
-
+    SocialNetworkInterface::ErrorType error;
+    QString errorMessage;
     QVariantMap relevanceCriteria;
+    QString nodeIdentifier;
+    IdentifiableContentItemInterface *node;
+    QList<CacheEntry> internalData;
+    bool hasNextNode;
+    bool hasPreviousNode;
 
-    // --------------------- model data
+    static QHash<int, QByteArray> roleNames();
 
-    QHash<int, QByteArray> headerData;
-    QList<CacheEntry*> internalData;
-
-    // --------------------- filters/sorters functions
-
+    // Filters and sorters
     static void filters_append(QDeclarativeListProperty<FilterInterface> *list, FilterInterface *filter);
     static FilterInterface *filters_at(QDeclarativeListProperty<FilterInterface> *list, int index);
     static void filters_clear(QDeclarativeListProperty<FilterInterface> *list);
@@ -129,48 +229,48 @@ public:
     void filterDestroyedHandler(QObject *object);
     void sorterDestroyedHandler(QObject *object);
 
+    // Cache and node management
+    QHash<QString, CacheEntry> cache;
+    int nodeStackIndex;         // Index of the current node
+    QStack<Node> nodeStack;
 
+    Node currentNode() const;
+    void checkCacheEntryRefcount(const CacheEntry &entry);
+    bool deleteLastNode();
 
-    // --------------------- node navigation functions
-
-    QString pendingCurrentNodeIdentifier;
-
-    IdentifiableContentItemInterface *currentNode() const;
-    QString currentNodeIdentifier() const;
-    void pushPlaceHolderNode(); // empty node.
-    void pushNode(IdentifiableContentItemInterface *node);
-    void nextNode();
-    void prevNode();
-
-private:
-    void init();
-    void purgeDoomedNode(IdentifiableContentItemInterface *n);
-    void maybePurgeDoomedNodes(int count, int direction, IdentifiableContentItemInterface *makingSpaceFor);
-    int currentNodePosition;                                 // the position of the current node in the nodeStack.
-    int nodeStackSize;                                       // the number of nodes in the nodeStack (navigation)
-    QList<IdentifiableContentItemInterface*> nodeStack;      // navigation breadcrumbs.
-
-public:
-    // --------------------- cache functions
-    IdentifiableContentItemInterface *findCachedNode(const QString &nodeIdentifier);
-    QList<CacheEntry*> cachedContent(IdentifiableContentItemInterface *node, bool *ok) const;
-    void populateCache(IdentifiableContentItemInterface *node, const QList<CacheEntry*> cacheEntries, bool *ok);
-    CacheEntry *createUncachedEntry(const QVariantMap &data);
-    CacheEntry *findCacheEntry(const QVariantMap &data, bool create = true);
-    CacheEntry *findCacheEntry(ContentItemInterface *item, bool create = true);
-
-private:
-    void addEntryToNodeContent(IdentifiableContentItemInterface *item, CacheEntry *entry);
-    void removeEntryFromNodeContent(IdentifiableContentItemInterface *item, CacheEntry *entry); // if after deref, count == 0, removes from cache list and deletes.
-    void updateCacheEntry(CacheEntry *entry, ContentItemInterface *item, const QVariantMap &data = QVariantMap()) const;
-    void derefCacheEntry(CacheEntry *entry); // if after deref, count == 0, removes from cache list and deletes.
-
-    QList<CacheEntry*> cache; // the actual cache
-    mutable QHash<ContentItemInterface*, CacheEntry*> cachedItems; // "index" of cache entries which have items constructed.
-    QMultiHash<IdentifiableContentItemInterface*, CacheEntry*> nodeContent; // cache entries which are connections/related content for a given node
-
+    // Arbitrary request handler
     ArbitraryRequestHandler *arbitraryRequestHandler;
 
+    // Slots
+    void itemDataChangedHandler();
+
+public:
+    // Testing functions
+    // TODO XXX: remove them !
+#ifdef ENABLE_TESTS
+    inline QStack<Node> publicNodeStack() const
+    {
+        return nodeStack;
+    }
+    inline QHash<QString, CacheEntry> publicCache() const
+    {
+        return cache;
+    }
+    inline void publicSetFilters(const QList<FilterInterface *> &newFilters)
+    {
+        filters = newFilters;
+    }
+    inline QList<FilterInterface *> publicFilters() const
+    {
+        return filters;
+    }
+    inline bool publicDeleteLastNode()
+    {
+        return deleteLastNode();
+    }
+
+#endif
+private:
     Q_DECLARE_PUBLIC(SocialNetworkInterface)
 };
 
