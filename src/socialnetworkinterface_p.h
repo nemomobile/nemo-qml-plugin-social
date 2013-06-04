@@ -126,6 +126,11 @@ public:
     static int sorters_count(QDeclarativeListProperty<SorterInterface> *list);
     QList<SorterInterface*> sorters;
 
+    void filterDestroyedHandler(QObject *object);
+    void sorterDestroyedHandler(QObject *object);
+
+
+
     // --------------------- node navigation functions
 
     QString pendingCurrentNodeIdentifier;

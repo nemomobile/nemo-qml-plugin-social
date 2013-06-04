@@ -30,28 +30,14 @@
  */
 
 #include "filterinterface.h"
-#include "filterinterface_p.h"
 
 #include "contentiteminterface.h"
 
-#include <QtDebug>
-
-FilterInterfacePrivate::FilterInterfacePrivate()
-    : ownedBySocialNetworkInterface(false)
-{
-}
-
-// ------------------------------
-
 FilterInterface::FilterInterface(QObject *parent)
-    : QObject(parent), d_ptr(new FilterInterfacePrivate)
+    : QObject(parent)
 {
 }
 
-FilterInterface::FilterInterface(FilterInterfacePrivate &dd, QObject *parent)
-    : QObject(parent), d_ptr(&dd)
-{
-}
 
 FilterInterface::~FilterInterface()
 {

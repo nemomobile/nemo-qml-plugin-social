@@ -36,7 +36,6 @@
 
 class SocialNetworkInterfacePrivate;
 class ContentItemInterface;
-class SorterInterfacePrivate;
 class SorterInterface : public QObject
 {
     Q_OBJECT
@@ -45,11 +44,6 @@ public:
     explicit SorterInterface(QObject *parent = 0);
     virtual ~SorterInterface();
     Q_INVOKABLE virtual bool firstLessThanSecond(ContentItemInterface *first, ContentItemInterface *second) const;
-protected:
-    QScopedPointer<SorterInterfacePrivate> d_ptr;
-private:
-    Q_DECLARE_PRIVATE(SorterInterface)
-    friend class SocialNetworkInterfacePrivate;
 };
 
 #endif // SORTERINTERFACE_H
