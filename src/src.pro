@@ -38,13 +38,11 @@ HEADERS += \
     $$PWD/contentiteminterface_p.h \
     $$PWD/contentitemtypefilterinterface.h \
     $$PWD/filterinterface.h \
-    $$PWD/filterinterface_p.h \
     $$PWD/identifiablecontentiteminterface.h \
     $$PWD/identifiablecontentiteminterface_p.h \
     $$PWD/socialnetworkinterface.h \
     $$PWD/socialnetworkinterface_p.h \
     $$PWD/sorterinterface.h \
-    $$PWD/sorterinterface_p.h \
     $$PWD/util_p.h
 
 OTHER_FILES += qmldir social.qdoc social.qdocconf

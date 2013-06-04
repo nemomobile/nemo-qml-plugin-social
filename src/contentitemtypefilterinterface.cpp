@@ -30,10 +30,9 @@
  */
 
 #include "contentitemtypefilterinterface.h"
-#include "filterinterface_p.h"
 #include "contentiteminterface.h"
 
-class ContentItemTypeFilterInterfacePrivate: public FilterInterfacePrivate
+class ContentItemTypeFilterInterfacePrivate
 {
 public:
     ContentItemTypeFilterInterfacePrivate();
@@ -43,14 +42,18 @@ public:
 };
 
 ContentItemTypeFilterInterfacePrivate::ContentItemTypeFilterInterfacePrivate()
-    : FilterInterfacePrivate(), type(0), limit(0)
+    : type(0), limit(0)
 {
 }
 
 // ------------------------------
 
 ContentItemTypeFilterInterface::ContentItemTypeFilterInterface(QObject *parent)
-    : FilterInterface(*(new ContentItemTypeFilterInterfacePrivate), parent)
+    : FilterInterface(parent), d_ptr(new ContentItemTypeFilterInterfacePrivate)
+{
+}
+
+ContentItemTypeFilterInterface::~ContentItemTypeFilterInterface()
 {
 }
 

@@ -207,6 +207,8 @@ private:
     friend class ContentItemInterface;
     friend class ContentItemInterfacePrivate;
     Q_DECLARE_PRIVATE(SocialNetworkInterface)
+    Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler(QObject*))
+    Q_PRIVATE_SLOT(d_func(), void sorterDestroyedHandler(QObject*))
 };
 
 #endif // SOCIALNETWORKINTERFACE_H

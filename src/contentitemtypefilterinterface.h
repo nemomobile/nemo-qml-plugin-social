@@ -33,8 +33,7 @@
 #define CONTENTITEMTYPEFILTERINTERFACE_H
 
 #include "filterinterface.h"
-
-#include <QStringList>
+#include <QtCore/QStringList>
 
 class ContentItemTypeFilterInterfacePrivate;
 class ContentItemTypeFilterInterface : public FilterInterface
@@ -46,6 +45,7 @@ class ContentItemTypeFilterInterface : public FilterInterface
 
 public:
     explicit ContentItemTypeFilterInterface(QObject *parent = 0);
+    virtual ~ContentItemTypeFilterInterface();
 
     // FilterInterface
     Q_INVOKABLE bool matches(ContentItemInterface *content) const;
@@ -63,6 +63,8 @@ Q_SIGNALS:
     void typeChanged();
     void whichFieldsChanged();
     void limitChanged();
+protected:
+    QScopedPointer<ContentItemTypeFilterInterfacePrivate> d_ptr;
 private:
     Q_DECLARE_PRIVATE(ContentItemTypeFilterInterface)
 };

@@ -30,19 +30,10 @@
  */
 
 #include "sorterinterface.h"
-#include "sorterinterface_p.h"
-
 #include "contentiteminterface.h"
 
-SorterInterfacePrivate::SorterInterfacePrivate()
-    : ownedBySocialNetworkInterface(false)
-{
-}
-
-// ------------------------------ SorterInterface
-
 SorterInterface::SorterInterface(QObject *parent)
-    : QObject(parent), d_ptr(new SorterInterfacePrivate)
+    : QObject(parent)
 {
 }
 
