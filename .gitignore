@@ -1,0 +1,13 @@
+# Qt Creator files
+*.pro.user
+qtc_packaging
+tests/socialtest/qt5
+
+# Compilation files
+.moc
+.obj
+build
+install
+
+# Python object files
+*.pyc
