@@ -167,7 +167,7 @@ Q_SIGNALS:
     void countChanged();
 
 public:
-    Q_INVOKABLE bool arbitraryRequest(int requestType, const QString &requestUri,
+    Q_INVOKABLE bool arbitraryRequest(RequestType requestType, const QString &requestUri,
                                       const QVariantMap &queryItems = QVariantMap(),
                                       const QString &postData = QString());
 Q_SIGNALS:
