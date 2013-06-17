@@ -90,8 +90,9 @@ ArbitraryRequestHandler::~ArbitraryRequestHandler()
     }
 }
 
-bool ArbitraryRequestHandler::request(int requestType, const QString &requestUri,
-                                      const QVariantMap &queryItems, const QString &postData)
+bool ArbitraryRequestHandler::request(SocialNetworkInterface::RequestType requestType,
+                                      const QString &requestUri, const QVariantMap &queryItems,
+                                      const QString &postData)
 {
     if (reply) {
         qWarning() << Q_FUNC_INFO
@@ -116,15 +117,15 @@ bool ArbitraryRequestHandler::request(int requestType, const QString &requestUri
 #endif
     QNetworkReply *arbitraryRequestReply = 0;
     switch (requestType) {
-    case SocialNetworkInterface::Get:
-        arbitraryRequestReply = networkAccessManager->get(QNetworkRequest(url));
-        break;
     case SocialNetworkInterface::Post:
         arbitraryRequestReply = networkAccessManager->post(QNetworkRequest(url),
                                            QByteArray::fromBase64(postData.toLatin1()));
         break;
-    default:
+    case SocialNetworkInterface::Delete:
         arbitraryRequestReply = networkAccessManager->deleteResource(QNetworkRequest(url));
+        break;
+    default:
+        arbitraryRequestReply = networkAccessManager->get(QNetworkRequest(url));
         break;
     }
 
@@ -1162,7 +1163,9 @@ QVariant SocialNetworkInterface::headerData(int section, Qt::Orientation orienta
     The request will not be started successfully if another arbitrary request is in progress.
     Returns true if the request could be started successfully, false otherwise. 
 */
-bool SocialNetworkInterface::arbitraryRequest(int requestType, const QString &requestUri, const QVariantMap &queryItems, const QString &postData)
+bool SocialNetworkInterface::arbitraryRequest(RequestType requestType, const QString &requestUri,
+                                              const QVariantMap &queryItems,
+                                              const QString &postData)
 {
     Q_D(SocialNetworkInterface);
     if (!d->arbitraryRequestHandler) {

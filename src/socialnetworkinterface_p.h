@@ -71,7 +71,7 @@ public:
     explicit ArbitraryRequestHandler(QNetworkAccessManager *network,
                                      SocialNetworkInterface *parent);
     virtual ~ArbitraryRequestHandler();
-    bool request(int requestType, const QString &requestUri,
+    bool request(SocialNetworkInterface::RequestType requestType, const QString &requestUri,
                  const QVariantMap &queryItems = QVariantMap(),
                  const QString &postData = QString());
 
