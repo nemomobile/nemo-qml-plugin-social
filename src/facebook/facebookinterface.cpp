@@ -60,6 +60,8 @@
 
 #include <QtDebug>
 
+#define FACEBOOK_ME QLatin1String("me")
+
 QVariant FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(const QString &key, const QVariantMap &data)
 {
     QVariant val = data.value(key);
@@ -77,7 +79,7 @@ QVariant FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(const QString &key, const QVarian
 
 FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
     : SocialNetworkInterfacePrivate(q)
-    , currentUserIdentifier("me")
+    , currentUserIdentifier(FACEBOOK_ME)
     , populatePending(false)
     , populateDataForUnseenPending(false)
     , continuationRequestActive(false)
@@ -255,7 +257,7 @@ void FacebookInterfacePrivate::connectFinishedAndErrors()
 
 /*! \internal */
 void FacebookInterfacePrivate::updateCurrentUserIdentifierHandler(bool isError,
-                                                                     const QVariantMap &data)
+                                                                  const QVariantMap &data)
 {
     Q_Q(FacebookInterface);
     QObject::disconnect(q, SIGNAL(arbitraryRequestResponseReceived(bool,QVariantMap)),
@@ -331,8 +333,8 @@ void FacebookInterfacePrivate::finishedHandler()
     }
 
     // Try to get the current user identifier
-    if (currentUserIdentifier == "me" && (requestUrl.path().startsWith("/me")
-                                          || requestUrl.path().startsWith("me"))) {
+    if (currentUserIdentifier == FACEBOOK_ME && (requestUrl.path().startsWith(QLatin1String("/me"))
+                                             || requestUrl.path().startsWith(FACEBOOK_ME))) {
         if (responseData.contains(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER)) {
             QVariant id = responseData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER);
             if (currentUserIdentifier != id.toString()) {
@@ -571,7 +573,7 @@ void FacebookInterface::populate()
 
     if (!node()) {
         if (nodeIdentifier().isEmpty()) {
-            setNodeIdentifier(QLatin1String("me"));
+            setNodeIdentifier(FACEBOOK_ME);
         } else {
             populateDataForNode(nodeIdentifier());
         }
@@ -1213,9 +1215,10 @@ void FacebookInterface::updateCurrentUserIdentifier()
     }
 
     QVariantMap queryItems;
-    queryItems.insert("access_token", d->accessToken);
-    queryItems.insert("fields", "id");
-    arbitraryRequest(SocialNetworkInterface::Get, "https://graph.facebook.com/me", queryItems);
+    queryItems.insert(QLatin1String("access_token"), d->accessToken);
+    queryItems.insert(QLatin1String("fields"), QLatin1String("id"));
+    arbitraryRequest(SocialNetworkInterface::Get, QLatin1String("https://graph.facebook.com/me"),
+                     queryItems);
     connect(this, SIGNAL(arbitraryRequestResponseReceived(bool,QVariantMap)),
             this, SLOT(updateCurrentUserIdentifierHandler(bool,QVariantMap)));
 }
