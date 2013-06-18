@@ -35,8 +35,6 @@
 #include "contentiteminterface.h"
 #include "contentiteminterface_p.h"
 #include "identifiablecontentiteminterface.h"
-#include "filterinterface_p.h"
-#include "sorterinterface_p.h"
 
 #include "util_p.h"
 
@@ -244,10 +242,8 @@ void SocialNetworkInterfacePrivate::filters_append(QDeclarativeListProperty<Filt
 {
     SocialNetworkInterface *socialNetwork = qobject_cast<SocialNetworkInterface *>(list->object);
     if (socialNetwork && filter) {
-        if (!filter->parent()) {
-            filter->setParent(socialNetwork);
-            filter->d_func()->ownedBySocialNetworkInterface = true;
-        }
+        QObject::connect(filter, SIGNAL(destroyed(QObject*)),
+                         socialNetwork, SLOT(filterDestroyedHandler(QObject*)));
         socialNetwork->d_func()->filters.append(filter);
     }
 }
@@ -264,16 +260,8 @@ FilterInterface *SocialNetworkInterfacePrivate::filters_at(QDeclarativeListPrope
 /*! \internal */
 void SocialNetworkInterfacePrivate::filters_clear(QDeclarativeListProperty<FilterInterface> *list)
 {
-    // TODO: This might be achieved without using the private attribute
-    // but with the parenting system
-    // filter->setParent(this) and if (filter->parent() == this)
     SocialNetworkInterface *socialNetwork = qobject_cast<SocialNetworkInterface *>(list->object);
     if (socialNetwork) {
-        foreach (FilterInterface *cf, socialNetwork->d_func()->filters) {
-            if (cf->d_func()->ownedBySocialNetworkInterface) {
-                cf->deleteLater();
-            }
-        }
         socialNetwork->d_func()->filters.clear();
     }
 }
@@ -293,10 +281,8 @@ void SocialNetworkInterfacePrivate::sorters_append(QDeclarativeListProperty<Sort
 {
     SocialNetworkInterface *socialNetwork = qobject_cast<SocialNetworkInterface *>(list->object);
     if (socialNetwork && sorter) {
-        if (!sorter->parent()) {
-            sorter->setParent(socialNetwork);
-            sorter->d_func()->ownedBySocialNetworkInterface = true;
-        }
+        QObject::connect(sorter, SIGNAL(destroyed(QObject*)),
+                         socialNetwork, SLOT(sorterDestroyedHandler(QObject*)));
         socialNetwork->d_func()->sorters.append(sorter);
     }
 }
@@ -315,11 +301,6 @@ void SocialNetworkInterfacePrivate::sorters_clear(QDeclarativeListProperty<Sorte
 {
     SocialNetworkInterface *socialNetwork = qobject_cast<SocialNetworkInterface *>(list->object);
     if (socialNetwork) {
-        foreach (SorterInterface *cs, socialNetwork->d_func()->sorters) {
-            if (cs->d_func()->ownedBySocialNetworkInterface) {
-                cs->deleteLater();
-            }
-        }
         socialNetwork->d_func()->sorters.clear();
     }
 }
@@ -331,6 +312,20 @@ int SocialNetworkInterfacePrivate::sorters_count(QDeclarativeListProperty<Sorter
     if (socialNetwork)
         return socialNetwork->d_func()->sorters.count();
     return 0;
+}
+
+/*! \interface */
+void SocialNetworkInterfacePrivate::filterDestroyedHandler(QObject *object)
+{
+    FilterInterface *filter = static_cast<FilterInterface *>(object);
+    filters.removeAll(filter);
+}
+
+/*! \interface */
+void SocialNetworkInterfacePrivate::sorterDestroyedHandler(QObject *object)
+{
+    SorterInterface *sorter = static_cast<SorterInterface *>(object);
+    sorters.removeAll(sorter);
 }
 
 /*
@@ -1316,4 +1311,3 @@ bool SocialNetworkInterface::isInitialized() const
 }
 
 #include "moc_socialnetworkinterface.cpp"
-
