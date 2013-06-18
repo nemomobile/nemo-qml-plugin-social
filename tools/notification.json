@@ -1,0 +1,53 @@
+{
+    "name": "notification",
+    "doc": " contentItem.title } // notification messages\n        }\n    }\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\"    // you must supply a valid access token\n        nodeIdentifier: \"me\"                // the \"me\" user is a \"special\" user id\n        filters: [ ContentItemTypeFilter { type: Facebook.Notification; limit: 5 } ]\n    }\n}\n\\endqml\n\nA FacebookNotification may also be used \"directly\" by clients, in order to\nview details about the notification.\n\n\\qml\nimport QtQuick 1.1\nimport org.nemomobile.social 1.0\n\nItem {\n    id: root\n    width: 400\n    height: 800\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\"    // you must supply a valid access token\n    }\n\n    FacebookNotification {\n        id: fbn\n        socialNetwork: fb\n        identifier: \"notif_12345678_987654321\"     // some valid Facebook Notification fbid\n    }\n\n    Text {\n        anchors.fill: parent\n        text: fbn.title + \" --> was created: \" + fbn.createdTime\n    }\n}\n\\endqml",
+    "identifiable": true,
+    "extra_public": "// Technically FacebookNotificationInterface is not identifiable, but it have an identifier\n// There is also an undocumented \"object\" property (TODO XXX ?)",
+    "properties": [
+        {
+            "name": "from",
+            "type": "FacebookObjectReferenceInterface",
+            "doc": "Holds a reference to the person or profile whose action triggered the notification.",
+            "is_pointer": true
+        },
+        {
+            "name": "to",
+            "type": "FacebookObjectReferenceInterface",
+            "doc": "Holds a reference to the person or profile to whom the notification was posted.",
+            "is_pointer": true
+        },
+        {
+            "name": "application",
+            "type": "FacebookObjectReferenceInterface",
+            "doc": "Holds a reference to the application which posted the notification.",
+            "is_pointer": true
+        },
+        {
+            "name": "created_time",
+            "type": "QString",
+            "doc": "Holds the creation time of the notification in an ISO8601-formatted string."
+        },
+        {
+            "name": "updated_time",
+            "type": "QString",
+            "doc": "Holds the update time of the notification in an ISO8601-formatted string."
+        },
+        {
+            "name": "title",
+            "type": "QString",
+            "doc": "Holds the title (message) of the notification."
+        },
+        {
+            "name": "link",
+            "type": "QUrl",
+            "doc": "Holds a link to the original content item about which the notification was posted."
+        },
+        {
+            "name": "unread",
+            "type": "int",
+            "doc": "Will be zero if the notification has been marked as read."
+        }
+    ]
+}
+ 
+ 

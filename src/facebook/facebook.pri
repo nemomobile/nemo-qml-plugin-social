@@ -7,30 +7,33 @@ HEADERS += \
     $$PWD/facebookcommentinterface_p.h \
     $$PWD/facebookinterface.h \
     $$PWD/facebookinterface_p.h \
-    $$PWD/facebooklikeinterface.h \
     $$PWD/facebooknotificationinterface.h \
     $$PWD/facebooknotificationinterface_p.h \
     $$PWD/facebookobjectreferenceinterface.h \
+    $$PWD/facebookobjectreferenceinterface_p.h \
     $$PWD/facebookontology_p.h \
+    $$PWD/facebooklikeinterface.h \
     $$PWD/facebookphotointerface.h \
     $$PWD/facebookphotointerface_p.h \
     $$PWD/facebookpictureinterface.h \
     $$PWD/facebooktaginterface.h \
+    $$PWD/facebooknametaginterface.h \
+    $$PWD/facebookimageinterface.h \
     $$PWD/facebookuserinterface.h \
     $$PWD/facebookuserinterface_p.h \
-    $$PWD/facebooklikeinterface_p.h \
-    $$PWD/facebookobjectreferenceinterface_p.h \
-    $$PWD/facebookpictureinterface_p.h \
-    $$PWD/facebooktaginterface_p.h
+    $$PWD/facebookcoverinterface.h
 
 SOURCES += \
     $$PWD/facebookalbuminterface.cpp \
     $$PWD/facebookcommentinterface.cpp \
     $$PWD/facebookinterface.cpp \
-    $$PWD/facebooklikeinterface.cpp \
     $$PWD/facebooknotificationinterface.cpp \
     $$PWD/facebookobjectreferenceinterface.cpp \
+    $$PWD/facebooklikeinterface.cpp \
     $$PWD/facebookphotointerface.cpp \
     $$PWD/facebookpictureinterface.cpp \
     $$PWD/facebooktaginterface.cpp \
-    $$PWD/facebookuserinterface.cpp
+    $$PWD/facebookimageinterface.cpp \
+    $$PWD/facebooknametaginterface.cpp \
+    $$PWD/facebookuserinterface.cpp \
+    $$PWD/facebookcoverinterface.cpp \

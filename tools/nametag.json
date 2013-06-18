@@ -1,0 +1,34 @@
+{
+    "name": "name_tag",
+    "doc": "An entry representing a name tag",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "id",
+            "alias": "user_identifier",
+            "type": "QString",
+            "doc": "Holds the identifier of the tagged entity"
+        },
+        {
+            "name": "name",
+            "alias": "user_name",
+            "type": "QString",
+            "doc": "Holds the name of the tagged entity"
+        },
+        {
+            "name": "type",
+            "type": "QString",
+            "doc": "Holds the type of the taggeed entity"
+        },
+        {
+            "name": "offset",
+            "type": "int",
+            "doc": "Holds the offset in the name for a tag"
+        },
+        {
+            "name": "length",
+            "type": "int",
+            "doc": "Holds the length of a tag"
+        }
+    ]
+}

@@ -29,20 +29,47 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
+#ifndef FACEBOOKIMAGEINTERFACE_H
+#define FACEBOOKIMAGEINTERFACE_H
 
-#ifndef FACEBOOKLIKEINTERFACE_P_H
-#define FACEBOOKLIKEINTERFACE_P_H
+#include "contentiteminterface.h"
 
-#include "contentiteminterface_p.h"
+#include <QtCore/QUrl>
 
-class FacebookLikeInterface;
-class FacebookLikeInterfacePrivate : public ContentItemInterfacePrivate
+/*
+ * NOTE: if you construct one of these in C++ directly,
+ * you MUST call classBegin() and componentCompleted()
+ * directly after construction.
+ */
+
+/*
+ * NOTE: this is an unidentifiable content item which
+ * is read only and only creatable by the top level
+ * FacebookInterface.
+ */
+
+class FacebookImageInterfacePrivate;
+class FacebookImageInterface: public ContentItemInterface
 {
+    Q_OBJECT
+    Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
+    Q_PROPERTY(int width READ width NOTIFY widthChanged)
+    Q_PROPERTY(int height READ height NOTIFY heightChanged)
 public:
-    explicit FacebookLikeInterfacePrivate(FacebookLikeInterface *q);
-    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+    explicit FacebookImageInterface(QObject *parent = 0);
+
+    // Overrides.
+    int type() const;
+    // Accessors
+    QUrl source() const;
+    int width() const;
+    int height() const;
+Q_SIGNALS:
+    void sourceChanged();
+    void widthChanged();
+    void heightChanged();
 private:
-    Q_DECLARE_PUBLIC(FacebookLikeInterface)
+    Q_DECLARE_PRIVATE(FacebookImageInterface)
 };
 
-#endif // FACEBOOKLIKEINTERFACE_P_H
+#endif // FACEBOOKIMAGEINTERFACE_H

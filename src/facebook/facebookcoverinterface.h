@@ -29,20 +29,47 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
+#ifndef FACEBOOKCOVERINTERFACE_H
+#define FACEBOOKCOVERINTERFACE_H
 
-#ifndef FACEBOOKPICTUREINTERFACE_P_H
-#define FACEBOOKPICTUREINTERFACE_P_H
+#include "contentiteminterface.h"
 
-#include "contentiteminterface_p.h"
+#include <QtCore/QString>
 
-class FacebookPictureInterface;
-class FacebookPictureInterfacePrivate : public ContentItemInterfacePrivate
+/*
+ * NOTE: if you construct one of these in C++ directly,
+ * you MUST call classBegin() and componentCompleted()
+ * directly after construction.
+ */
+
+/*
+ * NOTE: this is an unidentifiable content item which
+ * is read only and only creatable by the top level
+ * FacebookInterface.
+ */
+
+class FacebookCoverInterfacePrivate;
+class FacebookCoverInterface: public ContentItemInterface
 {
+    Q_OBJECT
+    Q_PROPERTY(QString photoIdentifier READ photoIdentifier NOTIFY photoIdentifierChanged)
+    Q_PROPERTY(QString source READ source NOTIFY sourceChanged)
+    Q_PROPERTY(int offsetY READ offsetY NOTIFY offsetYChanged)
 public:
-    explicit FacebookPictureInterfacePrivate(FacebookPictureInterface *q);
-    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+    explicit FacebookCoverInterface(QObject *parent = 0);
+
+    // Overrides.
+    int type() const;
+    // Accessors
+    QString photoIdentifier() const;
+    QString source() const;
+    int offsetY() const;
+Q_SIGNALS:
+    void photoIdentifierChanged();
+    void sourceChanged();
+    void offsetYChanged();
 private:
-    Q_DECLARE_PUBLIC(FacebookPictureInterface)
+    Q_DECLARE_PRIVATE(FacebookCoverInterface)
 };
 
-#endif // FACEBOOKPICTUREINTERFACE_P_H
+#endif // FACEBOOKCOVERINTERFACE_H

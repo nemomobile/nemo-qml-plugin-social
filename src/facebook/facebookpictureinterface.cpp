@@ -30,40 +30,51 @@
  */
 
 #include "facebookpictureinterface.h"
-#include "facebookpictureinterface_p.h"
-#include "contentiteminterface_p.h"
-#include "facebookontology_p.h"
-
 #include "facebookinterface.h"
+#include "facebookontology_p.h"
+#include "contentiteminterface_p.h"
+// <<< include
+// >>> include
 
-#include <QtCore/QUrl>
+class FacebookPictureInterfacePrivate: public ContentItemInterfacePrivate
+{
+public:
+    explicit FacebookPictureInterfacePrivate(FacebookPictureInterface *q);
+    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+private:
+    Q_DECLARE_PUBLIC(FacebookPictureInterface)
+};
 
 FacebookPictureInterfacePrivate::FacebookPictureInterfacePrivate(FacebookPictureInterface *q)
     : ContentItemInterfacePrivate(q)
 {
 }
 
-/*! \reimp */
-void FacebookPictureInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData)
+void FacebookPictureInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                                const QVariantMap &newData)
 {
     Q_Q(FacebookPictureInterface);
-    QString srcStr = newData.value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE).toString();
-    QString silBool = newData.value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE).toString();
+    QVariant oldSource = oldData.value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE);
+    QVariant newSource = newData.value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE);
+    QVariant oldIsSilhouette = oldData.value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE);
+    QVariant newIsSilhouette = newData.value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE);
 
-    QString oldSrcStr = newData.value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE).toString();
-    QString oldSilBool = newData.value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE).toString();
-
-    if (srcStr != oldSrcStr)
+    if (newSource != oldSource)
         emit q->sourceChanged();
-    if (silBool != oldSilBool)
+    if (newIsSilhouette != oldIsSilhouette)
         emit q->isSilhouetteChanged();
 
-    // call the super class implementation
+    // Call super class implementation
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
 }
 
-//---------------------------------------
+//-------------------------------
 
+/*!
+    \qmltype FacebookPicture
+    \instantiates FacebookPictureInterface
+    An entry representing a picture
+*/
 FacebookPictureInterface::FacebookPictureInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookPictureInterfacePrivate(this)), parent)
 {
@@ -75,23 +86,24 @@ int FacebookPictureInterface::type() const
     return FacebookInterface::Picture;
 }
 
+
 /*!
     \qmlproperty QUrl FacebookPicture::source
     Holds the url to the image source of the picture.
 */
 QUrl FacebookPictureInterface::source() const
 {
-    Q_D(const ContentItemInterface);
+    Q_D(const FacebookPictureInterface);
     return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE).toString());
 }
 
 /*!
     \qmlproperty bool FacebookPicture::isSilhouette
-    Whether the picture is a default, anonymous silhouette image
+    Whether the picture is a default, anonymous silhouette image.
 */
 bool FacebookPictureInterface::isSilhouette() const
 {
-    Q_D(const ContentItemInterface);
+    Q_D(const FacebookPictureInterface);
     return d->data().value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE).toString() == QLatin1String("true");
 }
 

@@ -1,0 +1,68 @@
+\brief A FacebookNotification represents a Notification object from the Facebook OpenGraph API
+
+Every FacebookNotification has a unique identifier, and thus a Notification may be
+set as the \c node (or central content item) in the Facebook
+adapter.  There are, however, no connections supported for Notifications, and
+thus clients are advised to avoid using Notification objects as nodes.  Instead,
+clients should read notifications by setting the appropriate filter on a User node.
+
+\qml
+import QtQuick 1.1
+import org.nemomobile.social 1.0
+
+Item {
+    id: root
+    width: 400
+    height: 800
+
+    Flickable {
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+
+        ListView {
+            model: fb
+            anchors.fill: parent
+            delegate: Text { text: contentItem.title } // notification messages
+        }
+    }
+
+    Facebook {
+        id: fb
+        accessToken: "your access token"    // you must supply a valid access token
+        nodeIdentifier: "me"                // the "me" user is a "special" user id
+        filters: [ ContentItemTypeFilter { type: Facebook.Notification; limit: 5 } ]
+    }
+}
+\endqml
+
+A FacebookNotification may also be used "directly" by clients, in order to
+view details about the notification.
+
+\qml
+import QtQuick 1.1
+import org.nemomobile.social 1.0
+
+Item {
+    id: root
+    width: 400
+    height: 800
+
+    Facebook {
+        id: fb
+        accessToken: "your access token"    // you must supply a valid access token
+    }
+
+    FacebookNotification {
+        id: fbn
+        socialNetwork: fb
+        identifier: "notif_12345678_987654321"     // some valid Facebook Notification fbid
+    }
+
+    Text {
+        anchors.fill: parent
+        text: fbn.title + " --> was created: " + fbn.createdTime
+    }
+}
+\endqml 

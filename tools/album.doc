@@ -1,0 +1,84 @@
+\inqmlmodule org.nemomobile.social 1
+\brief A FacebookAlbum represents an Album object from the Facebook OpenGraph API
+
+Every album has a unique identifier, and thus an album may be
+set as the \c node (or central content item) in the Facebook
+adapter.  The content items related to an album include various
+photos or videos, likes and comments.
+
+An example of usage of a FacebookAlbum as the node in a Facebook
+model is as follows:
+
+\qml
+import QtQuick 1.1
+import org.nemomobile.social 1.0
+
+Item {
+    id: root
+    width: 400
+    height: 800
+
+    Flickable {
+        anchors.top: parent.verticalCenter
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+
+        ListView {
+            model: fb
+            anchors.fill: parent
+            delegate: Label { text: "id: " + contentItemIdentifier } // Photo ids
+        }
+    }
+
+    Facebook {
+        id: fb
+        accessToken: "your access token"    // you must supply a valid access token
+        nodeIdentifier: "10150146071791729" // some valid Facebook album id.
+        filters: [ ContentItemTypeFilter { type: Facebook.Photo } ]
+    }
+
+    Component.onCompleted: {
+        fb.populate()
+    }
+}
+\endqml
+
+A FacebookAlbum may also be used "directly" by clients, in order to
+upload photos or comments, or like the album.  An example of direct
+usage of the FacebookAlbum type is as follows:
+
+\qml
+import QtQuick 1.1
+import org.nemomobile.social 1.0
+
+Item {
+    id: root
+    width: 400
+    height: 800
+
+    Facebook {
+        id: fb
+        accessToken: "your access token"    // you must supply a valid access token
+    }
+
+    FacebookAlbum {
+        id: fba
+        socialNetwork: fb
+        identifier: "10150146071791729"     // some valid Facebook Album fbid
+
+        onStatusChanged: {
+            if (status == SocialNetwork.Idle) {
+                // could comment on the album
+                fba.uploadComment("I really like this album!")
+                // could like the album
+                fba.like()
+                // could unlike the album
+                fba.unlike()
+                // could upload another photo to the album
+                fba.uploadPhoto(fileName, "A photo I took recently")
+            }
+        }
+    }
+}
+\endqml 

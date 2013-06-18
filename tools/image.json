@@ -1,0 +1,22 @@
+{
+    "name": "image",
+    "doc": "An entry representing a image size for a photo",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "source",
+            "type": "QUrl",
+            "doc": "Holds the source of the image"
+        },
+        {
+            "name": "width",
+            "type": "int",
+            "doc": "Holds the width of the image"
+        },
+        {
+            "name": "height",
+            "type": "int",
+            "doc": "Holds the height of the image"
+        }
+    ]
+}

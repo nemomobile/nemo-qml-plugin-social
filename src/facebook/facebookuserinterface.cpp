@@ -29,30 +29,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebookuserinterface.h"
 #include "facebookuserinterface_p.h"
-
 #include "facebookontology_p.h"
-#include "facebookpictureinterface.h"
-#include "facebookobjectreferenceinterface.h"
-
-#include "identifiablecontentiteminterface_p.h"
-#include "contentiteminterface_p.h"
-
+#include "facebookinterface.h"
+// <<< include
 #include <QtDebug>
+
+/*
+ * Doesn't expose (via API, although it does via data())
+ * the following fields from the Facebook API:
+ *     age_range
+ *     currency
+ *     devices
+ *     education
+ *     languages
+ *     payment_pricepoints
+ *     security_settings
+ *     video_upload_limits
+ *     work
+ */
+// >>> include
 
 FacebookUserInterfacePrivate::FacebookUserInterfacePrivate(FacebookUserInterface *q)
     : IdentifiableContentItemInterfacePrivate(q)
+    , action(FacebookInterfacePrivate::NoAction)
+// <<< custom
+    , gender(FacebookUserInterface::UnknownGender)
+    , cover(0)
     , hometown(0)
     , location(0)
-    , significantOther(0)
     , picture(0)
-    , action(FacebookInterfacePrivate::NoAction)
+    , relationshipStatus(FacebookUserInterface::UnknownRelationshipStatus)
+    , significantOther(0)
+// >>> custom
 {
 }
 
 void FacebookUserInterfacePrivate::finishedHandler()
 {
+// <<< finishedHandler
     Q_Q(FacebookUserInterface);
     if (!reply()) {
         // if an error occurred, it might have been deleted by the error handler.
@@ -119,221 +134,263 @@ void FacebookUserInterfacePrivate::finishedHandler()
         }
         break;
     }
+// >>> finishedHandler
 }
-
-/*! \reimp */
-void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData)
+void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                             const QVariantMap &newData)
 {
     Q_Q(FacebookUserInterface);
-    QString nameStr = newData.value(FACEBOOK_ONTOLOGY_USER_NAME).toString();
-    QString fnStr = newData.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).toString();
-    QString mnStr = newData.value(FACEBOOK_ONTOLOGY_USER_MIDDLENAME).toString();
-    QString lnStr = newData.value(FACEBOOK_ONTOLOGY_USER_LASTNAME).toString();
-    QString gnStr = newData.value(FACEBOOK_ONTOLOGY_USER_GENDER).toString();
-    QString locStr = newData.value(FACEBOOK_ONTOLOGY_USER_LOCALE).toString();
-    QString linkStr = newData.value(FACEBOOK_ONTOLOGY_USER_LINK).toString();
-    QString unStr = newData.value(FACEBOOK_ONTOLOGY_USER_USERNAME).toString();
-    QString tpiStr = newData.value(FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER).toString();
-    QString insStr = newData.value(FACEBOOK_ONTOLOGY_USER_INSTALLED).toString();
-    QString tzoStr = newData.value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET).toString();
-    QString verStr = newData.value(FACEBOOK_ONTOLOGY_USER_VERIFIED).toString();
-    QString udtStr = newData.value(FACEBOOK_ONTOLOGY_USER_UPDATEDTIME).toString();
-    QString bioStr = newData.value(FACEBOOK_ONTOLOGY_USER_BIO).toString();
-    QString bdayStr = newData.value(FACEBOOK_ONTOLOGY_USER_BIRTHDAY).toString();
-    QString emailStr = newData.value(FACEBOOK_ONTOLOGY_USER_EMAIL).toString();
-    QStringList iinStr = newData.value(FACEBOOK_ONTOLOGY_USER_INTERESTEDIN).toStringList();
-    QString polStr = newData.value(FACEBOOK_ONTOLOGY_USER_POLITICAL).toString();
-    QString quoStr = newData.value(FACEBOOK_ONTOLOGY_USER_QUOTES).toString();
-    QString rssStr = newData.value(FACEBOOK_ONTOLOGY_USER_RELATIONSHIPSTATUS).toString();
-    QString relStr = newData.value(FACEBOOK_ONTOLOGY_USER_RELIGION).toString();
-    QString webStr = newData.value(FACEBOOK_ONTOLOGY_USER_WEBSITE).toString();
-    QVariantMap htMap = newData.value(FACEBOOK_ONTOLOGY_USER_HOMETOWN).toMap();
-    QVariantMap locMap = newData.value(FACEBOOK_ONTOLOGY_USER_LOCATION).toMap();
-    QVariantMap picMap = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap();
-    QVariantMap sigMap = newData.value(FACEBOOK_ONTOLOGY_USER_SIGNIFICANTOTHER).toMap();
+    QVariant oldName = oldData.value(FACEBOOK_ONTOLOGY_USER_NAME);
+    QVariant newName = newData.value(FACEBOOK_ONTOLOGY_USER_NAME);
+    QVariant oldFirstName = oldData.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME);
+    QVariant newFirstName = newData.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME);
+    QVariant oldMiddleName = oldData.value(FACEBOOK_ONTOLOGY_USER_MIDDLENAME);
+    QVariant newMiddleName = newData.value(FACEBOOK_ONTOLOGY_USER_MIDDLENAME);
+    QVariant oldLastName = oldData.value(FACEBOOK_ONTOLOGY_USER_LASTNAME);
+    QVariant newLastName = newData.value(FACEBOOK_ONTOLOGY_USER_LASTNAME);
+    QVariant oldLocale = oldData.value(FACEBOOK_ONTOLOGY_USER_LOCALE);
+    QVariant newLocale = newData.value(FACEBOOK_ONTOLOGY_USER_LOCALE);
+    QVariant oldLink = oldData.value(FACEBOOK_ONTOLOGY_USER_LINK);
+    QVariant newLink = newData.value(FACEBOOK_ONTOLOGY_USER_LINK);
+    QVariant oldUserName = oldData.value(FACEBOOK_ONTOLOGY_USER_USERNAME);
+    QVariant newUserName = newData.value(FACEBOOK_ONTOLOGY_USER_USERNAME);
+    QVariant oldThirdPartyIdentifier = oldData.value(FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER);
+    QVariant newThirdPartyIdentifier = newData.value(FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER);
+    QVariant oldInstalled = oldData.value(FACEBOOK_ONTOLOGY_USER_INSTALLED);
+    QVariant newInstalled = newData.value(FACEBOOK_ONTOLOGY_USER_INSTALLED);
+    QVariant oldTimezoneOffset = oldData.value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET);
+    QVariant newTimezoneOffset = newData.value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET);
+    QVariant oldUpdatedTime = oldData.value(FACEBOOK_ONTOLOGY_USER_UPDATEDTIME);
+    QVariant newUpdatedTime = newData.value(FACEBOOK_ONTOLOGY_USER_UPDATEDTIME);
+    QVariant oldVerified = oldData.value(FACEBOOK_ONTOLOGY_USER_VERIFIED);
+    QVariant newVerified = newData.value(FACEBOOK_ONTOLOGY_USER_VERIFIED);
+    QVariant oldBio = oldData.value(FACEBOOK_ONTOLOGY_USER_BIO);
+    QVariant newBio = newData.value(FACEBOOK_ONTOLOGY_USER_BIO);
+    QVariant oldBirthday = oldData.value(FACEBOOK_ONTOLOGY_USER_BIRTHDAY);
+    QVariant newBirthday = newData.value(FACEBOOK_ONTOLOGY_USER_BIRTHDAY);
+    QVariant oldEmail = oldData.value(FACEBOOK_ONTOLOGY_USER_EMAIL);
+    QVariant newEmail = newData.value(FACEBOOK_ONTOLOGY_USER_EMAIL);
+    QVariant oldPolitical = oldData.value(FACEBOOK_ONTOLOGY_USER_POLITICAL);
+    QVariant newPolitical = newData.value(FACEBOOK_ONTOLOGY_USER_POLITICAL);
+    QVariant oldQuotes = oldData.value(FACEBOOK_ONTOLOGY_USER_QUOTES);
+    QVariant newQuotes = newData.value(FACEBOOK_ONTOLOGY_USER_QUOTES);
+    QVariant oldReligion = oldData.value(FACEBOOK_ONTOLOGY_USER_RELIGION);
+    QVariant newReligion = newData.value(FACEBOOK_ONTOLOGY_USER_RELIGION);
+    QVariant oldWebsite = oldData.value(FACEBOOK_ONTOLOGY_USER_WEBSITE);
+    QVariant newWebsite = newData.value(FACEBOOK_ONTOLOGY_USER_WEBSITE);
 
-    QString oldNameStr = oldData.value(FACEBOOK_ONTOLOGY_USER_NAME).toString();
-    QString oldFnStr = oldData.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).toString();
-    QString oldMnStr = oldData.value(FACEBOOK_ONTOLOGY_USER_MIDDLENAME).toString();
-    QString oldLnStr = oldData.value(FACEBOOK_ONTOLOGY_USER_LASTNAME).toString();
-    QString oldGnStr = oldData.value(FACEBOOK_ONTOLOGY_USER_GENDER).toString();
-    QString oldLocStr = oldData.value(FACEBOOK_ONTOLOGY_USER_LOCALE).toString();
-    QString oldLinkStr = oldData.value(FACEBOOK_ONTOLOGY_USER_LINK).toString();
-    QString oldUnStr = oldData.value(FACEBOOK_ONTOLOGY_USER_USERNAME).toString();
-    QString oldTpiStr = oldData.value(FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER).toString();
-    QString oldInsStr = oldData.value(FACEBOOK_ONTOLOGY_USER_INSTALLED).toString();
-    QString oldTzoStr = newData.value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET).toString();
-    QString oldVerStr = newData.value(FACEBOOK_ONTOLOGY_USER_VERIFIED).toString();
-    QString oldUdtStr = newData.value(FACEBOOK_ONTOLOGY_USER_UPDATEDTIME).toString();
-    QString oldBioStr = oldData.value(FACEBOOK_ONTOLOGY_USER_BIO).toString();
-    QString oldBdayStr = oldData.value(FACEBOOK_ONTOLOGY_USER_BIRTHDAY).toString();
-    QString oldEmailStr = oldData.value(FACEBOOK_ONTOLOGY_USER_EMAIL).toString();
-    QStringList oldIinStr = oldData.value(FACEBOOK_ONTOLOGY_USER_INTERESTEDIN).toStringList();
-    QString oldPolStr = oldData.value(FACEBOOK_ONTOLOGY_USER_POLITICAL).toString();
-    QString oldQuoStr = oldData.value(FACEBOOK_ONTOLOGY_USER_QUOTES).toString();
-    QString oldRssStr = oldData.value(FACEBOOK_ONTOLOGY_USER_RELATIONSHIPSTATUS).toString();
-    QString oldRelStr = oldData.value(FACEBOOK_ONTOLOGY_USER_RELIGION).toString();
-    QString oldWebStr = oldData.value(FACEBOOK_ONTOLOGY_USER_WEBSITE).toString();
-    QVariantMap oldHtMap = oldData.value(FACEBOOK_ONTOLOGY_USER_HOMETOWN).toMap();
-    QVariantMap oldLocMap = oldData.value(FACEBOOK_ONTOLOGY_USER_LOCATION).toMap();
-    QVariantMap oldPicMap = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap();
-    QVariantMap oldSigMap = oldData.value(FACEBOOK_ONTOLOGY_USER_SIGNIFICANTOTHER).toMap();
-
-    // standard properties
-    if (nameStr != oldNameStr)
+    if (newName != oldName)
         emit q->nameChanged();
-    if (fnStr != oldFnStr)
+    if (newFirstName != oldFirstName)
         emit q->firstNameChanged();
-    if (mnStr != oldMnStr)
+    if (newMiddleName != oldMiddleName)
         emit q->middleNameChanged();
-    if (lnStr != oldLnStr)
+    if (newLastName != oldLastName)
         emit q->lastNameChanged();
-    if (gnStr != oldGnStr)
-        emit q->genderChanged();
-    if (locStr != oldLocStr)
-        emit q->locationChanged();
-    if (linkStr != oldLinkStr)
+    if (newLocale != oldLocale)
+        emit q->localeChanged();
+    if (newLink != oldLink)
         emit q->linkChanged();
-    if (unStr != oldUnStr)
+    if (newUserName != oldUserName)
         emit q->userNameChanged();
-    if (tpiStr != oldTpiStr)
+    if (newThirdPartyIdentifier != oldThirdPartyIdentifier)
         emit q->thirdPartyIdentifierChanged();
-    if (insStr != oldInsStr)
+    if (newInstalled != oldInstalled)
         emit q->installedChanged();
-    if (tzoStr != oldTzoStr)
+    if (newTimezoneOffset != oldTimezoneOffset)
         emit q->timezoneOffsetChanged();
-    if (verStr != oldVerStr)
-        emit q->verifiedChanged();
-    if (udtStr != oldUdtStr)
+    if (newUpdatedTime != oldUpdatedTime)
         emit q->updatedTimeChanged();
-    if (bioStr != oldBioStr)
+    if (newVerified != oldVerified)
+        emit q->verifiedChanged();
+    if (newBio != oldBio)
         emit q->bioChanged();
-    if (bdayStr != oldBdayStr)
+    if (newBirthday != oldBirthday)
         emit q->birthdayChanged();
-    if (emailStr != oldEmailStr)
+    if (newEmail != oldEmail)
         emit q->emailChanged();
-    if (iinStr != oldIinStr)
-        emit q->interestedInChanged();
-    if (polStr != oldPolStr)
+    if (newPolitical != oldPolitical)
         emit q->politicalChanged();
-    if (quoStr != oldQuoStr)
+    if (newQuotes != oldQuotes)
         emit q->quotesChanged();
-    if (rssStr != oldRssStr)
-        emit q->relationshipStatusChanged();
-    if (relStr != oldRelStr)
+    if (newReligion != oldReligion)
         emit q->religionChanged();
-    if (webStr != oldWebStr)
+    if (newWebsite != oldWebsite)
         emit q->websiteChanged();
 
-    // variantmap / object reference properties
-    if (htMap != oldHtMap) {
-        QVariantMap newHtData;
-        newHtData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Location);
-        newHtData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newHtData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER));
-        newHtData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newHtData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME));
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(hometown, newHtData);
+// <<< emitPropertyChangeSignals
+    // Handle gender
+    QString oldGender = oldData.value(FACEBOOK_ONTOLOGY_USER_GENDER).toString().toLower();
+    QString newGender = newData.value(FACEBOOK_ONTOLOGY_USER_GENDER).toString().toLower();
+    if (newGender != oldGender) {
+        if (newGender == "male") {
+            gender = FacebookUserInterface::Male;
+        } else if (newGender == "female") {
+            gender = FacebookUserInterface::Female;
+        }
+        emit q->genderChanged();
+    }
+
+    // Handle cover
+    QVariantMap oldCoverMap = oldData.value(FACEBOOK_ONTOLOGY_USER_COVER).toMap();
+    QVariantMap newCoverMap = newData.value(FACEBOOK_ONTOLOGY_USER_COVER).toMap();
+
+    if (newCoverMap != oldCoverMap) {
+        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(cover, newCoverMap);
+        emit q->coverChanged();
+    }
+
+    // Handle hometown
+    QVariantMap oldHometownMap = oldData.value(FACEBOOK_ONTOLOGY_USER_HOMETOWN).toMap();
+    QString oldHometownId = oldHometownMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString oldHometownName = oldHometownMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    QVariantMap newHometownMap = newData.value(FACEBOOK_ONTOLOGY_USER_HOMETOWN).toMap();
+    QString newHometownId = newHometownMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString newHometownName = newHometownMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+
+    if (newHometownId != oldHometownId || newHometownName != oldHometownName) {
+        QVariantMap newHometownData;
+        newHometownData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Location);
+        newHometownData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newHometownId);
+        newHometownData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newHometownName);
+        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(hometown, newHometownData);
         emit q->hometownChanged();
     }
 
-    if (locMap != oldLocMap) {
-        QVariantMap newLocData;
-        newLocData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Location);
-        newLocData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newLocData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER));
-        newLocData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newLocData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME));
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(location, newLocData);
+    // Handle interested_in
+    QStringList oldInterestedIn = oldData.value(FACEBOOK_ONTOLOGY_USER_INTERESTEDIN).toStringList();
+    QStringList newInterestedIn = newData.value(FACEBOOK_ONTOLOGY_USER_INTERESTEDIN).toStringList();
+    if (newInterestedIn != oldInterestedIn) {
+        interestedIn = FacebookUserInterface::Genders();
+        if (newInterestedIn.contains("male")) {
+            interestedIn = interestedIn | FacebookUserInterface::Male;
+        }
+        if (newInterestedIn.contains("female")) {
+            interestedIn = interestedIn | FacebookUserInterface::Female;
+        }
+
+        emit q->interestedInChanged();
+    }
+
+    // Handle location
+    QVariantMap oldLocationMap = oldData.value(FACEBOOK_ONTOLOGY_USER_LOCATION).toMap();
+    QString oldLocationId = oldLocationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString oldLocationName = oldLocationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    QVariantMap newLocationMap = newData.value(FACEBOOK_ONTOLOGY_USER_LOCATION).toMap();
+    QString newLocationId = newLocationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString newLocationName = newLocationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+
+    if (newLocationId != oldLocationId || newLocationName != oldLocationName) {
+        QVariantMap newLocationData;
+        newLocationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Location);
+        newLocationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newLocationId);
+        newLocationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newLocationName);
+        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(location, newLocationData);
         emit q->locationChanged();
     }
 
-    if (picMap != oldPicMap) {
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(picture, picMap);
+    // Handle picture
+    QVariantMap oldPictureMap = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap();
+    QVariantMap newPictureMap = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap();
+
+    if (newPictureMap != oldPictureMap) {
+        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(picture, newPictureMap);
         emit q->pictureChanged();
     }
 
-    if (sigMap != oldSigMap) {
-        QVariantMap newSigData;
-        newSigData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
-        newSigData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newSigData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER));
-        newSigData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newSigData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME));
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(significantOther, newSigData);
+    // Handle relationship_status
+    QString oldRelationshipStatus = oldData.value(FACEBOOK_ONTOLOGY_USER_RELATIONSHIPSTATUS).toString().toLower();
+    QString newRelationshipStatus = newData.value(FACEBOOK_ONTOLOGY_USER_RELATIONSHIPSTATUS).toString().toLower();
+    if (newRelationshipStatus != oldRelationshipStatus) {
+        if (newRelationshipStatus.toLower() == QLatin1String("single")) {
+            relationshipStatus = FacebookUserInterface::Single;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("in a relationship")) {
+            relationshipStatus = FacebookUserInterface::InARelationship;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("engaged")) {
+            relationshipStatus = FacebookUserInterface::Engaged;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("married")) {
+            relationshipStatus = FacebookUserInterface::Married;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("it's complicated")) {
+            relationshipStatus = FacebookUserInterface::ItsComplicated;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("in an open relationship")) {
+            relationshipStatus = FacebookUserInterface::InAnOpenRelationship;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("widowed")) {
+            relationshipStatus = FacebookUserInterface::Widowed;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("separated")) {
+            relationshipStatus = FacebookUserInterface::Separated;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("divorced")) {
+            relationshipStatus = FacebookUserInterface::Divorced;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("in a civil union")) {
+            relationshipStatus = FacebookUserInterface::InACivilUnion;
+        } else if (newRelationshipStatus.toLower() == QLatin1String("in a domestic partnership")) {
+            relationshipStatus = FacebookUserInterface::InADomesticPartnership;
+        } else {
+            relationshipStatus = FacebookUserInterface::UnknownRelationshipStatus;
+        }
+        emit q->relationshipStatusChanged();
+    }
+    // Handle significant_other
+    QVariantMap oldSignificantOtherMap = oldData.value(FACEBOOK_ONTOLOGY_USER_SIGNIFICANTOTHER).toMap();
+    QString oldSignificantOtherId = oldSignificantOtherMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString oldSignificantOtherName = oldSignificantOtherMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    QVariantMap newSignificantOtherMap = newData.value(FACEBOOK_ONTOLOGY_USER_SIGNIFICANTOTHER).toMap();
+    QString newSignificantOtherId = newSignificantOtherMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString newSignificantOtherName = newSignificantOtherMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+
+    if (newSignificantOtherId != oldSignificantOtherId || newSignificantOtherName != oldSignificantOtherName) {
+        QVariantMap newSignificantOtherData;
+        newSignificantOtherData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
+        newSignificantOtherData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newSignificantOtherId);
+        newSignificantOtherData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newSignificantOtherName);
+        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(significantOther, newSignificantOtherData);
         emit q->significantOtherChanged();
     }
+// >>> emitPropertyChangeSignals
 
-    // call the super class implementation
-    QVariantMap oldDataWithId = oldData; oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, oldData.value(FACEBOOK_ONTOLOGY_USER_ID));
-    QVariantMap newDataWithId = newData; newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, newData.value(FACEBOOK_ONTOLOGY_USER_ID));
+    // Call super class implementation
+    QVariantMap oldDataWithId = oldData;
+    oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,
+                         oldData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
+    QVariantMap newDataWithId = newData;
+    newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,
+                         newData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
     IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(oldDataWithId, newDataWithId);
 }
 
-//-------------------------------------------
+//-------------------------------
 
 /*!
     \qmltype FacebookUser
     \instantiates FacebookUserInterface
-    \inqmlmodule org.nemomobile.social 1
-    \brief A FacebookUser represents a User object from the Facebook OpenGraph API
-
-    Every FacebookUser has a unique identifier, and thus a User may be
-    set as the \c node (or central content item) in the Facebook
-    adapter.  The content items related to a User include albums,
-    photos, notifications, friends, and so on.
-
-    An example of usage of a FacebookUser as the node in a Facebook
-    model is as follows:
-
-    \qml
-    import QtQuick 1.1
-    import org.nemomobile.social 1.0
-
-    Item {
-        id: root
-        width: 400
-        height: 800
-
-        Flickable {
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-
-            ListView {
-                model: fb
-                anchors.fill: parent
-                delegate: Label { text: "id: " + contentItemIdentifier } // will display valid Album identifiers
-            }
-        }
-
-        Facebook {
-            id: fb
-            accessToken: "your access token"    // you must supply a valid access token
-            nodeIdentifier: "me"                // the "me" user is a "special" user id
+    l" user id
             filters: [ ContentItemTypeFilter { type: Facebook.Album } ]
         }
     }
     \endqml
-
+    
     A FacebookUser may also be used "directly" by clients, in order to
     view specific information about the user or upload a new album.
     An example of direct usage of the FacebookUser type is as follows:
-
+    
     \qml
     import QtQuick 1.1
     import org.nemomobile.social 1.0
-
+    
     Item {
         id: root
         width: 400
         height: 800
-
+    
         Facebook {
             id: fb
             accessToken: "your access token" // you must supply a valid access token
         }
-
+    
         FacebookUser {
             id: fbu
             socialNetwork: fb
             identifier: "me" // some valid Facebook User fbid
-
+    
             onStatusChanged: {
                 if (status == SocialNetwork.Idle) {
                     // creates a new album, into which photos can be uploaded
@@ -341,7 +398,7 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
                 }
             }
         }
-
+    
         Text {
             anchors.fill: parent
             text: fbu.name // "name" field from the user's profile
@@ -349,15 +406,17 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
     }
     \endqml
 */
-
 FacebookUserInterface::FacebookUserInterface(QObject *parent)
     : IdentifiableContentItemInterface(*(new FacebookUserInterfacePrivate(this)), parent)
 {
+// <<< constructor
     Q_D(FacebookUserInterface);
+    d->cover = new FacebookCoverInterface(this);
     d->hometown = new FacebookObjectReferenceInterface(this);
     d->location = new FacebookObjectReferenceInterface(this);
-    d->significantOther = new FacebookObjectReferenceInterface(this);
     d->picture = new FacebookPictureInterface(this);
+    d->significantOther = new FacebookObjectReferenceInterface(this);
+// >>> constructor
 }
 
 /*! \reimp */
@@ -369,33 +428,39 @@ int FacebookUserInterface::type() const
 /*! \reimp */
 bool FacebookUserInterface::remove()
 {
+// <<< remove
     return IdentifiableContentItemInterface::remove();
+// >>> remove
 }
 
 /*! \reimp */
 bool FacebookUserInterface::reload(const QStringList &whichFields)
 {
+// <<< reload
     return IdentifiableContentItemInterface::reload(whichFields);
+// >>> reload
 }
 
 /*!
     \qmlmethod bool FacebookUser::uploadPhoto(const QUrl &source, const QString &message)
     Initiates a "post photo" operation on the user.  The photo will
     be loaded from the local filesystem and uploaded to Facebook with
-    its caption set to the given \a message.  It will be uploaded to
+    its caption set to the given \a message. It will be uploaded to
     the default album of the user.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the user will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
     false.
-
+    
     Once the network request completes, the \c responseReceived()
     signal will be emitted.  The \c data parameter of the signal
     will contain the \c id of the newly uploaded photo.
-*/
+    */
+
 bool FacebookUserInterface::uploadPhoto(const QUrl &source, const QString &message)
 {
+// <<< uploadPhoto
     Q_D(FacebookUserInterface);
     // XXX TODO: privacy parameter?
 
@@ -417,20 +482,21 @@ bool FacebookUserInterface::uploadPhoto(const QUrl &source, const QString &messa
     d->action = FacebookInterfacePrivate::UploadPhotoAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> uploadPhoto
 }
-
 /*!
-    \qmlmethod bool FacebookUser::removePhoto(const QString &identifier)
+    \qmlmethod bool FacebookUser::removePhoto(const QString &photoIdentifier)
     Initiates a "delete photo" operation on the photo specified by
     the given \a identifier.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the user will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookUserInterface::removePhoto(const QString &photoIdentifier)
 {
+// <<< removePhoto
     Q_D(FacebookUserInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete, photoIdentifier);
 
@@ -440,25 +506,26 @@ bool FacebookUserInterface::removePhoto(const QString &photoIdentifier)
     d->action = FacebookInterfacePrivate::DeletePhotoAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> removePhoto
 }
-
 /*!
     \qmlmethod bool FacebookUser::uploadAlbum(const QString &name, const QString &message, const QVariantMap &privacy)
     Initiates a "post album" operation on the user.  The album
     will be created with the given \a name and be described by the
     given \a message, and will have the specified \a privacy.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the user will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
     false.
-
+    
     Once the network request completes, the \c responseReceived()
     signal will be emitted.  The \c data parameter of the signal
-    will contain the \c id of the newly uploaded album.
-*/
+    will contain the \c id of the newly uploaded album.*/
+
 bool FacebookUserInterface::uploadAlbum(const QString &name, const QString &message, const QVariantMap &privacy)
 {
+// <<< uploadAlbum
     Q_D(FacebookUserInterface);
     QVariantMap postData;
     postData.insert("name", name);
@@ -477,20 +544,21 @@ bool FacebookUserInterface::uploadAlbum(const QString &name, const QString &mess
     d->action = FacebookInterfacePrivate::UploadAlbumAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> uploadAlbum
 }
-
 /*!
-    \qmlmethod bool FacebookUser::removeAlbum(const QString &identifier)
+    \qmlmethod bool FacebookUser::removeAlbum(const QString &albumIdentifier)
     Initiates a "delete album" operation on the album specified by
     the given \a identifier.
-
+    
     If the network request was started successfully, the function
     will return true and the status of the user will change to
     \c SocialNetwork::Busy.  Otherwise, the function will return
-    false.
-*/
+    false.*/
+
 bool FacebookUserInterface::removeAlbum(const QString &albumIdentifier)
 {
+// <<< removeAlbum
     Q_D(FacebookUserInterface);
     bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete, albumIdentifier);
 
@@ -500,12 +568,12 @@ bool FacebookUserInterface::removeAlbum(const QString &albumIdentifier)
     d->action = FacebookInterfacePrivate::DeleteAlbumAction;
     d->connectFinishedAndErrors();
     return true;
+// >>> removeAlbum
 }
-
 
 /*!
     \qmlproperty QString FacebookUser::name
-    Holds the full name of the user
+    Holds the full name of the user.
 */
 QString FacebookUserInterface::name() const
 {
@@ -515,7 +583,7 @@ QString FacebookUserInterface::name() const
 
 /*!
     \qmlproperty QString FacebookUser::firstName
-    Holds the first name of the user
+    Holds the first name of the user.
 */
 QString FacebookUserInterface::firstName() const
 {
@@ -525,7 +593,7 @@ QString FacebookUserInterface::firstName() const
 
 /*!
     \qmlproperty QString FacebookUser::middleName
-    Holds the middle name of the user
+    Holds the middle name of the user.
 */
 QString FacebookUserInterface::middleName() const
 {
@@ -535,7 +603,7 @@ QString FacebookUserInterface::middleName() const
 
 /*!
     \qmlproperty QString FacebookUser::lastName
-    Holds the last name of the user
+    Holds the last name of the user.
 */
 QString FacebookUserInterface::lastName() const
 {
@@ -544,28 +612,28 @@ QString FacebookUserInterface::lastName() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::gender
-    Holds the gender of the user
+    \qmlproperty FacebookUserInterface::Gender FacebookUser::gender
+    Holds the gender of the user.
 */
-QString FacebookUserInterface::gender() const
+FacebookUserInterface::Gender FacebookUserInterface::gender() const
 {
     Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_GENDER).toString();
+    return d->gender;
 }
 
 /*!
     \qmlproperty QString FacebookUser::locale
-    Holds the locale of the user
+    Holds the locale of the user.
 */
 QString FacebookUserInterface::locale() const
 {
-   Q_D(const FacebookUserInterface);
+    Q_D(const FacebookUserInterface);
     return d->data().value(FACEBOOK_ONTOLOGY_USER_LOCALE).toString();
 }
 
 /*!
     \qmlproperty QUrl FacebookUser::link
-    Holds a link to the profile of the user
+    Holds a link to the profile of the user.
 */
 QUrl FacebookUserInterface::link() const
 {
@@ -575,7 +643,7 @@ QUrl FacebookUserInterface::link() const
 
 /*!
     \qmlproperty QString FacebookUser::userName
-    Holds the username of the user
+    Holds the userName of the user.
 */
 QString FacebookUserInterface::userName() const
 {
@@ -585,7 +653,7 @@ QString FacebookUserInterface::userName() const
 
 /*!
     \qmlproperty QString FacebookUser::thirdPartyIdentifier
-    Holds the third party identifier of the user
+    Holds the third party identifier of the user.
 */
 QString FacebookUserInterface::thirdPartyIdentifier() const
 {
@@ -596,7 +664,7 @@ QString FacebookUserInterface::thirdPartyIdentifier() const
 /*!
     \qmlproperty bool FacebookUser::installed
     Whether the user has installed the application associated with
-    the access token which made the request to the Facebook service
+    the access token which made the request to the Facebook service.
 */
 bool FacebookUserInterface::installed() const
 {
@@ -605,23 +673,24 @@ bool FacebookUserInterface::installed() const
 }
 
 /*!
-    \qmlproperty qreal FacebookUser::timezoneOffset
-    Holds the timezone offset of the user
+    \qmlproperty float FacebookUser::timezoneOffset
+    Holds the timezone offset of the user.
 */
-qreal FacebookUserInterface::timezoneOffset() const
+float FacebookUserInterface::timezoneOffset() const
 {
     Q_D(const FacebookUserInterface);
-    QString tzoStr = d->data().value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET).toString();
-    bool ok = false;
-    qreal tzo = tzoStr.toDouble(&ok);
-    if (!ok)
-        return 0.0;
-    return tzo;
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET).toString();
+    bool ok;
+    float number = numberString.toFloat(&ok);
+    if (ok) {
+        return number;
+    }
+    return 0.;
 }
 
 /*!
     \qmlproperty QString FacebookUser::updatedTime
-    Holds the last-update time of the user as an ISO8601-formatted string
+    Holds the last-update time of the user as an ISO8601-formatted string.
 */
 QString FacebookUserInterface::updatedTime() const
 {
@@ -631,7 +700,7 @@ QString FacebookUserInterface::updatedTime() const
 
 /*!
     \qmlproperty bool FacebookUser::verified
-    Whether the user has been verified
+    Whether the user has been verified.
 */
 bool FacebookUserInterface::verified() const
 {
@@ -641,7 +710,7 @@ bool FacebookUserInterface::verified() const
 
 /*!
     \qmlproperty QString FacebookUser::bio
-    Holds the biographical details of the user
+    Holds the biographical details of the user.
 */
 QString FacebookUserInterface::bio() const
 {
@@ -651,7 +720,7 @@ QString FacebookUserInterface::bio() const
 
 /*!
     \qmlproperty QString FacebookUser::birthday
-    Holds the birthday of the user in MM/dd/YYYY format
+    Holds the birthday of the user in MM/dd/YYYY format.
 */
 QString FacebookUserInterface::birthday() const
 {
@@ -660,8 +729,18 @@ QString FacebookUserInterface::birthday() const
 }
 
 /*!
+    \qmlproperty FacebookCoverInterface * FacebookUser::cover
+    Holds the cover of the user.
+*/
+FacebookCoverInterface * FacebookUserInterface::cover() const
+{
+    Q_D(const FacebookUserInterface);
+    return d->cover;
+}
+
+/*!
     \qmlproperty QString FacebookUser::email
-    Holds the email address of the user
+    Holds the email address of the user.
 */
 QString FacebookUserInterface::email() const
 {
@@ -670,31 +749,31 @@ QString FacebookUserInterface::email() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReference *FacebookUser::hometown
-    Holds a reference to the place object which is the user's home town
+    \qmlproperty FacebookObjectReferenceInterface * FacebookUser::hometown
+    Holds a reference to the place object which is the user's home town.
 */
-FacebookObjectReferenceInterface *FacebookUserInterface::hometown() const
+FacebookObjectReferenceInterface * FacebookUserInterface::hometown() const
 {
     Q_D(const FacebookUserInterface);
     return d->hometown;
 }
 
 /*!
-    \qmlproperty QStringList FacebookUser::interestedIn
+    \qmlproperty FacebookUserInterface::Genders FacebookUser::interestedIn
     Holds a list of the user's personal gender preferences in the
-    context of relationships
+    context of relationships.
 */
-QStringList FacebookUserInterface::interestedIn() const
+FacebookUserInterface::Genders FacebookUserInterface::interestedIn() const
 {
     Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_INTERESTEDIN).toStringList();
+    return d->interestedIn;
 }
 
 /*!
-    \qmlproperty FacebookObjectReference *FacebookUser::location
-    Holds a reference to the place object which is the user's current domicile location
+    \qmlproperty FacebookObjectReferenceInterface * FacebookUser::location
+    Holds a reference to the place object which is the user's current domicile location.
 */
-FacebookObjectReferenceInterface *FacebookUserInterface::location() const
+FacebookObjectReferenceInterface * FacebookUserInterface::location() const
 {
     Q_D(const FacebookUserInterface);
     return d->location;
@@ -702,7 +781,7 @@ FacebookObjectReferenceInterface *FacebookUserInterface::location() const
 
 /*!
     \qmlproperty QString FacebookUser::political
-    Holds the political views which the user identifies with
+    Holds the political views which the user identifies with.
 */
 QString FacebookUserInterface::political() const
 {
@@ -711,10 +790,10 @@ QString FacebookUserInterface::political() const
 }
 
 /*!
-    \qmlproperty FacebookPicture *FacebookUser::picture
-    Holds a reference to the picture associated with the user
+    \qmlproperty FacebookPictureInterface * FacebookUser::picture
+    Holds a reference to the picture associated with the user.
 */
-FacebookPictureInterface *FacebookUserInterface::picture() const
+FacebookPictureInterface * FacebookUserInterface::picture() const
 {
     Q_D(const FacebookUserInterface);
     return d->picture;
@@ -722,7 +801,7 @@ FacebookPictureInterface *FacebookUserInterface::picture() const
 
 /*!
     \qmlproperty QString FacebookUser::quotes
-    Holds some of the user's favourite quotes
+    Holds some of the user's favourite quotes.
 */
 QString FacebookUserInterface::quotes() const
 {
@@ -731,41 +810,18 @@ QString FacebookUserInterface::quotes() const
 }
 
 /*!
-    \qmlproperty Facebookuser::RelationshipStatus FacebookUser::relationshipStatus
-    Holds the current relationship status of the user
+    \qmlproperty FacebookUserInterface::RelationshipStatus FacebookUser::relationshipStatus
+    Holds the current relationship status of the user.
 */
 FacebookUserInterface::RelationshipStatus FacebookUserInterface::relationshipStatus() const
 {
     Q_D(const FacebookUserInterface);
-    QString statusStr = d->data().value(FACEBOOK_ONTOLOGY_USER_RELATIONSHIPSTATUS).toString();
-    if (statusStr.toLower() == QLatin1String("single"))
-        return FacebookUserInterface::Single;
-    if (statusStr.toLower() == QLatin1String("in a relationship"))
-        return FacebookUserInterface::InARelationship;
-    if (statusStr.toLower() == QLatin1String("engaged"))
-        return FacebookUserInterface::Engaged;
-    if (statusStr.toLower() == QLatin1String("married"))
-        return FacebookUserInterface::Married;
-    if (statusStr.toLower() == QLatin1String("it's complicated"))
-        return FacebookUserInterface::ItsComplicated;
-    if (statusStr.toLower() == QLatin1String("in an open relationship"))
-        return FacebookUserInterface::InAnOpenRelationship;
-    if (statusStr.toLower() == QLatin1String("widowed"))
-        return FacebookUserInterface::Widowed;
-    if (statusStr.toLower() == QLatin1String("separated"))
-        return FacebookUserInterface::Separated;
-    if (statusStr.toLower() == QLatin1String("divorced"))
-        return FacebookUserInterface::Divorced;
-    if (statusStr.toLower() == QLatin1String("in a civil union"))
-        return FacebookUserInterface::InACivilUnion;
-    if (statusStr.toLower() == QLatin1String("in a domestic partnership"))
-        return FacebookUserInterface::InADomesticPartnership;
-    return FacebookUserInterface::Unknown;
+    return d->relationshipStatus;
 }
 
 /*!
     \qmlproperty QString FacebookUser::religion
-    Holds the religious views which the user identifies with
+    Holds the religious views which the user identifies with.
 */
 QString FacebookUserInterface::religion() const
 {
@@ -774,11 +830,11 @@ QString FacebookUserInterface::religion() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReference *FacebookUser::significantOther
+    \qmlproperty FacebookObjectReferenceInterface * FacebookUser::significantOther
     Holds a reference to the person object which is listed as the user's
-    significant other (spouse or partner)
+    significant other (spouse or partner).
 */
-FacebookObjectReferenceInterface *FacebookUserInterface::significantOther() const
+FacebookObjectReferenceInterface * FacebookUserInterface::significantOther() const
 {
     Q_D(const FacebookUserInterface);
     return d->significantOther;
@@ -786,10 +842,11 @@ FacebookObjectReferenceInterface *FacebookUserInterface::significantOther() cons
 
 /*!
     \qmlproperty QUrl FacebookUser::website
-    Holds a link the user's website
+    Holds a link the user's website.
 */
 QUrl FacebookUserInterface::website() const
 {
     Q_D(const FacebookUserInterface);
     return QUrl(d->data().value(FACEBOOK_ONTOLOGY_USER_WEBSITE).toString());
 }
+

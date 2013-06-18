@@ -30,42 +30,51 @@
  */
 
 #include "facebooklikeinterface.h"
-#include "contentiteminterface_p.h"
-#include "facebookontology_p.h"
-
 #include "facebookinterface.h"
-#include "facebooklikeinterface_p.h"
+#include "facebookontology_p.h"
+#include "contentiteminterface_p.h"
+// <<< include
+// >>> include
+
+class FacebookLikeInterfacePrivate: public ContentItemInterfacePrivate
+{
+public:
+    explicit FacebookLikeInterfacePrivate(FacebookLikeInterface *q);
+    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+private:
+    Q_DECLARE_PUBLIC(FacebookLikeInterface)
+};
 
 FacebookLikeInterfacePrivate::FacebookLikeInterfacePrivate(FacebookLikeInterface *q)
     : ContentItemInterfacePrivate(q)
 {
 }
 
-/*! \reimp */
-void FacebookLikeInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData)
+void FacebookLikeInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                             const QVariantMap &newData)
 {
     Q_Q(FacebookLikeInterface);
-    QString tidStr = newData.value(FACEBOOK_ONTOLOGY_LIKE_TARGETIDENTIFIER).toString();
-    QString uidStr = newData.value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER).toString();
-    QString unStr = newData.value(FACEBOOK_ONTOLOGY_LIKE_USERNAME).toString();
+    QVariant oldUserIdentifier = oldData.value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER);
+    QVariant newUserIdentifier = newData.value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER);
+    QVariant oldUserName = oldData.value(FACEBOOK_ONTOLOGY_LIKE_USERNAME);
+    QVariant newUserName = newData.value(FACEBOOK_ONTOLOGY_LIKE_USERNAME);
 
-    QString oldTidStr = newData.value(FACEBOOK_ONTOLOGY_LIKE_TARGETIDENTIFIER).toString();
-    QString oldUidStr = newData.value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER).toString();
-    QString oldUnStr = newData.value(FACEBOOK_ONTOLOGY_LIKE_USERNAME).toString();
-
-    if (tidStr != oldTidStr)
-        emit q->targetIdentifierChanged();
-    if (uidStr != oldUidStr)
+    if (newUserIdentifier != oldUserIdentifier)
         emit q->userIdentifierChanged();
-    if (unStr != oldUnStr)
+    if (newUserName != oldUserName)
         emit q->userNameChanged();
 
-    // call super class implementation
+    // Call super class implementation
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
 }
 
 //-------------------------------
 
+/*!
+    \qmltype FacebookLike
+    \instantiates FacebookLikeInterface
+    An entry representing a like
+*/
 FacebookLikeInterface::FacebookLikeInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookLikeInterfacePrivate(this)), parent)
 {
@@ -77,32 +86,24 @@ int FacebookLikeInterface::type() const
     return FacebookInterface::Like;
 }
 
-/*!
-    \qmlproperty QString FacebookLike::targetIdentifier
-    Holds the identifier of the object which was liked
-*/
-QString FacebookLikeInterface::targetIdentifier() const
-{
-    Q_D(const ContentItemInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_LIKE_TARGETIDENTIFIER).toString();
-}
+
 /*!
     \qmlproperty QString FacebookLike::userIdentifier
-    Holds the identifier of the user who liked the target object
+    Holds the identifier of the user who liked an entry
 */
 QString FacebookLikeInterface::userIdentifier() const
 {
-    Q_D(const ContentItemInterface);
+    Q_D(const FacebookLikeInterface);
     return d->data().value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER).toString();
 }
+
 /*!
     \qmlproperty QString FacebookLike::userName
-    Holds the name of the user who liked the target object
+    Holds the name of the user who liked an entry
 */
 QString FacebookLikeInterface::userName() const
 {
-    Q_D(const ContentItemInterface);
+    Q_D(const FacebookLikeInterface);
     return d->data().value(FACEBOOK_ONTOLOGY_LIKE_USERNAME).toString();
 }
-
 

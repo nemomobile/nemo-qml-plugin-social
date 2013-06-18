@@ -34,11 +34,9 @@
 
 #include "identifiablecontentiteminterface.h"
 
-#include <QtCore/QVariantMap>
+#include "facebookobjectreferenceinterface.h"
 #include <QtCore/QString>
 #include <QtCore/QUrl>
-
-class FacebookObjectReferenceInterface;
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -47,37 +45,39 @@ class FacebookObjectReferenceInterface;
  */
 
 class FacebookNotificationInterfacePrivate;
-class FacebookNotificationInterface : public IdentifiableContentItemInterface
+class FacebookNotificationInterface: public IdentifiableContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(FacebookObjectReferenceInterface *from READ from NOTIFY fromChanged)
-    Q_PROPERTY(FacebookObjectReferenceInterface *to READ to NOTIFY toChanged)
-    Q_PROPERTY(FacebookObjectReferenceInterface *application READ application NOTIFY applicationChanged)
+    Q_PROPERTY(FacebookObjectReferenceInterface * from READ from NOTIFY fromChanged)
+    Q_PROPERTY(FacebookObjectReferenceInterface * to READ to NOTIFY toChanged)
+    Q_PROPERTY(FacebookObjectReferenceInterface * application READ application NOTIFY applicationChanged)
     Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(QUrl link READ link NOTIFY linkChanged)
     Q_PROPERTY(int unread READ unread NOTIFY unreadChanged)
-    /* XXX TODO: "object" property -- probably another object reference? Undocumented. */
-
+public:
+    // Technically FacebookNotificationInterface is not identifiable, but it have an identifier
+    // There is also an undocumented "object" property (TODO XXX ?)
 public:
     explicit FacebookNotificationInterface(QObject *parent = 0);
 
-    // overrides
+    // Overrides.
     int type() const;
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
-    // properties
-    FacebookObjectReferenceInterface *from() const;
-    FacebookObjectReferenceInterface *to() const;
-    FacebookObjectReferenceInterface *application() const;
+    // Invokable API.
+
+    // Accessors
+    FacebookObjectReferenceInterface * from() const;
+    FacebookObjectReferenceInterface * to() const;
+    FacebookObjectReferenceInterface * application() const;
     QString createdTime() const;
     QString updatedTime() const;
     QString title() const;
     QUrl link() const;
     int unread() const;
-
 Q_SIGNALS:
     void fromChanged();
     void toChanged();
@@ -89,7 +89,6 @@ Q_SIGNALS:
     void unreadChanged();
 private:
     Q_DECLARE_PRIVATE(FacebookNotificationInterface)
-
 };
 
 #endif // FACEBOOKNOTIFICATIONINTERFACE_H
