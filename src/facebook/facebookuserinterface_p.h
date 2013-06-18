@@ -32,31 +32,25 @@
 #ifndef FACEBOOKUSERINTERFACE_P_H
 #define FACEBOOKUSERINTERFACE_P_H
 
-#include <QtCore/QObject>
-#include <QtCore/QList>
-#include <QtNetwork/QNetworkReply>
-
+#include "facebookuserinterface.h"
 #include "facebookinterface_p.h"
 #include "identifiablecontentiteminterface_p.h"
 
-class IdentifiableContentItemInterfacePrivate;
-class FacebookObjectReferenceInterface;
-class FacebookPictureInterface;
-class FacebookUserInterface;
-
-class FacebookUserInterfacePrivate : public IdentifiableContentItemInterfacePrivate
+class FacebookUserInterfacePrivate: public IdentifiableContentItemInterfacePrivate
 {
 public:
     explicit FacebookUserInterfacePrivate(FacebookUserInterface *q);
     void finishedHandler();
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-
-    FacebookObjectReferenceInterface *hometown;
-    FacebookObjectReferenceInterface *location;
-    FacebookObjectReferenceInterface *significantOther;
-    FacebookPictureInterface *picture;
-
     FacebookInterfacePrivate::FacebookAction action;
+    FacebookUserInterface::Gender gender;
+    FacebookCoverInterface *cover;
+    FacebookObjectReferenceInterface *hometown;
+    FacebookUserInterface::Genders interestedIn;
+    FacebookObjectReferenceInterface *location;
+    FacebookPictureInterface *picture;
+    FacebookUserInterface::RelationshipStatus relationshipStatus;
+    FacebookObjectReferenceInterface *significantOther;
 private:
     Q_DECLARE_PUBLIC(FacebookUserInterface)
 };

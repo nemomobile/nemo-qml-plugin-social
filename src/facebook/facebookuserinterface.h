@@ -34,14 +34,11 @@
 
 #include "identifiablecontentiteminterface.h"
 
-#include <QtCore/QObject>
-#include <QtCore/QVariantMap>
-#include <QtCore/QStringList>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
-
-class FacebookObjectReferenceInterface;
-class FacebookPictureInterface;
+#include "facebookcoverinterface.h"
+#include "facebookobjectreferenceinterface.h"
+#include "facebookpictureinterface.h"
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -49,58 +46,40 @@ class FacebookPictureInterface;
  * directly after construction.
  */
 
-/*
- * Doesn't expose (via API, although it does via data())
- * the following fields from the Facebook API:
- *     age_range
- *     cover
- *     currency
- *     devices
- *     education
- *     languages
- *     payment_pricepoints
- *     security_settings
- *     video_upload_limits
- *     work
- */
-
 class FacebookUserInterfacePrivate;
-class FacebookUserInterface : public IdentifiableContentItemInterface
+class FacebookUserInterface: public IdentifiableContentItemInterface
 {
     Q_OBJECT
-
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
     Q_PROPERTY(QString firstName READ firstName NOTIFY firstNameChanged)
     Q_PROPERTY(QString middleName READ middleName NOTIFY middleNameChanged)
     Q_PROPERTY(QString lastName READ lastName NOTIFY lastNameChanged)
-    Q_PROPERTY(QString gender READ gender NOTIFY genderChanged)
+    Q_PROPERTY(FacebookUserInterface::Gender gender READ gender NOTIFY genderChanged)
     Q_PROPERTY(QString locale READ locale NOTIFY localeChanged)
     Q_PROPERTY(QUrl link READ link NOTIFY linkChanged)
     Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
     Q_PROPERTY(QString thirdPartyIdentifier READ thirdPartyIdentifier NOTIFY thirdPartyIdentifierChanged)
     Q_PROPERTY(bool installed READ installed NOTIFY installedChanged)
-    Q_PROPERTY(qreal timezoneOffset READ timezoneOffset NOTIFY timezoneOffsetChanged)
+    Q_PROPERTY(float timezoneOffset READ timezoneOffset NOTIFY timezoneOffsetChanged)
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
     Q_PROPERTY(bool verified READ verified NOTIFY verifiedChanged)
     Q_PROPERTY(QString bio READ bio NOTIFY bioChanged)
     Q_PROPERTY(QString birthday READ birthday NOTIFY birthdayChanged)
+    Q_PROPERTY(FacebookCoverInterface * cover READ cover NOTIFY coverChanged)
     Q_PROPERTY(QString email READ email NOTIFY emailChanged)
-    Q_PROPERTY(FacebookObjectReferenceInterface *hometown READ hometown NOTIFY hometownChanged)
-    Q_PROPERTY(QStringList interestedIn READ interestedIn NOTIFY interestedInChanged)
-    Q_PROPERTY(FacebookObjectReferenceInterface *location READ location NOTIFY locationChanged)
+    Q_PROPERTY(FacebookObjectReferenceInterface * hometown READ hometown NOTIFY hometownChanged)
+    Q_PROPERTY(FacebookUserInterface::Genders interestedIn READ interestedIn NOTIFY interestedInChanged)
+    Q_PROPERTY(FacebookObjectReferenceInterface * location READ location NOTIFY locationChanged)
     Q_PROPERTY(QString political READ political NOTIFY politicalChanged)
-    Q_PROPERTY(FacebookPictureInterface *picture READ picture NOTIFY pictureChanged)
+    Q_PROPERTY(FacebookPictureInterface * picture READ picture NOTIFY pictureChanged)
     Q_PROPERTY(QString quotes READ quotes NOTIFY quotesChanged)
-    Q_PROPERTY(RelationshipStatus relationshipStatus READ relationshipStatus NOTIFY relationshipStatusChanged)
+    Q_PROPERTY(FacebookUserInterface::RelationshipStatus relationshipStatus READ relationshipStatus NOTIFY relationshipStatusChanged)
     Q_PROPERTY(QString religion READ religion NOTIFY religionChanged)
-    Q_PROPERTY(FacebookObjectReferenceInterface *significantOther READ significantOther NOTIFY significantOtherChanged)
+    Q_PROPERTY(FacebookObjectReferenceInterface * significantOther READ significantOther NOTIFY significantOtherChanged)
     Q_PROPERTY(QUrl website READ website NOTIFY websiteChanged)
-
-    Q_ENUMS(RelationshipStatus)
-
 public:
     enum RelationshipStatus {
-        Unknown = 0,
+        UnknownRelationshipStatus = 0,
         Single,
         InARelationship,
         Engaged,
@@ -113,51 +92,57 @@ public:
         InACivilUnion,
         InADomesticPartnership
     };
-
-
+    Q_ENUMS(RelationshipStatus)
+    enum Gender {
+        UnknownGender = 0x0,
+        Male = 0x1,
+        Female = 0x2
+    };
+    Q_ENUMS(Gender)
+    Q_DECLARE_FLAGS(Genders, Gender)
+    Q_ENUMS(Genders)
 public:
     explicit FacebookUserInterface(QObject *parent = 0);
 
-    // overrides.
+    // Overrides.
     int type() const;
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
-    // invokable API
+    // Invokable API.
     Q_INVOKABLE bool uploadPhoto(const QUrl &source, const QString &message = QString());
     Q_INVOKABLE bool removePhoto(const QString &photoIdentifier);
     Q_INVOKABLE bool uploadAlbum(const QString &name, const QString &message = QString(), const QVariantMap &privacy = QVariantMap());
     Q_INVOKABLE bool removeAlbum(const QString &albumIdentifier);
 
-public:
-    // property accessors.
+    // Accessors
     QString name() const;
     QString firstName() const;
     QString middleName() const;
     QString lastName() const;
-    QString gender() const;
+    FacebookUserInterface::Gender gender() const;
     QString locale() const;
     QUrl link() const;
     QString userName() const;
     QString thirdPartyIdentifier() const;
     bool installed() const;
-    qreal timezoneOffset() const;
+    float timezoneOffset() const;
     QString updatedTime() const;
     bool verified() const;
     QString bio() const;
     QString birthday() const;
+    FacebookCoverInterface * cover() const;
     QString email() const;
-    FacebookObjectReferenceInterface *hometown() const;
-    QStringList interestedIn() const;
-    FacebookObjectReferenceInterface *location() const;
+    FacebookObjectReferenceInterface * hometown() const;
+    FacebookUserInterface::Genders interestedIn() const;
+    FacebookObjectReferenceInterface * location() const;
     QString political() const;
-    FacebookPictureInterface *picture() const;
+    FacebookPictureInterface * picture() const;
     QString quotes() const;
-    RelationshipStatus relationshipStatus() const;
+    FacebookUserInterface::RelationshipStatus relationshipStatus() const;
     QString religion() const;
-    FacebookObjectReferenceInterface *significantOther() const;
+    FacebookObjectReferenceInterface * significantOther() const;
     QUrl website() const;
-
 Q_SIGNALS:
     void nameChanged();
     void firstNameChanged();
@@ -174,6 +159,7 @@ Q_SIGNALS:
     void verifiedChanged();
     void bioChanged();
     void birthdayChanged();
+    void coverChanged();
     void emailChanged();
     void hometownChanged();
     void interestedInChanged();
@@ -188,5 +174,6 @@ Q_SIGNALS:
 private:
     Q_DECLARE_PRIVATE(FacebookUserInterface)
 };
+Q_DECLARE_OPERATORS_FOR_FLAGS(FacebookUserInterface::Genders)
 
 #endif // FACEBOOKUSERINTERFACE_H

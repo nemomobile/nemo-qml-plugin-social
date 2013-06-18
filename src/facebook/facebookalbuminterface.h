@@ -34,13 +34,9 @@
 
 #include "identifiablecontentiteminterface.h"
 
-#include <QtCore/QObject>
-#include <QtCore/QVariantMap>
-#include <QtCore/QStringList>
+#include "facebookobjectreferenceinterface.h"
 #include <QtCore/QString>
 #include <QtCore/QUrl>
-
-class FacebookObjectReferenceInterface;
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -49,26 +45,21 @@ class FacebookObjectReferenceInterface;
  */
 
 class FacebookAlbumInterfacePrivate;
-class FacebookAlbumInterface : public IdentifiableContentItemInterface
+class FacebookAlbumInterface: public IdentifiableContentItemInterface
 {
     Q_OBJECT
-
-    Q_PROPERTY(FacebookObjectReferenceInterface *from READ from NOTIFY fromChanged)
+    Q_PROPERTY(FacebookObjectReferenceInterface * from READ from NOTIFY fromChanged)
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
     Q_PROPERTY(QString description READ description NOTIFY descriptionChanged)
     Q_PROPERTY(QUrl link READ link NOTIFY linkChanged)
-    Q_PROPERTY(QString coverPhoto READ coverPhoto NOTIFY coverPhotoChanged)
+    Q_PROPERTY(QUrl coverPhoto READ coverPhoto NOTIFY coverPhotoChanged)
     Q_PROPERTY(QString privacy READ privacy NOTIFY privacyChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(AlbumType albumType READ albumType NOTIFY albumTypeChanged)
+    Q_PROPERTY(FacebookAlbumInterface::AlbumType albumType READ albumType NOTIFY albumTypeChanged)
     Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
     Q_PROPERTY(bool canUpload READ canUpload NOTIFY canUploadChanged)
-
-    Q_PROPERTY(bool liked READ liked NOTIFY likedChanged) // requires: requesting all likes connections, iterating through, finding "current user id" / or not...
-
-    Q_ENUMS(AlbumType)
-
+    Q_PROPERTY(bool liked READ liked NOTIFY likedChanged)
 public:
     enum AlbumType {
         Album,
@@ -77,16 +68,16 @@ public:
         Profile,
         Mobile
     };
-
+    Q_ENUMS(AlbumType)
 public:
     explicit FacebookAlbumInterface(QObject *parent = 0);
 
-    // overrides.
+    // Overrides.
     int type() const;
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
-    // invokable API
+    // Invokable API.
     Q_INVOKABLE bool like();
     Q_INVOKABLE bool unlike();
     Q_INVOKABLE bool uploadComment(const QString &message);
@@ -94,21 +85,19 @@ public:
     Q_INVOKABLE bool uploadPhoto(const QUrl &source, const QString &message = QString());
     Q_INVOKABLE bool removePhoto(const QString &photoIdentifier);
 
-public:
-    // property accessors.
-    FacebookObjectReferenceInterface *from() const;
+    // Accessors
+    FacebookObjectReferenceInterface * from() const;
     QString name() const;
     QString description() const;
     QUrl link() const;
-    QString coverPhoto() const;
+    QUrl coverPhoto() const;
     QString privacy() const;
     int count() const;
-    AlbumType albumType() const;
+    FacebookAlbumInterface::AlbumType albumType() const;
     QString createdTime() const;
     QString updatedTime() const;
     bool canUpload() const;
     bool liked() const;
-
 Q_SIGNALS:
     void fromChanged();
     void nameChanged();

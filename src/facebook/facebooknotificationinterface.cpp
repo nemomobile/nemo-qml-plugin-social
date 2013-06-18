@@ -29,136 +29,114 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebooknotificationinterface.h"
 #include "facebooknotificationinterface_p.h"
-
 #include "facebookontology_p.h"
-#include "facebookobjectreferenceinterface.h"
-#include "identifiablecontentiteminterface_p.h"
-#include "contentiteminterface_p.h"
-
-#include <QtDebug>
+#include "facebookinterface.h"
+// <<< include
+// >>> include
 
 FacebookNotificationInterfacePrivate::FacebookNotificationInterfacePrivate(FacebookNotificationInterface *q)
     : IdentifiableContentItemInterfacePrivate(q)
+    , action(FacebookInterfacePrivate::NoAction)
+// <<< custom
     , from(0)
     , to(0)
     , application(0)
-    , action(FacebookInterfacePrivate::NoAction)
+// >>> custom
 {
 }
 
 void FacebookNotificationInterfacePrivate::finishedHandler()
 {
-    Q_Q(FacebookNotificationInterface);
-    if (!reply()) {
-        // if an error occurred, it might have been deleted by the error handler.
-        qWarning() << Q_FUNC_INFO << "network request finished but no reply";
-        return;
-    }
-
-    QByteArray replyData = reply()->readAll();
-    deleteReply();
-    bool ok = false;
-    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
-    if (!ok)
-        responseData.insert("response", replyData);
-
-    // In the future, we will have "mark notification as read" action.
-    // XXX TODO: implement "mark as read".
-    error = SocialNetworkInterface::OtherError;
-    errorMessage = QLatin1String("Request finished but no action currently in progress");
-    status = SocialNetworkInterface::Error;
-    emit q->statusChanged();
-    emit q->errorChanged();
-    emit q->errorMessageChanged();
-    emit q->responseReceived(responseData);
+// <<< finishedHandler
+// >>> finishedHandler
 }
-
-/*! \reimp */
-void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData)
+void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                                     const QVariantMap &newData)
 {
     Q_Q(FacebookNotificationInterface);
-    // populate our new values
-    QString typeStr = newData.value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString();
-    QString idStr = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_ID).toString();
-    QVariantMap fromMap = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_FROM).toMap();
-    QString fromIdStr = fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-    QString fromNameStr = fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
-    QVariantMap toMap = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_TO).toMap();
-    QString toIdStr = fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-    QString toNameStr = fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
-    QVariantMap applicationMap = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_APPLICATION).toMap();
-    QString applicationIdStr = fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-    QString applicationNameStr = fromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
-    QString createdTimeStr = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_CREATEDTIME).toString();
-    QString updatedTimeStr = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_UPDATEDTIME).toString();
-    QString titleStr = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_TITLE).toString();
-    QString linkUrl = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_LINK).toString();
-    QString unreadInt = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD).toString();
+    QVariant oldCreatedTime = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_CREATEDTIME);
+    QVariant newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_CREATEDTIME);
+    QVariant oldUpdatedTime = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_UPDATEDTIME);
+    QVariant newUpdatedTime = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_UPDATEDTIME);
+    QVariant oldTitle = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_TITLE);
+    QVariant newTitle = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_TITLE);
+    QVariant oldLink = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_LINK);
+    QVariant newLink = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_LINK);
+    QVariant oldUnread = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD);
+    QVariant newUnread = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD);
 
-    // populate our old values
-    QVariantMap oldFromMap = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_FROM).toMap();
-    QString oldFromIdStr = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-    QString oldFromNameStr = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
-    QVariantMap oldToMap = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_TO).toMap();
-    QString oldToIdStr = oldToMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-    QString oldToNameStr = oldToMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
-    QVariantMap oldApplicationMap = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_APPLICATION).toMap();
-    QString oldApplicationIdStr = oldApplicationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-    QString oldApplicationNameStr = oldApplicationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
-    QString oldCreatedTimeStr = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_CREATEDTIME).toString();
-    QString oldUpdatedTimeStr = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_UPDATEDTIME).toString();
-    QString oldTitleStr = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_TITLE).toString();
-    QString oldLinkUrl = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_LINK).toString();
-    QString oldUnreadInt = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD).toString();
-
-    // determine if any of our properties have changed
-    if (!typeStr.isEmpty() && typeStr != FACEBOOK_ONTOLOGY_NOTIFICATION)
-        qWarning() << Q_FUNC_INFO << "data does not define a notification!  type = " + typeStr;
-    if (typeStr.isEmpty() && !idStr.startsWith(FACEBOOK_ONTOLOGY_NOTIFICATION_ID_PREFIX))
-        qWarning() << Q_FUNC_INFO << "data does not define a notification!  id = " + idStr;
-    if (createdTimeStr != oldCreatedTimeStr)
+    if (newCreatedTime != oldCreatedTime)
         emit q->createdTimeChanged();
-    if (updatedTimeStr != oldUpdatedTimeStr)
+    if (newUpdatedTime != oldUpdatedTime)
         emit q->updatedTimeChanged();
-    if (titleStr != oldTitleStr)
+    if (newTitle != oldTitle)
         emit q->titleChanged();
-    if (linkUrl != oldLinkUrl)
+    if (newLink != oldLink)
         emit q->linkChanged();
-    if (unreadInt != oldUnreadInt)
+    if (newUnread != oldUnread)
         emit q->unreadChanged();
 
+// <<< emitPropertyChangeSignals
+    QVariantMap oldFromMap = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_FROM).toMap();
+    QString oldFromId = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString oldFromName = oldFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    QVariantMap newFromMap = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_FROM).toMap();
+    QString newFromId = newFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString newFromName = newFromMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
 
-    // update the from/to/application objects if required
-    if (fromIdStr != oldFromIdStr || fromNameStr != oldFromNameStr) {
+    // Update the from object if required
+    if (newFromId != oldFromId || newFromName != oldFromName) {
         QVariantMap newFromData;
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
-        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, fromIdStr);
-        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, fromNameStr);
+        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
+        newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
         qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
         emit q->fromChanged();
     }
-    if (toIdStr != oldToIdStr || toNameStr != oldToNameStr) {
+
+    QVariantMap oldToMap = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_TO).toMap();
+    QString oldToId = oldToMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString oldToName = oldToMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    QVariantMap newToMap = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_TO).toMap();
+    QString newToId = newToMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString newToName = newToMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+
+    // Update the To object if required
+    if (newToId != oldToId || newToName != oldToName) {
         QVariantMap newToData;
         newToData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
-        newToData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, toIdStr);
-        newToData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, toNameStr);
+        newToData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newToId);
+        newToData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newToName);
         qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(to, newToData);
         emit q->toChanged();
     }
-    if (applicationIdStr != oldApplicationIdStr || applicationNameStr != oldApplicationNameStr) {
+
+    QVariantMap oldApplicationMap = oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_APPLICATION).toMap();
+    QString oldApplicationId = oldApplicationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString oldApplicationName = oldApplicationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    QVariantMap newApplicationMap = newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_APPLICATION).toMap();
+    QString newApplicationId = newApplicationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    QString newApplicationName = newApplicationMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+
+    // Update the Application object if required
+    if (newApplicationId != oldApplicationId || newApplicationName != oldApplicationName) {
         QVariantMap newApplicationData;
-        newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
-        newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, applicationIdStr);
-        newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, applicationNameStr);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newApplicationData);
+        newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Application);
+        newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newApplicationId);
+        newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newApplicationName);
+        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(application, newApplicationData);
         emit q->applicationChanged();
     }
+// >>> emitPropertyChangeSignals
 
-    // then, call super class implementation.
-    QVariantMap oldDataWithId = oldData; oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, oldData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_ID));
-    QVariantMap newDataWithId = newData; newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, newData.value(FACEBOOK_ONTOLOGY_NOTIFICATION_ID));
+    // Call super class implementation
+    QVariantMap oldDataWithId = oldData;
+    oldDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,
+                         oldData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
+    QVariantMap newDataWithId = newData;
+    newDataWithId.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID,
+                         newData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
     IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(oldDataWithId, newDataWithId);
 }
 
@@ -167,37 +145,10 @@ void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVari
 /*!
     \qmltype FacebookNotification
     \instantiates FacebookNotificationInterface
-    \inqmlmodule org.nemomobile.social 1
-    \brief A FacebookNotification represents a Notification object from the Facebook OpenGraph API
-
-    Every FacebookNotification has a unique identifier, and thus a Notification may be
-    set as the \c node (or central content item) in the Facebook
-    adapter.  There are, however, no connections supported for Notifications, and
-    thus clients are advised to avoid using Notification objects as nodes.  Instead,
-    clients should read notifications by setting the appropriate filter on a User node.
-
-    \qml
-    import QtQuick 1.1
-    import org.nemomobile.social 1.0
-
-    Item {
-        id: root
-        width: 400
-        height: 800
-
-        Flickable {
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-
-            ListView {
-                model: fb
-                anchors.fill: parent
-                delegate: Text { text: contentItem.title } // notification messages
+     contentItem.title } // notification messages
             }
         }
-
+    
         Facebook {
             id: fb
             accessToken: "your access token"    // you must supply a valid access token
@@ -206,30 +157,30 @@ void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVari
         }
     }
     \endqml
-
+    
     A FacebookNotification may also be used "directly" by clients, in order to
     view details about the notification.
-
+    
     \qml
     import QtQuick 1.1
     import org.nemomobile.social 1.0
-
+    
     Item {
         id: root
         width: 400
         height: 800
-
+    
         Facebook {
             id: fb
             accessToken: "your access token"    // you must supply a valid access token
         }
-
+    
         FacebookNotification {
             id: fbn
             socialNetwork: fb
             identifier: "notif_12345678_987654321"     // some valid Facebook Notification fbid
         }
-
+    
         Text {
             anchors.fill: parent
             text: fbn.title + " --> was created: " + fbn.createdTime
@@ -237,14 +188,15 @@ void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVari
     }
     \endqml
 */
-
 FacebookNotificationInterface::FacebookNotificationInterface(QObject *parent)
     : IdentifiableContentItemInterface(*(new FacebookNotificationInterfacePrivate(this)), parent)
 {
+// <<< constructor
     Q_D(FacebookNotificationInterface);
     d->from = new FacebookObjectReferenceInterface(this);
     d->to = new FacebookObjectReferenceInterface(this);
     d->application = new FacebookObjectReferenceInterface(this);
+// >>> constructor
 }
 
 /*! \reimp */
@@ -256,40 +208,45 @@ int FacebookNotificationInterface::type() const
 /*! \reimp */
 bool FacebookNotificationInterface::remove()
 {
+// <<< remove
     return IdentifiableContentItemInterface::remove();
+// >>> remove
 }
 
 /*! \reimp */
 bool FacebookNotificationInterface::reload(const QStringList &whichFields)
 {
+// <<< reload
     return IdentifiableContentItemInterface::reload(whichFields);
+// >>> reload
 }
 
+
 /*!
-    \qmlproperty FacebookObjectReference *FacebookNotification::from
-    Holds a reference to the person or profile whose action triggered the notification
+    \qmlproperty FacebookObjectReferenceInterface * FacebookNotification::from
+    Holds a reference to the person or profile whose action triggered the notification.
 */
-FacebookObjectReferenceInterface *FacebookNotificationInterface::from() const
+FacebookObjectReferenceInterface * FacebookNotificationInterface::from() const
 {
     Q_D(const FacebookNotificationInterface);
     return d->from;
 }
 
 /*!
-    \qmlproperty FacebookObjectReference *FacebookNotification::to
-    Holds a reference to the person or profile to whom the notification was posted
+    \qmlproperty FacebookObjectReferenceInterface * FacebookNotification::to
+    Holds a reference to the person or profile to whom the notification was posted.
 */
-FacebookObjectReferenceInterface *FacebookNotificationInterface::to() const
+FacebookObjectReferenceInterface * FacebookNotificationInterface::to() const
 {
     Q_D(const FacebookNotificationInterface);
     return d->to;
 }
 
 /*!
-    \qmlproperty FacebookObjectReference *FacebookNotification::from
-    Holds a reference to the application which posted the notification
+    \qmlproperty FacebookObjectReferenceInterface * FacebookNotification::application
+    Holds a reference to the application which posted the notification.
 */
-FacebookObjectReferenceInterface *FacebookNotificationInterface::application() const
+FacebookObjectReferenceInterface * FacebookNotificationInterface::application() const
 {
     Q_D(const FacebookNotificationInterface);
     return d->application;
@@ -297,7 +254,7 @@ FacebookObjectReferenceInterface *FacebookNotificationInterface::application() c
 
 /*!
     \qmlproperty QString FacebookNotification::createdTime
-    Holds the date and time that the notification was created, in ISO8601 format
+    Holds the creation time of the notification in an ISO8601-formatted string.
 */
 QString FacebookNotificationInterface::createdTime() const
 {
@@ -307,7 +264,7 @@ QString FacebookNotificationInterface::createdTime() const
 
 /*!
     \qmlproperty QString FacebookNotification::updatedTime
-    Holds the date and time that the notification was updated, in ISO8601 format
+    Holds the update time of the notification in an ISO8601-formatted string.
 */
 QString FacebookNotificationInterface::updatedTime() const
 {
@@ -317,7 +274,7 @@ QString FacebookNotificationInterface::updatedTime() const
 
 /*!
     \qmlproperty QString FacebookNotification::title
-    Holds the title (message) of the notification
+    Holds the title (message) of the notification.
 */
 QString FacebookNotificationInterface::title() const
 {
@@ -327,7 +284,7 @@ QString FacebookNotificationInterface::title() const
 
 /*!
     \qmlproperty QUrl FacebookNotification::link
-    Holds a link to the original content item about which the notification was posted
+    Holds a link to the original content item about which the notification was posted.
 */
 QUrl FacebookNotificationInterface::link() const
 {
@@ -337,15 +294,17 @@ QUrl FacebookNotificationInterface::link() const
 
 /*!
     \qmlproperty int FacebookNotification::unread
-    Will be zero if the notification has been marked as read
+    Will be zero if the notification has been marked as read.
 */
 int FacebookNotificationInterface::unread() const
 {
     Q_D(const FacebookNotificationInterface);
-    QString countStr = d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD).toString();
-    bool ok = false;
-    int retn = countStr.toInt(&ok);
-    if (ok)
-        return retn;
-    return 0;
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD).toString();
+    bool ok;
+    int number = numberString.toInt(&ok);
+    if (ok) {
+        return number;
+    }
+    return -1;
 }
+

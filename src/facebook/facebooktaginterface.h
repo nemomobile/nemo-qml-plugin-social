@@ -34,7 +34,6 @@
 
 #include "contentiteminterface.h"
 
-#include <QtCore/QVariantMap>
 #include <QtCore/QString>
 
 /*
@@ -50,35 +49,34 @@
  */
 
 class FacebookTagInterfacePrivate;
-class FacebookTagInterface : public ContentItemInterface
+class FacebookTagInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString targetIdentifier READ targetIdentifier NOTIFY targetIdentifierChanged)
     Q_PROPERTY(QString userIdentifier READ userIdentifier NOTIFY userIdentifierChanged)
+    Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
     Q_PROPERTY(QString text READ text NOTIFY textChanged)
-    Q_PROPERTY(qreal xOffset READ xOffset NOTIFY xOffsetChanged)
-    Q_PROPERTY(qreal yOffset READ yOffset NOTIFY yOffsetChanged)
-
+    Q_PROPERTY(float x READ x NOTIFY xChanged)
+    Q_PROPERTY(float y READ y NOTIFY yChanged)
+    Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
 public:
     explicit FacebookTagInterface(QObject *parent = 0);
 
-    // overrides.
+    // Overrides.
     int type() const;
-
-    // property accessors
-    QString targetIdentifier() const;
+    // Accessors
     QString userIdentifier() const;
+    QString userName() const;
     QString text() const;
-    qreal xOffset() const;
-    qreal yOffset() const;
-
+    float x() const;
+    float y() const;
+    QString createdTime() const;
 Q_SIGNALS:
-    void targetIdentifierChanged();
     void userIdentifierChanged();
+    void userNameChanged();
     void textChanged();
-    void xOffsetChanged();
-    void yOffsetChanged();
-
+    void xChanged();
+    void yChanged();
+    void createdTimeChanged();
 private:
     Q_DECLARE_PRIVATE(FacebookTagInterface)
 };

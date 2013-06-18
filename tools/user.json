@@ -1,0 +1,223 @@
+{
+    "name": "user",
+    "doc": "l\" user id\n        filters: [ ContentItemTypeFilter { type: Facebook.Album } ]\n    }\n}\n\\endqml\n\nA FacebookUser may also be used \"directly\" by clients, in order to\nview specific information about the user or upload a new album.\nAn example of direct usage of the FacebookUser type is as follows:\n\n\\qml\nimport QtQuick 1.1\nimport org.nemomobile.social 1.0\n\nItem {\n    id: root\n    width: 400\n    height: 800\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\" // you must supply a valid access token\n    }\n\n    FacebookUser {\n        id: fbu\n        socialNetwork: fb\n        identifier: \"me\" // some valid Facebook User fbid\n\n        onStatusChanged: {\n            if (status == SocialNetwork.Idle) {\n                // creates a new album, into which photos can be uploaded\n                uploadAlbum(\"World Cup Photos\", \"Photos taken at the world cup football event\")\n            }\n        }\n    }\n\n    Text {\n        anchors.fill: parent\n        text: fbu.name // \"name\" field from the user's profile\n    }\n}\n\\endqml",
+    "identifiable": true,
+    "extra_public": "enum RelationshipStatus {\n    UnknownRelationshipStatus = 0,\n    Single,\n    InARelationship,\n    Engaged,\n    Married,\n    ItsComplicated,\n    InAnOpenRelationship,\n    Widowed,\n    Separated,\n    Divorced,\n    InACivilUnion,\n    InADomesticPartnership\n};\nQ_ENUMS(RelationshipStatus)\nenum Gender {\n    UnknownGender = 0x0,\n    Male = 0x1,\n    Female = 0x2\n};\nQ_ENUMS(Gender)\nQ_DECLARE_FLAGS(Genders, Gender)\nQ_ENUMS(Genders)",
+    "extra_end": "Q_DECLARE_OPERATORS_FOR_FLAGS(FacebookUserInterface::Genders)",
+    "properties": [
+        {
+            "name": "name",
+            "type": "QString",
+            "doc": "Holds the full name of the user."
+        },
+        {
+            "name": "first_name",
+            "type": "QString",
+            "doc": "Holds the first name of the user."
+        },
+        {
+            "name": "middle_name",
+            "type": "QString",
+            "doc": "Holds the middle name of the user."
+        },
+        {
+            "name": "last_name",
+            "type": "QString",
+            "doc": "Holds the last name of the user."
+        },
+        {
+            "name": "gender",
+            "type": "FacebookUserInterface::Gender",
+            "doc": "Holds the gender of the user.",
+            "custom": true
+        },
+        {
+            "name": "locale",
+            "type": "QString",
+            "doc": "Holds the locale of the user."
+        },
+        {
+            "name": "link",
+            "type": "QUrl",
+            "doc": "Holds a link to the profile of the user."
+        },
+        {
+            "name": "user_name",
+            "type": "QString",
+            "doc": "Holds the userName of the user."
+        },
+        {
+            "name": "third_party_id",
+            "type": "QString",
+            "doc": "Holds the third party identifier of the user."
+        },
+        {
+            "name": "installed",
+            "type": "bool",
+            "doc": "Whether the user has installed the application associated with\nthe access token which made the request to the Facebook service."
+        },
+        {
+            "name": "timezone_offset",
+            "type": "float",
+            "doc": "Holds the timezone offset of the user."
+        },
+        {
+            "name": "updated_time",
+            "type": "QString",
+            "doc": "Holds the last-update time of the user as an ISO8601-formatted string."
+        },
+        {
+            "name": "verified",
+            "type": "bool",
+            "doc": "Whether the user has been verified."
+        },
+        {
+            "name": "bio",
+            "type": "QString",
+            "doc": "Holds the biographical details of the user."
+        },
+        {
+            "name": "birthday",
+            "type": "QString",
+            "doc": "Holds the birthday of the user in MM/dd/YYYY format."
+        },
+        {
+            "name": "cover",
+            "type": "FacebookCoverInterface",
+            "is_pointer": true,
+            "doc": "Holds the cover of the user."
+        },
+        {
+            "name": "email",
+            "type": "QString",
+            "doc": "Holds the email address of the user."
+        },
+        {
+            "name": "hometown",
+            "type": "FacebookObjectReferenceInterface",
+            "is_pointer": true,
+            "doc": "Holds a reference to the place object which is the user's home town."
+        },
+        {
+            "name": "interested_in",
+            "type": "FacebookUserInterface::Genders",
+            "custom": true,
+            "doc": "Holds a list of the user's personal gender preferences in the\ncontext of relationships."
+        },
+        {
+            "name": "location",
+            "type": "FacebookObjectReferenceInterface",
+            "is_pointer": true,
+            "doc": "Holds a reference to the place object which is the user's current domicile location."
+        },
+        {
+            "name": "political",
+            "type": "QString",
+            "doc": "Holds the political views which the user identifies with."
+        },
+        {
+            "name": "picture",
+            "type": "FacebookPictureInterface",
+            "is_pointer": true,
+            "doc": "Holds a reference to the picture associated with the user."
+        },
+        {
+            "name": "quotes",
+            "type": "QString",
+            "doc": "Holds some of the user's favourite quotes."
+        },
+        {
+            "name": "relationship_status",
+            "type": "FacebookUserInterface::RelationshipStatus",
+            "custom": true,
+            "doc": "Holds the current relationship status of the user."
+        },
+        {
+            "name": "religion",
+            "type": "QString",
+            "doc": "Holds the religious views which the user identifies with."
+        },
+        {
+            "name": "significant_other",
+            "type": "FacebookObjectReferenceInterface",
+            "is_pointer": true,
+            "doc": "Holds a reference to the person object which is listed as the user's\nsignificant other (spouse or partner)."
+        },
+        {
+            "name": "website",
+            "type": "QUrl",
+            "doc": "Holds a link the user's website."
+        }
+    ],
+    "methods": [
+        {
+            "name": "uploadPhoto",
+            "parameters": [
+                {
+                    "type": "QUrl",
+                    "name": "source",
+                    "is_const": true,
+                    "is_reference": true
+                },
+                {
+                    "type": "QString",
+                    "name": "message",
+                    "default": "QString()",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": "Initiates a \"post photo\" operation on the user.  The photo will\nbe loaded from the local filesystem and uploaded to Facebook with\nits caption set to the given \\a message. It will be uploaded to\nthe default album of the user.\n\nIf the network request was started successfully, the function\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded photo.\n"
+        },
+        {
+            "name": "removePhoto",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "photoIdentifier",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": "Initiates a \"delete photo\" operation on the photo specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+        },
+        {
+            "name": "uploadAlbum",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "name",
+                    "is_const": true,
+                    "is_reference": true
+                },
+                {
+                    "type": "QString",
+                    "name": "message",
+                    "default": "QString()",
+                    "is_const": true,
+                    "is_reference": true
+                },
+                {
+                    "type": "QVariantMap",
+                    "name": "privacy",
+                    "default": "QVariantMap()",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": "Initiates a \"post album\" operation on the user.  The album\nwill be created with the given \\a name and be described by the\ngiven \\a message, and will have the specified \\a privacy.\n\nIf the network request was started successfully, the function\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded album."
+        },
+        {
+            "name": "removeAlbum",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "albumIdentifier",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": "Initiates a \"delete album\" operation on the album specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+        }
+    ]
+}

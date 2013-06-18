@@ -1,0 +1,84 @@
+\brief A FacebookComment represents a Comment object from the Facebook OpenGraph API
+
+Every FacebookComment has a unique identifier, and thus a comment may be
+set as the \c node (or central content item) in the Facebook
+adapter.  The content items related to a comment include various
+likes.
+
+An example of usage of a FacebookComment as the node in a Facebook
+model is as follows:
+
+\qml
+import QtQuick 1.1
+import org.nemomobile.social 1.0
+
+Item {
+    id: root
+    width: 400
+    height: 800
+
+    Flickable {
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+
+        ListView {
+            model: fb
+            anchors.fill: parent
+            delegate: Text { text: "liker: " + contentItemData["name"] } // Users who liked the comment
+        }
+    }
+
+    Facebook {
+        id: fb
+        accessToken: "your access token"    // you must supply a valid access token
+        nodeIdentifier: "10150146071791729_15215233" // some valid Facebook comment id.
+        filters: [ ContentItemTypeFilter { type: Facebook.Like } ]
+    }
+
+    Component.onCompleted: {
+        fb.populate()
+    }
+}
+\endqml
+
+A FacebookComment may also be used "directly" by clients, in order to
+like the comment.  An example of direct usage of the FacebookComment
+type is as follows:
+
+\qml
+import QtQuick 1.1
+import org.nemomobile.social 1.0
+
+Item {
+    id: root
+    width: 400
+    height: 800
+
+    Facebook {
+        id: fb
+        accessToken: "your access token"    // you must supply a valid access token
+    }
+
+    FacebookComment {
+        id: fbc
+        socialNetwork: fb
+        identifier: "10150146071791729_15215233"     // some valid Facebook Comment fbid
+
+        onStatusChanged: {
+            if (status == SocialNetwork.Idle) {
+                // could like the comment
+                fbc.like()
+                // could unlike the comment
+                fbc.unlike()
+            }
+        }
+    }
+
+    Text {
+        anchors.fill: parent
+        text: fbc.message
+    }
+}
+\endqml 

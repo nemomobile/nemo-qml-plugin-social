@@ -34,10 +34,8 @@
 
 #include "identifiablecontentiteminterface.h"
 
-#include <QtCore/QVariantMap>
+#include "facebookobjectreferenceinterface.h"
 #include <QtCore/QString>
-
-class FacebookObjectReferenceInterface;
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -46,41 +44,47 @@ class FacebookObjectReferenceInterface;
  */
 
 class FacebookCommentInterfacePrivate;
-class FacebookCommentInterface : public IdentifiableContentItemInterface
+class FacebookCommentInterface: public IdentifiableContentItemInterface
 {
     Q_OBJECT
+    Q_PROPERTY(FacebookObjectReferenceInterface * from READ from NOTIFY fromChanged)
     Q_PROPERTY(QString message READ message NOTIFY messageChanged)
-    Q_PROPERTY(FacebookObjectReferenceInterface *from READ from NOTIFY fromChanged)
     Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
     Q_PROPERTY(int likeCount READ likeCount NOTIFY likeCountChanged)
+    Q_PROPERTY(FacebookCommentInterface * parent READ parent NOTIFY parentChanged)
+    Q_PROPERTY(bool canComment READ canComment NOTIFY canCommentChanged)
+    Q_PROPERTY(int commentCount READ commentCount NOTIFY commentCountChanged)
     Q_PROPERTY(bool liked READ liked NOTIFY likedChanged)
-
 public:
     explicit FacebookCommentInterface(QObject *parent = 0);
 
-    // overrides
+    // Overrides.
     int type() const;
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
-    // invokable api
+    // Invokable API.
     Q_INVOKABLE bool like();
     Q_INVOKABLE bool unlike();
 
-    // properties
+    // Accessors
+    FacebookObjectReferenceInterface * from() const;
     QString message() const;
-    FacebookObjectReferenceInterface *from() const;
     QString createdTime() const;
     int likeCount() const;
+    FacebookCommentInterface * parent() const;
+    bool canComment() const;
+    int commentCount() const;
     bool liked() const;
-
 Q_SIGNALS:
-    void messageChanged();
     void fromChanged();
+    void messageChanged();
     void createdTimeChanged();
     void likeCountChanged();
+    void parentChanged();
+    void canCommentChanged();
+    void commentCountChanged();
     void likedChanged();
-
 private:
     Q_DECLARE_PRIVATE(FacebookCommentInterface)
 };
