@@ -88,6 +88,15 @@ public Q_SLOTS:
     void sslErrorsHandler(const QList<QSslError> &sslErrors);
 };
 
+class SorterFunctor
+{
+public:
+    explicit SorterFunctor(SorterInterface *sorter);
+    bool operator()(CacheEntry *first, CacheEntry *second) const;
+private:
+    SorterInterface *m_sorter;
+};
+
 class SocialNetworkInterfacePrivate
 {
 public:

@@ -29,42 +29,68 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "sorterinterface.h"
+#include "alphabeticalsorterinterface.h"
+#include "contentiteminterface.h"
+#include <QtCore/QMetaProperty>
+#include <QtCore/QMetaObject>
 #include "sorterinterface_p.h"
 
-#include "contentiteminterface.h"
+class AlphabeticalSorterInterfacePrivate: public SorterInterfacePrivate
+{
+public:
+    AlphabeticalSorterInterfacePrivate();
+    QString field;
+};
 
-SorterInterfacePrivate::SorterInterfacePrivate()
-    : ownedBySocialNetworkInterface(false)
+AlphabeticalSorterInterfacePrivate::AlphabeticalSorterInterfacePrivate()
 {
 }
 
-// ------------------------------ SorterInterface
-
-
-SorterInterface::SorterInterface(QObject *parent)
-    : QObject(parent), d_ptr(new SorterInterfacePrivate)
+AlphabeticalSorterInterface::AlphabeticalSorterInterface(QObject *parent):
+    SorterInterface(*(new AlphabeticalSorterInterfacePrivate()), parent)
 {
 }
 
-SorterInterface::SorterInterface(SorterInterfacePrivate &dd, QObject *parent)
-    : QObject(parent), d_ptr(&dd)
+QString AlphabeticalSorterInterface::field() const
 {
+    Q_D(const AlphabeticalSorterInterface);
+    return d->field;
 }
 
-SorterInterface::~SorterInterface()
+void AlphabeticalSorterInterface::setField(const QString &field)
 {
+    Q_D(AlphabeticalSorterInterface);
+    if (d->field != field) {
+        d->field = field;
+        emit fieldChanged();
+    }
 }
 
-// The default sorting algorithm is to sort by type.
-bool SorterInterface::firstLessThanSecond(const QVariantMap &first, const QVariantMap &second) const
+bool AlphabeticalSorterInterface::firstLessThanSecond(const QVariantMap &first,
+                                              const QVariantMap &second) const
 {
+    Q_D(const AlphabeticalSorterInterface);
+    if (d->field.isEmpty()) {
+        return SorterInterface::firstLessThanSecond(first, second);
+    }
+
     if (first.empty() && !second.empty())
         return true;
 
     if (second.empty())
         return false;
 
-    return first.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt()
-           < second.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
+    // We first order by type
+    int firstType = first.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
+    int secondType = second.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
+    if (firstType < secondType)
+        return true;
+    if (firstType > secondType)
+        return false;
+
+
+
+    return first.value(d->field).toString()
+           < second.value(d->field).toString();
+
 }

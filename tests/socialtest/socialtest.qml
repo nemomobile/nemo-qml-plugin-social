@@ -69,18 +69,23 @@ Item {
         switch (which) {
         case 1:
             facebook.filters = [ facebook.notificationsFilter ]
+            facebook.sorters = []
             break
         case 2:
             facebook.filters = [ facebook.friendsFilter ]
+            facebook.sorters = [ facebook.alphabeticalSorter ]
             break
         case 3:
             facebook.filters = [ facebook.albumsFilter ]
+            facebook.sorters = []
             break
         case 4:
             facebook.filters = [ facebook.photosFilter ]
+            facebook.sorters = []
             break
         case 5:
             facebook.filters = [ facebook.commentsFilter ]
+            facebook.sorters = []
             break
         }
         whichActive = which
@@ -95,6 +100,7 @@ Item {
         property QtObject albumsFilter:        ContentItemTypeFilter { type: Facebook.Album }
         property QtObject photosFilter:        ContentItemTypeFilter { type: Facebook.Photo }
         property QtObject commentsFilter:      ContentItemTypeFilter { type: Facebook.Comment }
+        property QtObject alphabeticalSorter:  AlphabeticalSorter{ field: "name" }
     }
 
 

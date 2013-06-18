@@ -33,10 +33,11 @@
 #define SORTERINTERFACE_H
 
 #include <QtCore/QObject>
+#include <QtCore/QVariantMap>
 
 class SocialNetworkInterfacePrivate;
-class ContentItemInterface;
 class SorterInterfacePrivate;
+
 class SorterInterface : public QObject
 {
     Q_OBJECT
@@ -44,8 +45,10 @@ class SorterInterface : public QObject
 public:
     explicit SorterInterface(QObject *parent = 0);
     virtual ~SorterInterface();
-    Q_INVOKABLE virtual bool firstLessThanSecond(ContentItemInterface *first, ContentItemInterface *second) const;
+    Q_INVOKABLE virtual bool firstLessThanSecond(const QVariantMap &first,
+                                                 const QVariantMap &second) const;
 protected:
+    explicit SorterInterface(SorterInterfacePrivate &dd, QObject *parent = 0);
     QScopedPointer<SorterInterfacePrivate> d_ptr;
 private:
     Q_DECLARE_PRIVATE(SorterInterface)

@@ -193,6 +193,16 @@ void ArbitraryRequestHandler::sslErrorsHandler(const QList<QSslError> &sslErrors
     isError = true;
 }
 
+SorterFunctor::SorterFunctor(SorterInterface *sorter):
+    m_sorter(sorter)
+{
+}
+
+bool SorterFunctor::operator ()(CacheEntry *first, CacheEntry *second) const
+{
+    return m_sorter->firstLessThanSecond(first->data, second->data);
+}
+
 SocialNetworkInterfacePrivate::SocialNetworkInterfacePrivate(SocialNetworkInterface *q)
     : q_ptr(q)
     , networkAccessManager(0)

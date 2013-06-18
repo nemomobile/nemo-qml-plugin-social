@@ -31,7 +31,8 @@ SOURCES += \
     $$PWD/contentitemtypefilterinterface.cpp \
     $$PWD/identifiablecontentiteminterface.cpp \
     $$PWD/socialnetworkinterface.cpp \
-    $$PWD/sorterinterface.cpp
+    $$PWD/sorterinterface.cpp \
+    $$PWD/alphabeticalsorterinterface.cpp
 
 HEADERS += \
     $$PWD/contentiteminterface.h \
@@ -45,7 +46,8 @@ HEADERS += \
     $$PWD/socialnetworkinterface_p.h \
     $$PWD/sorterinterface.h \
     $$PWD/sorterinterface_p.h \
-    $$PWD/util_p.h
+    $$PWD/util_p.h \
+    $$PWD/alphabeticalsorterinterface.h \
 
 OTHER_FILES += qmldir social.qdoc social.qdocconf
 
