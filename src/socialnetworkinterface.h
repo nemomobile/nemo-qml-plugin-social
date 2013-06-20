@@ -116,9 +116,9 @@ public:
         Unknown = 1
     };
     enum RequestType {
-        Get = 0,
-        Post,
-        Delete
+        GetRequest = 0,
+        PostRequest,
+        DeleteRequest
     };
 public:
     explicit SocialNetworkInterface(QObject *parent = 0);

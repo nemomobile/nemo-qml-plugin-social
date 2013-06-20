@@ -1,0 +1,17 @@
+{
+    "name": "action",
+    "doc": "An entry representing a action for a post",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "name",
+            "type": "QString",
+            "doc": "Holds the name of the action"
+        },
+        {
+            "name": "link",
+            "type": "QString",
+            "doc": "Holds the link used to perform the action"
+        }
+    ]
+}

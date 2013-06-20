@@ -86,7 +86,10 @@ public:
         Photo,
         Event,
         Notification,
-        Application
+        Application,
+        Home,
+        Action,
+        Property
     };
 
 public:
@@ -125,6 +128,7 @@ private:
     friend class FacebookCommentInterfacePrivate;
     friend class FacebookObjectReferenceInterface;
     friend class FacebookPhotoInterfacePrivate;
+    friend class FacebookPostInterfacePrivate;
     friend class FacebookUserInterfacePrivate;
     friend class FacebookNotificationInterfacePrivate;
 

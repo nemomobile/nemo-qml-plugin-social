@@ -15,13 +15,17 @@ HEADERS += \
     $$PWD/facebooklikeinterface.h \
     $$PWD/facebookphotointerface.h \
     $$PWD/facebookphotointerface_p.h \
+    $$PWD/facebookactioninterface.h \
+    $$PWD/facebookpropertyinterface.h \
+    $$PWD/facebookpostinterface.h \
+    $$PWD/facebookpostinterface_p.h \
     $$PWD/facebookpictureinterface.h \
     $$PWD/facebooktaginterface.h \
     $$PWD/facebooknametaginterface.h \
     $$PWD/facebookimageinterface.h \
     $$PWD/facebookuserinterface.h \
     $$PWD/facebookuserinterface_p.h \
-    $$PWD/facebookcoverinterface.h
+    $$PWD/facebookcoverinterface.h \
 
 SOURCES += \
     $$PWD/facebookalbuminterface.cpp \
@@ -31,6 +35,9 @@ SOURCES += \
     $$PWD/facebookobjectreferenceinterface.cpp \
     $$PWD/facebooklikeinterface.cpp \
     $$PWD/facebookphotointerface.cpp \
+    $$PWD/facebookactioninterface.cpp \
+    $$PWD/facebookpropertyinterface.cpp \
+    $$PWD/facebookpostinterface.cpp \
     $$PWD/facebookpictureinterface.cpp \
     $$PWD/facebooktaginterface.cpp \
     $$PWD/facebookimageinterface.cpp \

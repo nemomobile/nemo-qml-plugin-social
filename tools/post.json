@@ -1,0 +1,209 @@
+{
+    "name": "post",
+    "doc": "",
+    "identifiable": true,
+    "properties": [
+        {
+            "name": "from",
+            "type": "FacebookObjectReferenceInterface",
+            "doc": "Holds a reference to the user or profile which uploaded this post.",
+            "is_pointer": true
+        },
+        {
+            "name": "to",
+            "type": "FacebookObjectReferenceInterface",
+            "doc": "Holds a list of references to the users or profiles which are targetted by this post.",
+            "is_list": true
+            
+        },
+        {
+            "name": "message",
+            "type": "QString",
+            "doc": "Holds the message text of the post."
+        },
+        {
+            "name": "message_tags",
+            "type": "FacebookNameTagInterface",
+            "doc": "Holds the objects tagged in the message.",
+            "is_list": true
+        },
+        {
+            "name": "picture",
+            "type": "QUrl",
+            "doc": "Holds a link to the picture of the post, if available."
+        },
+        {
+            "name": "link",
+            "type": "QUrl",
+            "doc": "Holds the link attached to this post."
+        },
+        {
+            "name": "name",
+            "type": "QString",
+            "doc": "Holds the name of the link that is attached to this post."
+        },
+        {
+            "name": "caption",
+            "type": "QString",
+            "doc": "Holds the caption of the link that is attached to this post."
+        },
+        {
+            "name": "description",
+            "type": "QString",
+            "doc": "Holds the description of the link that is attached to this post."
+        },
+        {
+            "name": "source",
+            "type": "QUrl",
+            "doc": "Holds the link to a video or flash movie that is embedded in this post."
+        },
+        {
+            "name": "properties",
+            "type": "FacebookPropertyInterface",
+            "doc": "Holds a list of properties for the attached content.",
+            "is_list": true
+        },
+        {
+            "name": "icon",
+            "type": "QUrl",
+            "doc": "Holds a link to an icon representing the type of this post."
+        },
+        {
+            "name": "actions",
+            "type": "FacebookActionInterface",
+            "doc": "Holds a list of actions that can be done with this post. (not generated yet)",
+            "is_list": true
+        },
+        {
+            "name": "privacy",
+            "type": "QVariant",
+            "doc": "Holds the privacy settings of this post. (not generated yet)",
+            "is_interface_property": false,
+            "is_ontology": false
+        },
+        {
+            "name": "type",
+            "type": "QString",
+            "doc": "Holds the type of this post."
+        },
+        {
+            "name": "likes",
+            "type": "QVariant",
+            "doc": "Hold informations about the likes for this post. (not generated yet)",
+            "is_interface_property": false,
+            "is_ontology": false
+        },
+        {
+            "name": "place",
+            "type": "QVariant",
+            "doc": "Hold informations about the place attached to this post. (not generated yet)",
+            "is_interface_property": false,
+            "is_ontology": false
+        },
+        {
+            "name": "story",
+            "type": "QString",
+            "doc": "Holds the story, if this post represents a story."
+        },
+        {
+            "name": "story_tags",
+            "type": "FacebookNameTagInterface",
+            "doc": "Holds the objects tagged in the story.",
+            "is_list": true
+        },
+        {
+            "name": "with_tags",
+            "type": "FacebookObjectReferenceInterface",
+            "doc": "Holds the objects or users that are tagged with the \"Who are you with ?\" field. (not generated yet)",
+            "is_list": true
+        },
+        {
+            "name": "comments",
+            "type": "QVariant",
+            "doc": "Hold informations about the comments for this post. (not generated yet)",
+            "is_interface_property": false,
+            "is_ontology": false
+        },
+        {
+            "name": "object_id",
+            "type": "QString",
+            "alias": "object_identifier",
+            "doc": "Hold the identifier of the uploaded photo or video attached to this post."
+        },
+        {
+            "name": "application",
+            "type": "FacebookObjectReferenceInterface",
+            "doc": "Hold the application that was used to upload this post.",
+            "is_pointer": true
+        },
+        {
+            "name": "created_time",
+            "type": "QString",
+            "doc": "Holds the creation time of the post in an ISO8601-formatted string."
+        },
+        {
+            "name": "updated_time",
+            "type": "QString",
+            "doc": "Holds the last-update time of the post in an ISO8601-formatted string."
+        },
+        {
+            "name": "shares",
+            "type": "int",
+            "doc": "Holds the number of times this post has been shared."
+        },
+        {
+            "name": "include_hidden",
+            "type": "bool",
+            "doc": "Holds if this post is hidden from timeline."
+        },
+        {
+            "name": "status_type",
+            "type": "QString",
+            "doc": "Hold the type of status update."
+        },
+        {
+            "name": "liked",
+            "type": "bool",
+            "custom": true,
+            "is_ontology": false,
+            "doc": "Whether the post has been liked by the current user."
+        }
+    ],
+    "methods": [
+        {
+            "name": "like",
+            "parameters": [],
+            "doc": "Initiates a \"like\" operation on the post.\n\nIf the network request was started successfully, the function\nwill return true and the status of the post will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+        },
+        {
+            "name": "unlike",
+            "parameters": [],
+            "doc": "Initiates a \"delete like\" operation on the post.\n\nIf the network request was started successfully, the function\nwill return true and the status of the post will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+        },
+        {
+            "name": "uploadComment",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "message",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": "Initiates a \"post comment\" operation on the post.  The comment\nwill contain the specified \\a message.\n\nIf the network request was started successfully, the function\nwill return true and the status of the post will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded comment."
+        },
+        {
+            "name": "removeComment",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "commentIdentifier",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": "Initiates a \"delete comment\" operation on the comment specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the post will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+        }
+    ]
+}
+ 

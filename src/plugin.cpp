@@ -51,12 +51,15 @@
 #include "contentitemtypefilterinterface.h"
 
 // facebook implementation headers
+#include "facebook/facebookactioninterface.h"
 #include "facebook/facebookalbuminterface.h"
 #include "facebook/facebookcommentinterface.h"
 #include "facebook/facebookinterface.h"
 #include "facebook/facebooklikeinterface.h"
 #include "facebook/facebookobjectreferenceinterface.h"
 #include "facebook/facebookphotointerface.h"
+#include "facebook/facebookpostinterface.h"
+#include "facebook/facebookpropertyinterface.h"
 #include "facebook/facebookpictureinterface.h"
 #include "facebook/facebooktaginterface.h"
 #include "facebook/facebooknametaginterface.h"
@@ -97,12 +100,15 @@ public:
 
         // creatable types from the facebook implementation
         qmlRegisterType<FacebookInterface>(uri, 1, 0, "Facebook");
+        qmlRegisterType<FacebookActionInterface>(uri, 1, 0, "FacebookAction");
         qmlRegisterType<FacebookAlbumInterface>(uri, 1, 0, "FacebookAlbum");
         qmlRegisterType<FacebookCommentInterface>(uri, 1, 0, "FacebookComment");
         qmlRegisterType<FacebookLikeInterface>(uri, 1, 0, "FacebookLike");
         qmlRegisterType<FacebookObjectReferenceInterface>(uri, 1, 0, "FacebookObjectReference");
         qmlRegisterType<FacebookPhotoInterface>(uri, 1, 0, "FacebookPhoto");
         qmlRegisterType<FacebookPictureInterface>(uri, 1, 0, "FacebookPicture");
+        qmlRegisterType<FacebookPostInterface>(uri, 1, 0, "FacebookPost");
+        qmlRegisterType<FacebookPropertyInterface>(uri, 1, 0, "FacebookProperty");
         qmlRegisterType<FacebookTagInterface>(uri, 1, 0, "FacebookTag");
         qmlRegisterType<FacebookNameTagInterface>(uri, 1, 0, "FacebookNameTag");
         qmlRegisterType<FacebookNameTagInterface>(uri, 1, 0, "FacebookImage");

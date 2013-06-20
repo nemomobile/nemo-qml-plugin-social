@@ -57,6 +57,7 @@
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS               QLatin1String("albums")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS               QLatin1String("photos")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS                 QLatin1String("tags")
+#define FACEBOOK_ONTOLOGY_CONNECTIONS_FEED                 QLatin1String("feed")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS              QLatin1String("friends")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS        QLatin1String("notifications")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_PICTURE              QLatin1String("picture")
@@ -118,6 +119,34 @@
 #define FACEBOOK_ONTOLOGY_PICTURE_SOURCE                   QLatin1String("source")
 #define FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE             QLatin1String("is_silhouette")
 // >>> picture
+
+// <<< post
+#define FACEBOOK_ONTOLOGY_POST                             QLatin1String("post")
+#define FACEBOOK_ONTOLOGY_POST_FROM                        QLatin1String("from")
+#define FACEBOOK_ONTOLOGY_POST_TO                          QLatin1String("to")
+#define FACEBOOK_ONTOLOGY_POST_MESSAGE                     QLatin1String("message")
+#define FACEBOOK_ONTOLOGY_POST_MESSAGETAGS                 QLatin1String("message_tags")
+#define FACEBOOK_ONTOLOGY_POST_PICTURE                     QLatin1String("picture")
+#define FACEBOOK_ONTOLOGY_POST_LINK                        QLatin1String("link")
+#define FACEBOOK_ONTOLOGY_POST_NAME                        QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_POST_CAPTION                     QLatin1String("caption")
+#define FACEBOOK_ONTOLOGY_POST_DESCRIPTION                 QLatin1String("description")
+#define FACEBOOK_ONTOLOGY_POST_SOURCE                      QLatin1String("source")
+#define FACEBOOK_ONTOLOGY_POST_PROPERTIES                  QLatin1String("properties")
+#define FACEBOOK_ONTOLOGY_POST_ICON                        QLatin1String("icon")
+#define FACEBOOK_ONTOLOGY_POST_ACTIONS                     QLatin1String("actions")
+#define FACEBOOK_ONTOLOGY_POST_POSTTYPE                    QLatin1String("type")
+#define FACEBOOK_ONTOLOGY_POST_STORY                       QLatin1String("story")
+#define FACEBOOK_ONTOLOGY_POST_STORYTAGS                   QLatin1String("story_tags")
+#define FACEBOOK_ONTOLOGY_POST_WITHTAGS                    QLatin1String("with_tags")
+#define FACEBOOK_ONTOLOGY_POST_OBJECTIDENTIFIER            QLatin1String("object_id")
+#define FACEBOOK_ONTOLOGY_POST_APPLICATION                 QLatin1String("application")
+#define FACEBOOK_ONTOLOGY_POST_CREATEDTIME                 QLatin1String("created_time")
+#define FACEBOOK_ONTOLOGY_POST_UPDATEDTIME                 QLatin1String("updated_time")
+#define FACEBOOK_ONTOLOGY_POST_SHARES                      QLatin1String("shares")
+#define FACEBOOK_ONTOLOGY_POST_INCLUDEHIDDEN               QLatin1String("include_hidden")
+#define FACEBOOK_ONTOLOGY_POST_STATUSTYPE                  QLatin1String("status_type")
+// >>> post
 
 // <<< user
 #define FACEBOOK_ONTOLOGY_USER                             QLatin1String("user")
@@ -191,6 +220,12 @@
 #define FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH                  QLatin1String("length")
 // >>> name_tag
 
+// <<< property
+#define FACEBOOK_ONTOLOGY_PROPERTY                         QLatin1String("property")
+#define FACEBOOK_ONTOLOGY_PROPERTY_NAME                    QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_PROPERTY_TEXT                    QLatin1String("text")
+// >>> property
+
 // <<< tag
 #define FACEBOOK_ONTOLOGY_TAG                              QLatin1String("tag")
 #define FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER               QLatin1String("id")
@@ -199,5 +234,11 @@
 #define FACEBOOK_ONTOLOGY_TAG_Y                            QLatin1String("y")
 #define FACEBOOK_ONTOLOGY_TAG_CREATEDTIME                  QLatin1String("created_time")
 // >>> tag
+
+// <<< action
+#define FACEBOOK_ONTOLOGY_ACTION                           QLatin1String("action")
+#define FACEBOOK_ONTOLOGY_ACTION_NAME                      QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_ACTION_LINK                      QLatin1String("link")
+// >>> action
 
 #endif // FACEBOOKONTOLOGY_P_H

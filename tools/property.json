@@ -1,0 +1,17 @@
+{
+    "name": "property",
+    "doc": "An entry representing a property for a post",
+    "identifiable": false,
+    "properties": [
+        {
+            "name": "name",
+            "type": "QString",
+            "doc": "Holds the name of the property"
+        },
+        {
+            "name": "text",
+            "type": "QString",
+            "doc": "Holds the text contained in the property"
+        }
+    ]
+}

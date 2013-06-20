@@ -1217,7 +1217,7 @@ void FacebookInterface::updateCurrentUserIdentifier()
     QVariantMap queryItems;
     queryItems.insert(QLatin1String("access_token"), d->accessToken);
     queryItems.insert(QLatin1String("fields"), QLatin1String("id"));
-    arbitraryRequest(SocialNetworkInterface::Get, QLatin1String("https://graph.facebook.com/me"),
+    arbitraryRequest(SocialNetworkInterface::GetRequest, QLatin1String("https://graph.facebook.com/me"),
                      queryItems);
     connect(this, SIGNAL(arbitraryRequestResponseReceived(bool,QVariantMap)),
             this, SLOT(updateCurrentUserIdentifierHandler(bool,QVariantMap)));
