@@ -84,6 +84,7 @@ public:
         User,
         Album,
         Photo,
+        Post,
         Event,
         Notification,
         Application,

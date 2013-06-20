@@ -30,54 +30,17 @@
  */
 
 import QtQuick 1.1
-import org.nemomobile.social 1.0
 
-Item {
+Rectangle {
     id: container
-    property alias model: view.model
-    signal backClicked
-    anchors.fill: parent
+    signal clicked()
+    width: 200
+    height: 60
+    color: !mouseArea.pressed ? "white" : "#DCDCDC"
 
-    Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " notifications" : ""
-    }
-
-    Button {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
-    }
-
-    ListView {
-        id: view
-        clip: true
-        anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        delegate: Item {
-            width: view.width
-            height: column.height + 20
-            Column {
-                id: column
-                anchors.left: parent.left; anchors.leftMargin: 10
-                anchors.right: parent.right; anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-
-                Text {
-                    text: "From: " + model.contentItem.from.objectName
-                }
-                Text {
-                    anchors.left: parent.left; anchors.right: parent.right
-                    wrapMode: Text.WordWrap
-                    text: "Title: " + model.contentItem.title
-                }
-            }
-        }
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        onClicked: container.clicked()
     }
 }

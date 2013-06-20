@@ -154,7 +154,8 @@
         {
             "name": "include_hidden",
             "type": "bool",
-            "doc": "Holds if this post is hidden from timeline."
+            "doc": "Holds if this post is hidden from timeline.",
+            "alias": "hidden"
         },
         {
             "name": "status_type",

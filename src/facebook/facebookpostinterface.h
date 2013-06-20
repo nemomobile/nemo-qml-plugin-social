@@ -79,7 +79,7 @@ class FacebookPostInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
     Q_PROPERTY(int shares READ shares NOTIFY sharesChanged)
-    Q_PROPERTY(bool includeHidden READ includeHidden NOTIFY includeHiddenChanged)
+    Q_PROPERTY(bool hidden READ hidden NOTIFY hiddenChanged)
     Q_PROPERTY(QString statusType READ statusType NOTIFY statusTypeChanged)
     Q_PROPERTY(bool liked READ liked NOTIFY likedChanged)
 public:
@@ -119,7 +119,7 @@ public:
     QString createdTime() const;
     QString updatedTime() const;
     int shares() const;
-    bool includeHidden() const;
+    bool hidden() const;
     QString statusType() const;
     bool liked() const;
 Q_SIGNALS:
@@ -145,7 +145,7 @@ Q_SIGNALS:
     void createdTimeChanged();
     void updatedTimeChanged();
     void sharesChanged();
-    void includeHiddenChanged();
+    void hiddenChanged();
     void statusTypeChanged();
     void likedChanged();
 private:

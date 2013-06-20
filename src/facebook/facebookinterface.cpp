@@ -46,6 +46,7 @@
 #include "facebooklikeinterface.h"
 #include "facebookobjectreferenceinterface.h"
 #include "facebookpictureinterface.h"
+#include "facebookpostinterface.h"
 #include "facebooktaginterface.h"
 #include "facebooknotificationinterface.h"
 
@@ -100,20 +101,25 @@ int FacebookInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
 {
     // attempt to detect the type directly from the Facebook metadata field
     if (data.contains(FACEBOOK_ONTOLOGY_METADATA)
-            && data.value(FACEBOOK_ONTOLOGY_METADATA).type() == QVariant::Map
-            && !data.value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString().isEmpty()) {
-        QString typeStr = data.value(FACEBOOK_ONTOLOGY_METADATA).toMap().value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString();
-        if (typeStr == FACEBOOK_ONTOLOGY_USER)
-            return FacebookInterface::User;
-        else if (typeStr == FACEBOOK_ONTOLOGY_ALBUM)
-            return FacebookInterface::Album;
-        else if (typeStr == FACEBOOK_ONTOLOGY_COMMENT)
-            return FacebookInterface::Comment;
-        else if (typeStr == FACEBOOK_ONTOLOGY_PHOTO)
-            return FacebookInterface::Photo;
+            && data.value(FACEBOOK_ONTOLOGY_METADATA).type() == QVariant::Map) {
 
-        qWarning() << Q_FUNC_INFO << "Unsupported type:" << typeStr;
-        return FacebookInterface::Unknown;
+        QVariantMap metadata = data.value(FACEBOOK_ONTOLOGY_METADATA).toMap();
+        if (!metadata.value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString().isEmpty()) {
+
+            QString typeStr = metadata.value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString();
+            if (typeStr == FACEBOOK_ONTOLOGY_USER)
+                return FacebookInterface::User;
+            else if (typeStr == FACEBOOK_ONTOLOGY_ALBUM)
+                return FacebookInterface::Album;
+            else if (typeStr == FACEBOOK_ONTOLOGY_COMMENT)
+                return FacebookInterface::Comment;
+            else if (typeStr == FACEBOOK_ONTOLOGY_PHOTO)
+                return FacebookInterface::Photo;
+            else if (typeStr == FACEBOOK_ONTOLOGY_POST)
+                return FacebookInterface::Post;
+            qWarning() << Q_FUNC_INFO << "Unsupported type:" << typeStr;
+            return FacebookInterface::Unknown;
+        }
     }
 
     // it's possible that we've already tagged the type already
@@ -133,6 +139,8 @@ int FacebookInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
         return FacebookInterface::Photo;
     else if (data.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).isValid() || data.value(FACEBOOK_ONTOLOGY_USER_GENDER).isValid())
         return FacebookInterface::User;
+    else if (data.value(FACEBOOK_ONTOLOGY_POST_ACTIONS).isValid() && data.value(FACEBOOK_ONTOLOGY_POST_POSTTYPE).isValid())
+        return FacebookInterface::Post;
 
     qWarning() << Q_FUNC_INFO << "Unable to heuristically detect type!";
     foreach (const QString &datakey, data.keys())
@@ -848,6 +856,7 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
                 case FacebookInterface::Photo:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS);   break;
                 case FacebookInterface::Event:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_EVENTS);   break;
                 case FacebookInterface::Notification: addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS);   break;
+                case FacebookInterface::Post: addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_FEED);   break;
                 default: break;
             }
 
@@ -995,6 +1004,9 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
         } else if (key == FACEBOOK_ONTOLOGY_METADATA_PAGING) {
             QVariantMap pagingObject = relatedData.value(key).toMap();
             continuationRequestUri = pagingObject.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toString();
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_FEED) {
+            QVariantMap feedObject = relatedData.value(key).toMap();
+            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(feedObject, FacebookInterface::Post);
         } else if (key == FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER
                 || key == FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTPICTURE) {
             // can ignore this data - it's for the current node, which we already know.
@@ -1187,6 +1199,15 @@ ContentItemInterface *FacebookInterface::contentItemFromData(QObject *parent, co
             retn->componentComplete();
             return retn;
         }
+        break;
+    case FacebookInterface::Post: {
+        FacebookPostInterface *retn = new FacebookPostInterface(parent);
+        retn->classBegin();
+        retn->setSocialNetwork(const_cast<FacebookInterface*>(this));
+        setContentItemData(retn, data);
+        retn->componentComplete();
+        return retn;
+    }
         break;
 
         case FacebookInterface::Unknown: {

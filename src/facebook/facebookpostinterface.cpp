@@ -153,8 +153,8 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
     QVariant newUpdatedTime = newData.value(FACEBOOK_ONTOLOGY_POST_UPDATEDTIME);
     QVariant oldShares = oldData.value(FACEBOOK_ONTOLOGY_POST_SHARES);
     QVariant newShares = newData.value(FACEBOOK_ONTOLOGY_POST_SHARES);
-    QVariant oldIncludeHidden = oldData.value(FACEBOOK_ONTOLOGY_POST_INCLUDEHIDDEN);
-    QVariant newIncludeHidden = newData.value(FACEBOOK_ONTOLOGY_POST_INCLUDEHIDDEN);
+    QVariant oldHidden = oldData.value(FACEBOOK_ONTOLOGY_POST_HIDDEN);
+    QVariant newHidden = newData.value(FACEBOOK_ONTOLOGY_POST_HIDDEN);
     QVariant oldStatusType = oldData.value(FACEBOOK_ONTOLOGY_POST_STATUSTYPE);
     QVariant newStatusType = newData.value(FACEBOOK_ONTOLOGY_POST_STATUSTYPE);
 
@@ -186,8 +186,8 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         emit q->updatedTimeChanged();
     if (newShares != oldShares)
         emit q->sharesChanged();
-    if (newIncludeHidden != oldIncludeHidden)
-        emit q->includeHiddenChanged();
+    if (newHidden != oldHidden)
+        emit q->hiddenChanged();
     if (newStatusType != oldStatusType)
         emit q->statusTypeChanged();
 
@@ -1058,13 +1058,13 @@ int FacebookPostInterface::shares() const
 }
 
 /*!
-    \qmlproperty bool FacebookPost::includeHidden
+    \qmlproperty bool FacebookPost::hidden
     Holds if this post is hidden from timeline.
 */
-bool FacebookPostInterface::includeHidden() const
+bool FacebookPostInterface::hidden() const
 {
     Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_INCLUDEHIDDEN).toString() == QLatin1String("true");
+    return d->data().value(FACEBOOK_ONTOLOGY_POST_HIDDEN).toString() == QLatin1String("true");
 }
 
 /*!

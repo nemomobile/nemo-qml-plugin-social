@@ -144,7 +144,7 @@
 #define FACEBOOK_ONTOLOGY_POST_CREATEDTIME                 QLatin1String("created_time")
 #define FACEBOOK_ONTOLOGY_POST_UPDATEDTIME                 QLatin1String("updated_time")
 #define FACEBOOK_ONTOLOGY_POST_SHARES                      QLatin1String("shares")
-#define FACEBOOK_ONTOLOGY_POST_INCLUDEHIDDEN               QLatin1String("include_hidden")
+#define FACEBOOK_ONTOLOGY_POST_HIDDEN                      QLatin1String("include_hidden")
 #define FACEBOOK_ONTOLOGY_POST_STATUSTYPE                  QLatin1String("status_type")
 // >>> post
 
