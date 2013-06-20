@@ -103,6 +103,7 @@ private:
 
 struct NodePrivate: public QSharedData
 {
+    explicit NodePrivate();
     // The identifier associated to the node
     // It might be different from the one associated to the cache entry
     QString identifier;
@@ -113,6 +114,11 @@ struct NodePrivate: public QSharedData
     // A list of cache entries, that represents the data displayed in the model
     // for this node
     QList<CacheEntry> data;
+    bool hasPrevious;
+    bool hasNext;
+    // A set of extra informations, used to store, for example, cursors or
+    // indexes for next and previous
+    QVariantMap extraInfo;
 };
 
 class Node
@@ -131,6 +137,11 @@ public:
     void setCacheEntry(const CacheEntry &cacheEntry);
     QList<CacheEntry> data() const;
     void setData(const QList<CacheEntry> &data);
+    bool hasPrevious() const;
+    bool hasNext() const;
+    void setPreviousAndNext(bool hasPrevious, bool hasNext);
+    QVariantMap extraInfo() const;
+    void setExtraInfo(const QVariantMap &extraInfo);
 protected:
     QExplicitlySharedDataPointer<NodePrivate> d_ptr;
 private:
@@ -173,6 +184,18 @@ private:
 class SocialNetworkInterfacePrivate
 {
 public:
+    enum UpdateMode {
+        Replace,
+        Append,
+        Prepend,
+        Resort
+    };
+    enum PagingInfo {
+        HaveNext = 0x1,
+        HavePrevious = 0x2
+    };
+    Q_DECLARE_FLAGS(PagingInfos, PagingInfo)
+
     explicit SocialNetworkInterfacePrivate(SocialNetworkInterface *q);
     virtual ~SocialNetworkInterfacePrivate();
     void setStatus(SocialNetworkInterface::Status newStatus);
@@ -186,7 +209,10 @@ public:
 
     // Display helpers
     bool atLastNode() const;
-    void updateNodeAndContent();
+    void insertContent(const QList<CacheEntry> &newData, PagingInfos pagingInfos,
+                       UpdateMode updateMode = Replace);
+    void updateNodePositionStatus();
+    void updateRelatedData();
 
     QNetworkAccessManager *networkAccessManager;
 
@@ -195,6 +221,7 @@ protected:
     SocialNetworkInterface * const q_ptr;
 private:
     void init();
+    bool resortUpdatePosted;
 
     // Initialization management
     bool initialized;
@@ -208,8 +235,10 @@ private:
     QString nodeIdentifier;
     IdentifiableContentItemInterface *node;
     QList<CacheEntry> internalData;
-    bool hasNextNode;
     bool hasPreviousNode;
+    bool hasNextNode;
+    bool hasPrevious;
+    bool hasNext;
 
     static QHash<int, QByteArray> roleNames();
 
@@ -238,11 +267,15 @@ private:
     void checkCacheEntryRefcount(const CacheEntry &entry);
     bool deleteLastNode();
 
+    // Slots
+    void itemDataChangedHandler();
+
+    // Display helpers
+    void updateNextAndPrevious();
+
     // Arbitrary request handler
     ArbitraryRequestHandler *arbitraryRequestHandler;
 
-    // Slots
-    void itemDataChangedHandler();
 
 public:
     // Testing functions
@@ -273,5 +306,7 @@ public:
 private:
     Q_DECLARE_PUBLIC(SocialNetworkInterface)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(SocialNetworkInterfacePrivate::PagingInfos)
 
 #endif // SOCIALNETWORKINTERFACE_P_H

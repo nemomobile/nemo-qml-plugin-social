@@ -98,22 +98,18 @@ public:
 Q_SIGNALS:
     void accessTokenChanged();
     void currentUserIdentifierChanged();
-
-    // SocialNetworkInterface
 public:
-//    void componentComplete();
-//    Q_INVOKABLE void populate();
+    Q_INVOKABLE void loadNext();
+    Q_INVOKABLE void loadPrevious();
 protected:
     QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply *postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply *deleteRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &extraData);
     QString dataSection(int type, const QVariantMap &data) const;
-    //void updateInternalData(QList<CacheEntry*> data);
-    //void populateDataForNode(IdentifiableContentItemInterface *currentNode);
-    //void populateDataForNode(const QString &unseenNodeIdentifier);
     ContentItemInterface *contentItemFromData(QObject *parent, const QVariantMap &data) const;
     void populateDataForLastNode();
     void populateRelatedDataforLastNode();
+    bool validateCacheEntryForLastNode(const QVariantMap &cacheEntryData);
 
     // private API for all Facebook adapters to use
 private:
@@ -134,8 +130,7 @@ private:
     void retrieveRelatedContent(IdentifiableContentItemInterface *whichNode);
     void continuePopulateDataForUnseenNode(const QVariantMap &nodeData);
     void continuePopulateDataForSeenNode(const QVariantMap &nodeData, const QUrl &requestUrl);
-
-    // private data.
+    // private data
 private:
     Q_DECLARE_PRIVATE(FacebookInterface)
     Q_PRIVATE_SLOT(d_func(), void finishedHandler())

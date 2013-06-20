@@ -104,8 +104,8 @@ Item {
         accessToken: root.accessToken
 
         property QtObject notificationsFilter: ContentItemTypeFilter { type: Facebook.Notification; limit: 10 }
-        property QtObject friendsFilter:       ContentItemTypeFilter { type: Facebook.User }
-        property QtObject albumsFilter:        ContentItemTypeFilter { type: Facebook.Album }
+        property QtObject friendsFilter:       ContentItemTypeFilter { type: Facebook.User; limit: 50}
+        property QtObject albumsFilter:        ContentItemTypeFilter { type: Facebook.Album; limit: 10}
         property QtObject photosFilter:        ContentItemTypeFilter { type: Facebook.Photo }
         property QtObject commentsFilter:      ContentItemTypeFilter { type: Facebook.Comment }
         property QtObject feedFilter:          ContentItemTypeFilter { type: Facebook.Post }
@@ -161,22 +161,15 @@ Item {
         id: postList
         visible: whichActive == 6
         model: visible ? facebook : null
-        onBackClicked: makeActive(0, facebook.currentUserIdentifier)
-        onPostClicked: {
-            postCommmentList.backPostId = model.node.identifier
-            makeActive(7, postId)
-        }
+        onBackClicked: back(0)
+        onPostClicked: makeActive(7, postId)
     }
 
     PostCommentsList {
         id: postCommmentList
-        property string backPostId
         visible: whichActive == 7
         model: visible ? facebook : null
-        onBackClicked: {
-            makeActive(6, backPostId) // back to photos page
-            facebook.nodeIdentifier = backPostId // shouldn't need this... force
-        }
+        onBackClicked: back(6)
     }
 
     NotificationsList {

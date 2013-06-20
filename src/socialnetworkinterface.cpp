@@ -39,6 +39,8 @@
 #include "util_p.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QEvent>
 #include <QtCore/QUrl>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -62,7 +64,7 @@
     The SNI have a list of nodes, each node representing a page, and also
     something to display. A node contains the identifier of an entity, as
     well as some filters that indicates what are the data related to that
-    entity to query. It then provides access to that node in the QML context,
+    entity to query. It then provides access to that node ine QML context,
     via SocialNetworkInterface::node(), and access to the related content
     via the data set in the model.
 
@@ -187,7 +189,7 @@
 
     A set of private methods, available through the D-pointer, can be used:
 
-    - setStatus and setError can be used to make status and error management easier.
+    - setStatus() and setError() can be used to make status and error management easier.
       As usual setters, they set the data, and emit the corresponding signals.
 
     - lastNode() is very useful in order to get the last node, that is the node
@@ -201,8 +203,13 @@
       last node.
 
     - atLastNode() is used to inform if the SocialNetworkInterface is currently
-      displaying the last node. And if it is the case, updateNodeAndContent() can
-      be used to automatically update all the attributes that influences the display.
+      displaying the last node. And if it is the case, updateNodePositionStatus() or
+      updateRelatedData() can be used to automatically update all the attributes
+      that influences the display.
+
+    - insertContent() is used to perform population for related content. It can be used
+      in append mode (default), or prepend mode, and also sets the paging properties
+      (if there is a next or previous page).
 */
 
 // TODO XXX: CacheEntry::ref and deref should be made private and friend with some classes
@@ -346,13 +353,19 @@ void CacheEntry::deleteItem()
     d->item = 0;
 }
 
-Node::Node():
-    d_ptr(new NodePrivate())
+NodePrivate::NodePrivate()
+    : hasPrevious(false)
+    , hasNext(false)
 {
 }
 
-Node::Node(const QString &identifier, const QSet<FilterInterface *> &filters):
-    d_ptr(new NodePrivate())
+Node::Node()
+    : d_ptr(new NodePrivate())
+{
+}
+
+Node::Node(const QString &identifier, const QSet<FilterInterface *> &filters)
+    : d_ptr(new NodePrivate())
 {
     Q_D(Node);
     d->identifier = identifier;
@@ -432,6 +445,37 @@ void Node::setData(const QList<CacheEntry> &data)
     foreach (CacheEntry cacheEntry, d->data) {
         cacheEntry.ref();
     }
+}
+
+bool Node::hasPrevious() const
+{
+    Q_D(const Node);
+    return d->hasPrevious;
+}
+
+bool Node::hasNext() const
+{
+    Q_D(const Node);
+    return d->hasNext;
+}
+
+void Node::setPreviousAndNext(bool hasPrevious, bool hasNext)
+{
+    Q_D(Node);
+    d->hasPrevious = hasPrevious;
+    d->hasNext = hasNext;
+}
+
+QVariantMap Node::extraInfo() const
+{
+    Q_D(const Node);
+    return d->extraInfo;
+}
+
+void Node::setExtraInfo(const QVariantMap &extraInfo)
+{
+    Q_D(Node);
+    d->extraInfo = extraInfo;
 }
 
 ArbitraryRequestHandler::ArbitraryRequestHandler(QNetworkAccessManager *networkAccessManager,
@@ -564,13 +608,16 @@ bool SorterFunctor::operator()(const CacheEntry &first, const CacheEntry &second
 SocialNetworkInterfacePrivate::SocialNetworkInterfacePrivate(SocialNetworkInterface *q)
     : networkAccessManager(0)
     , q_ptr(q)
+    , resortUpdatePosted(false)
     , initialized(false)
     , populatePending(false)
     , status(SocialNetworkInterface::Initializing)
     , error(SocialNetworkInterface::NoError)
     , node(0)
-    , hasNextNode(false)
     , hasPreviousNode(false)
+    , hasNextNode(false)
+    , hasPrevious(false)
+    , hasNext(false)
     , nodeStackIndex(-1)
     , arbitraryRequestHandler(0)
 {
@@ -637,7 +684,6 @@ CacheEntry SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &da
     // Check if there is already a cached entry that corresponds
     if (!identifier.isEmpty()) {
         if (cache.contains(identifier)) {
-            // TODO: maybe do an update here
             CacheEntry entry = cache.value(identifier);
             entry.setData(data);
             if (entry.item()) {
@@ -651,7 +697,6 @@ CacheEntry SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &da
     if (!identifier.isEmpty()) {
         CacheEntry cacheEntry (data, identifier);
         cache.insert(identifier, cacheEntry);
-
         return cacheEntry;
     } else {
         return CacheEntry(data);
@@ -678,7 +723,63 @@ bool SocialNetworkInterfacePrivate::atLastNode() const
     return (nodeStackIndex == nodeStack.count() - 1);
 }
 
-void SocialNetworkInterfacePrivate::updateNodeAndContent()
+void SocialNetworkInterfacePrivate::insertContent(const QList<CacheEntry> &newData,
+                                                  PagingInfos pagingInfos,
+                                                  UpdateMode updateMode)
+{
+    Q_Q(SocialNetworkInterface);
+    if (nodeStack.isEmpty()) {
+        return;
+    }
+
+    bool havePrevious = pagingInfos.testFlag(HavePrevious);
+    bool haveNext = pagingInfos.testFlag(HaveNext);
+    nodeStack.top().setPreviousAndNext(havePrevious, haveNext);
+    updateNextAndPrevious();
+
+    if (newData.isEmpty()) {
+        return;
+    }
+
+    QList<CacheEntry> data;
+    switch (updateMode) {
+    case Prepend:
+        data = newData;
+        data.append(nodeStack.top().data());
+        break;
+    case Replace:
+        data = newData;
+        break;
+    default:
+        data = nodeStack.top().data();
+        data.append(newData);
+        break;
+    }
+
+    lastNode().setData(data);
+
+    if (atLastNode()) {
+        // Update model
+        int initialIndex = 0;
+        if (updateMode == Append) {
+            initialIndex = internalData.count();
+        }
+
+        if (updateMode == Replace) {
+            q->beginRemoveRows(QModelIndex(), 0, internalData.count() - 1);
+            internalData.clear();
+            q->endRemoveRows();
+        }
+
+        q->beginInsertRows(QModelIndex(), initialIndex, initialIndex + newData.count() - 1);
+        internalData = q->sortedData(nodeStack.top().data());
+        emit q->countChanged();
+        q->endInsertRows();
+        emit q->dataChanged(q->index(0), q->index(internalData.count() - 1));
+    }
+}
+
+void SocialNetworkInterfacePrivate::updateNodePositionStatus()
 {
     Q_Q(SocialNetworkInterface);
     // Update next and previous
@@ -737,16 +838,30 @@ void SocialNetworkInterfacePrivate::updateNodeAndContent()
         node = currentNode().cacheEntry().identifiableItem();
         emit q->nodeChanged();
     }
+}
+
+void SocialNetworkInterfacePrivate::updateRelatedData()
+{
+    Q_Q(SocialNetworkInterface);
+    if (nodeStackIndex == -1) {
+        return;
+    }
+
 
     bool modelShouldBeChanged = false;
     bool sameCount = false;
-    if (internalData.count() != currentNode().data().count()) {
+    QList<CacheEntry> newData = currentNode().data();
+
+    // If the count is not the same, the model should be changed
+    if (internalData.count() != newData.count()) {
         modelShouldBeChanged = true;
     }
 
+    // If the count is the same, but not the same data
+    // the model should be changed
     if (!modelShouldBeChanged) {
-        foreach (CacheEntry data, currentNode().data()) {
-            if (!internalData.contains(data)) {
+        for (int i = 0; i < newData.count(); i++) {
+            if (internalData.at(i) != newData.at(i)) {
                 modelShouldBeChanged = true;
                 sameCount = true;
                 break;
@@ -762,8 +877,8 @@ void SocialNetworkInterfacePrivate::updateNodeAndContent()
         }
 
         if (currentNode().data().count() > 0) {
-            q->beginInsertRows(QModelIndex(), 0, currentNode().data().count() - 1);
-            internalData = q->filteredData(currentNode().data());
+            q->beginInsertRows(QModelIndex(), 0, newData.count() - 1);
+            internalData = q->sortedData(newData);
             q->endInsertRows();
         }
 
@@ -771,6 +886,8 @@ void SocialNetworkInterfacePrivate::updateNodeAndContent()
             emit q->countChanged();
         }
     }
+
+    updateNextAndPrevious();
 }
 
 void SocialNetworkInterfacePrivate::init()
@@ -831,6 +948,10 @@ void SocialNetworkInterfacePrivate::sorters_append(QDeclarativeListProperty<Sort
         QObject::connect(sorter, SIGNAL(destroyed(QObject*)),
                          socialNetwork, SLOT(sorterDestroyedHandler(QObject*)));
         socialNetwork->d_func()->sorters.append(sorter);
+        if (!socialNetwork->d_func()->resortUpdatePosted) {
+            socialNetwork->d_func()->resortUpdatePosted = true;
+            QCoreApplication::instance()->postEvent(socialNetwork, new QEvent(QEvent::User));
+        }
     }
 }
 
@@ -926,6 +1047,26 @@ void SocialNetworkInterfacePrivate::itemDataChangedHandler()
                 cacheEntry.setData(item->data());
             }
         }
+    }
+}
+
+void SocialNetworkInterfacePrivate::updateNextAndPrevious()
+{
+    Q_Q(SocialNetworkInterface);
+    bool newHasPrevious = false;
+    bool newHasNext = false;
+
+    if (nodeStackIndex > -1) {
+        newHasPrevious = currentNode().hasPrevious();
+        newHasNext = currentNode().hasNext();
+    }
+    if (hasPrevious != newHasPrevious) {
+        hasPrevious = newHasPrevious;
+        emit q->hasPreviousChanged();
+    }
+    if (hasNext != newHasNext) {
+        hasNext = newHasNext;
+        emit q->hasNextChanged();
     }
 }
 
@@ -1029,7 +1170,8 @@ void SocialNetworkInterface::nextNode()
         return;
     }
 
-    d->updateNodeAndContent();
+    d->updateNodePositionStatus();
+    d->updateRelatedData();
 }
 
 /*!
@@ -1053,7 +1195,15 @@ void SocialNetworkInterface::previousNode()
 
 
     d->nodeStackIndex --;
-    d->updateNodeAndContent();
+    d->updateNodePositionStatus();
+    d->updateRelatedData();
+}
+
+void SocialNetworkInterface::popNode()
+{
+    Q_D(SocialNetworkInterface);
+    previousNode();
+    d->deleteLastNode();
 }
 
 /*!
@@ -1075,6 +1225,16 @@ QObject *SocialNetworkInterface::relatedItem(int index) const
     ContentItemInterface *ci = cv.value<ContentItemInterface*>();
     
     return ci;
+}
+
+void SocialNetworkInterface::loadNext()
+{
+    qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
+}
+
+void SocialNetworkInterface::loadPrevious()
+{
+    qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
 }
 
 /*!
@@ -1184,16 +1344,28 @@ QVariantMap SocialNetworkInterface::relevanceCriteria() const
     return d->relevanceCriteria;
 }
 
+bool SocialNetworkInterface::hasPreviousNode() const
+{
+    Q_D(const SocialNetworkInterface);
+    return d->hasPreviousNode;
+}
+
 bool SocialNetworkInterface::hasNextNode() const
 {
     Q_D(const SocialNetworkInterface);
     return d->hasNextNode;
 }
 
-bool SocialNetworkInterface::hasPreviousNode() const
+bool SocialNetworkInterface::hasPrevious() const
 {
     Q_D(const SocialNetworkInterface);
-    return d->hasPreviousNode;
+    return d->hasPrevious;
+}
+
+bool SocialNetworkInterface::hasNext() const
+{
+    Q_D(const SocialNetworkInterface);
+    return d->hasNext;
 }
 
 void SocialNetworkInterface::setRelevanceCriteria(const QVariantMap &relevanceCriteria)
@@ -1439,6 +1611,18 @@ bool SocialNetworkInterface::isInitialized() const
     return d->initialized;
 }
 
+bool SocialNetworkInterface::event(QEvent *e)
+{
+    Q_D(SocialNetworkInterface);
+    if (e->type() == QEvent::User) {
+        d->resortUpdatePosted = false;
+        d->internalData = sortedData(d->internalData);
+        emit dataChanged(index(0), index(d->internalData.count() - 1));
+        return true;
+    }
+    return QObject::event(e);
+}
+
 /*
     Specific implementations of the SocialNetwork interface MUST implement this
     function.  It must be implemented such that it performs the appropriate
@@ -1511,7 +1695,7 @@ ContentItemInterface *SocialNetworkInterface::contentItemFromData(QObject *paren
     return 0;
 }
 
-QList<CacheEntry> SocialNetworkInterface::filteredData(const QList<CacheEntry> &data)
+QList<CacheEntry> SocialNetworkInterface::sortedData(const QList<CacheEntry> &data)
 {
     Q_D(SocialNetworkInterface);
     QList<CacheEntry> sortedData = data;

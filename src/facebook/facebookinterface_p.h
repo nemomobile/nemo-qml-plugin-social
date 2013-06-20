@@ -44,6 +44,9 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QSslError>
 
+typedef QPair<QString, QString> StringPair;
+typedef QMultiMap<int, StringPair> RequestFieldsMap;
+
 class ContentItemInterface;
 
 class FacebookInterfacePrivate : public SocialNetworkInterfacePrivate
@@ -54,7 +57,9 @@ public:
     QString accessToken;
     QString currentUserIdentifier;
 
-    bool continuationRequestActive;
+//    bool continuationRequestActive;
+    bool prepending;
+    bool appending;
 
     int outOfBandConnectionsLimit;
 
@@ -71,8 +76,10 @@ public:
     void setCurrentReply(QNetworkReply *newCurrentReply, const QString &whichNodeIdentifier);
     QNetworkReply *currentReply; // this should never be set directly, always use the above mutator.
 
-    QUrl requestUrl(const QString &objectId, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
-    QNetworkReply *uploadImage(const QString &objectId, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
+    QUrl requestUrl(const QString &objectId, const QString &extraPath,
+                    const QStringList &whichFields, const QVariantMap &extraData);
+    QNetworkReply *uploadImage(const QString &objectId, const QString &extraPath,
+                               const QVariantMap &data, const QVariantMap &extraData);
 
     int detectTypeFromData(const QVariantMap &data) const;
     void populateRelatedDataForLastNode(const QVariantMap &relatedData, const QUrl &requestUrl);
@@ -81,7 +88,7 @@ public:
     // Slots
     void updateCurrentUserIdentifierHandler(bool isError, const QVariantMap &data);
     void finishedHandler();
-    void errorHandler(QNetworkReply::NetworkError err);
+    void errorHandler(QNetworkReply::NetworkError networkError);
     void sslErrorsHandler(const QList<QSslError> &errs);
     void deleteReply();
 
@@ -103,7 +110,14 @@ public:
         DeleteAlbumAction
     };
 private:
-    inline void addCacheEntryFromData(const QVariantMap &data, int type, QList<CacheEntry> &list);
+    inline bool tryAddCacheEntryFromData(const QVariantMap &relatedData, const QString &requestPath,
+                                         int type, const QString &typeName, QList<CacheEntry> &list,
+                                         QVariantMap &nodeExtra);
+    bool performRelatedDataRequest(const QString &identifier,
+                                   const QList<FilterInterface *> &filters,
+                                   const RequestFieldsMap &extra = RequestFieldsMap());
+    inline QString createField(int type, const QString &connection,
+                               const RequestFieldsMap &requestFiledsMap);
     Q_DECLARE_PUBLIC(FacebookInterface)
 };
 

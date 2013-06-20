@@ -104,14 +104,15 @@ private slots:
         switch (m_internalState) {
         case PopulateData:
             populateData();
+            d->updateNodePositionStatus();
             break;
         case PopulateModelData:
             populateModelData();
+            d->updateRelatedData();
             break;
         default:
             break;
         }
-        d->updateNodeAndContent();
     }
     void populateData()
     {
