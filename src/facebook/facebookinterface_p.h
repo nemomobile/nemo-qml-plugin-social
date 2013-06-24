@@ -57,11 +57,8 @@ public:
     QString accessToken;
     QString currentUserIdentifier;
 
-//    bool continuationRequestActive;
     bool prepending;
     bool appending;
-
-    int outOfBandConnectionsLimit;
 
     enum InternalStatus {
         Idle = 0,

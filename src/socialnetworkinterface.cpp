@@ -56,7 +56,7 @@
     The SocialNetworkInterface is a conveinent way to represent data
     from a social network and query that social network for data.
 
-    SocialNetworkInterface, often called SNI, is a QML mode (inheriting
+    SocialNetworkInterface, often called SNI, is a QML model (inheriting
     from QAbstractListModel), that can be used to display data in
     ListView or GridView. It is built to mirror most mobile applications
     behaviour.
@@ -82,11 +82,12 @@
     CacheEntry
 
     A CacheEntry represents an entry in the cache. These entries
-    represents entities that have an identifier, and that inherits
-    from IdentifiableContentItemInterface.
+    represents any entities, (that inherits from ContentItemInterface),
+    but work best with those that have an identifier.
 
     Each cache entry contains the identifier that is associated to
-    the entity, the data, provided as QVariantMap, that is downloaded
+    the entity. This identifier can be null, in the case of a non identifiable
+    entity. It also contains the data, provided as QVariantMap, that is downloaded
     from the social network, the ContentItem pointer that is associated
     to the data, and a refCount, that is used to count the number of use
     of this cache entry.
@@ -101,6 +102,9 @@
     will modify all the copies. Basically, it behaves like a pointer.
     CacheEntries can also be compared, and are considered equal if they
     share the same identifier, data and item.
+
+    Remark: CacheEntry are not put in the cache if the entity that they
+    store is not identifiable.
 */
 
 /*
@@ -724,7 +728,7 @@ bool SocialNetworkInterfacePrivate::atLastNode() const
 }
 
 void SocialNetworkInterfacePrivate::insertContent(const QList<CacheEntry> &newData,
-                                                  PagingInfos pagingInfos,
+                                                  PagingFlags pagingFlags,
                                                   UpdateMode updateMode)
 {
     Q_Q(SocialNetworkInterface);
@@ -732,8 +736,8 @@ void SocialNetworkInterfacePrivate::insertContent(const QList<CacheEntry> &newDa
         return;
     }
 
-    bool havePrevious = pagingInfos.testFlag(HavePrevious);
-    bool haveNext = pagingInfos.testFlag(HaveNext);
+    bool havePrevious = pagingFlags.testFlag(HavePreviousFlag);
+    bool haveNext = pagingFlags.testFlag(HaveNextFlag);
     nodeStack.top().setPreviousAndNext(havePrevious, haveNext);
     updateNextAndPrevious();
 
@@ -970,6 +974,10 @@ void SocialNetworkInterfacePrivate::sorters_clear(QDeclarativeListProperty<Sorte
     SocialNetworkInterface *socialNetwork = qobject_cast<SocialNetworkInterface *>(list->object);
     if (socialNetwork) {
         socialNetwork->d_func()->sorters.clear();
+        if (!socialNetwork->d_func()->resortUpdatePosted) {
+            socialNetwork->d_func()->resortUpdatePosted = true;
+            QCoreApplication::instance()->postEvent(socialNetwork, new QEvent(QEvent::User));
+        }
     }
 }
 
@@ -987,13 +995,44 @@ void SocialNetworkInterfacePrivate::filterDestroyedHandler(QObject *object)
 {
     FilterInterface *filter = static_cast<FilterInterface *>(object);
     filters.removeAll(filter);
+
+    // Need to invalidate all data from the nodes that are impacted by that filter
+    foreach (Node node, nodeStack) {
+        if (node.filters().contains(filter)) {
+
+            foreach (CacheEntry entry, node.data()) {
+                entry.deref();
+            }
+
+            foreach (CacheEntry entry, node.data()) {
+                checkCacheEntryRefcount(entry);
+            }
+
+            node.setData(QList<CacheEntry>());
+        }
+
+        QSet<FilterInterface *> filters = node.filters();
+        filters.remove(filter);
+        node.d_func()->filters = filters;
+        qWarning() << "Destroying a filter affected the node associated to" << node.identifier();
+    }
+
 }
 
 /*! \interface */
 void SocialNetworkInterfacePrivate::sorterDestroyedHandler(QObject *object)
 {
+    Q_Q(SocialNetworkInterface);
     SorterInterface *sorter = static_cast<SorterInterface *>(object);
     sorters.removeAll(sorter);
+
+    // We should resort with the new filters
+    if (!resortUpdatePosted) {
+        resortUpdatePosted = true;
+        QCoreApplication::instance()->postEvent(q, new QEvent(QEvent::User));
+    }
+
+
 }
 
 Node SocialNetworkInterfacePrivate::currentNode() const

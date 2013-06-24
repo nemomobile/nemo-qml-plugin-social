@@ -33,64 +33,69 @@ import QtQuick 1.1
 import org.nemomobile.social 1.0
 
 Item {
-    id: root
+    id: container
+    anchors.fill: parent
     property alias model: view.model
     signal backClicked
-    signal showLikesClicked
-    anchors.fill: parent
 
-    Image {
-        id: backgroundImage
-        opacity: 0.4
-        anchors.fill: parent
-        source: model != null ? model.node.source : "" // full-size image url
+    Connections {
+        target: root
+        onWhichActiveChanged: container.visible = (root.whichActive == 6)
+    }
+
+    function load() {
+        facebook.filters = [ myFilter ]
+        facebook.populate()
+        facebook.nextNode()
+    }
+
+    ContentItemTypeFilter {
+        id: myFilter
+        type: Facebook.User
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "There are " + model.count + " comments on this photo" : ""
+        text: model != null ? "You have " + model.count + " friends" : ""
     }
 
-    Column {
-        id: column
-        Button {
-            text: "Likes"
-            onClicked: root.showLikesClicked()
-        }
-        Button {
-            text: "Back"
-            onClicked: root.backClicked()
-        }
-
+    Button {
+        id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
+        text: "Back"
+        onClicked: {
+            container.backClicked()
+            container.destroy()
+        }
     }
-
 
     ListView {
         id: view
         clip: true
         anchors.top: topLabel.bottom
-        anchors.bottom: column.top
+        anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
-        delegate: Item {
-            id: commentDelegate
-            width: parent.width
+        footer: Item {
+            width: view.width
             height: childrenRect.height
-            Column {
-                width: parent.width
-                height: nameLabel.height + countLabel.height
-                Text {
-                    id: nameLabel
-                    text: "From: " + contentItem.from.objectName
-                }
-                Text {
-                    id: countLabel
-                    text: "Message: " + contentItem.message
-                }
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: facebook.hasNext ? "Load more" : "Cannot load more"
+                onClicked: facebook.loadNext()
+            }
+        }
+
+        delegate: Item {
+            width: view.width
+            height: 50
+
+            Text {
+                anchors.centerIn: parent
+                text: model.contentItem.name
             }
         }
     }

@@ -86,7 +86,6 @@ FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
     , currentUserIdentifier(FACEBOOK_ME)
     , prepending(false)
     , appending(false)
-    , outOfBandConnectionsLimit(-1)
     , internalStatus(Idle)
     , currentReply(0)
 {
@@ -206,14 +205,14 @@ void FacebookInterfacePrivate::populateRelatedDataForLastNode(const QVariantMap 
         haveNext = haveNext || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toBool();
     }
 
-    PagingInfos pageInfos = PagingInfos();
+    PagingFlags pagingFlags = PagingFlags();
     bool replacing = !prepending && !appending;
 
     if (havePrevious && (prepending || replacing)) {
-        pageInfos = pageInfos | HavePrevious;
+        pagingFlags = pagingFlags | HavePreviousFlag;
     }
     if (haveNext && (appending || replacing)) {
-        pageInfos = pageInfos | HaveNext;
+        pagingFlags = pagingFlags | HaveNextFlag;
     }
 
 
@@ -225,11 +224,11 @@ void FacebookInterfacePrivate::populateRelatedDataForLastNode(const QVariantMap 
         updateMode = FacebookInterfacePrivate::Append;
     }
 
-    insertContent(relatedContent, pageInfos, updateMode);
-
-    setStatus(SocialNetworkInterface::Idle);
     prepending = false;
     appending = false;
+
+    insertContent(relatedContent, pagingFlags, updateMode);
+    setStatus(SocialNetworkInterface::Idle);
 }
 
 /*! \internal */
@@ -396,16 +395,15 @@ void FacebookInterfacePrivate::finishedHandler()
 
     QByteArray replyData = currentReply->readAll();
     QUrl requestUrl = currentReply->request().url();
-//    QVariant specialLimitVar = currentReply->property("specialLimit");
     deleteReply();
     bool ok = false;
     QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok) {
         responseData.insert("response", replyData);
         setError(SocialNetworkInterface::RequestError,
-                 QLatin1String("Error populating node: response is invalid. \
-                                Perhaps the requested object id was incorrect?  Response: ")
-                               + QString::fromLatin1(replyData.constData()));
+                 QLatin1String("Error populating node: response is invalid. "\
+                               "Perhaps the requested object id was incorrect?  Response: ")
+                 + QString::fromLatin1(replyData.constData()));
         setStatus(SocialNetworkInterface::Error);
         return;
     }
@@ -531,6 +529,10 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
     foreach (const QVariant &variant, itemsList) {
         QVariantMap variantMap = variant.toMap();
         QString identifier = variantMap.value(FACEBOOK_ONTOLOGY_METADATA_ID).toString();
+        // If the type is a "Like", it is not identifiable:
+        if (type == FacebookInterface::Like) {
+            identifier.clear();
+        }
         variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, type);
         variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, identifier);
         list.append(createCacheEntry(variantMap, identifier));
@@ -601,9 +603,9 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
 
             QVariantMap previous;
             for (i = previousQueries.begin(); i != previousQueries.end(); ++ i) {
-                if ((*i).first == FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET
-                    || (*i).first == FACEBOOK_ONTOLOGY_METADATA_PAGING_SINCE) {
-                    previous.insert((*i).first, (*i).second);
+                if (i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET
+                    || i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_SINCE) {
+                    previous.insert(i->first, i->second);
                 }
             }
             if (!previous.isEmpty()) {
@@ -621,9 +623,9 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
 
             QVariantMap next;
             for (i = nextQueries.begin(); i != nextQueries.end(); ++ i) {
-                if ((*i).first == FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET
-                    || (*i).first == FACEBOOK_ONTOLOGY_METADATA_PAGING_UNTIL) {
-                    next.insert((*i).first, (*i).second);
+                if (i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET
+                    || i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_UNTIL) {
+                    next.insert(i->first, i->second);
                 }
             }
             if (!next.isEmpty()) {
@@ -725,7 +727,7 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
                     = connectionFields.values(FacebookInterface::Notification);
             QList<QPair<QString, QString> >::Iterator i;
             for (i = extraValues.begin(); i != extraValues.end(); i++) {
-                extraData.insert((*i).first, (*i).second);
+                extraData.insert(i->first, i->second);
             }
 
             setCurrentReply(q->getRequest(identifier, FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS,
@@ -769,7 +771,7 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
         case FacebookInterface::Location:
             fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_LOCATIONS,
                                       connectionFields));
-            ; break; // not supported?
+            break; // not supported?
         case FacebookInterface::Comment:
             fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS,
                                       connectionFields));
@@ -813,7 +815,7 @@ QString FacebookInterfacePrivate::createField(int type, const QString &connectio
         QList<QPair<QString, QString> > fieldValues = requestFiledsMap.values(type);
         QList<QPair<QString, QString> >::Iterator i;
         for (i = fieldValues.begin(); i != fieldValues.end(); i++) {
-            QString fieldsExtraEntry = QString(".%1(%2)").arg((*i).first, (*i).second);
+            QString fieldsExtraEntry = QString(".%1(%2)").arg(i->first, i->second);
             field.append(fieldsExtraEntry);
         }
     }
@@ -1076,7 +1078,7 @@ void FacebookInterface::loadPrevious()
         break;
     }
 
-    if (!hasNext()) {
+    if (!hasPrevious()) {
         return;
     }
 
@@ -1221,7 +1223,8 @@ void FacebookInterface::populateRelatedDataforLastNode()
     Q_D(FacebookInterface);
     if (!d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
                            QMultiMap<int, QPair<QString, QString> >())) {
-        d->setStatus(SocialNetworkInterface::Idle);
+        d->setError(SocialNetworkInterface::DataUpdateError,
+                    QLatin1String("Cannot perform related data request"));
     } else {
         d->internalStatus = FacebookInterfacePrivate::PopulatingNodeModelData;
     }

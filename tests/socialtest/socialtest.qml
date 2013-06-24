@@ -64,9 +64,13 @@ Item {
     property string accessToken // provided by main.cpp
     property int whichActive: 0
 
+    function backHome() {
+        back(0)
+    }
+
     function back(which) {
-        facebook.previousNode(which)
         whichActive = which
+        facebook.previousNode(which)
     }
 
     function makeActive(which, nodeId) {
@@ -74,29 +78,54 @@ Item {
         switch (which) {
         case 1:
             facebook.filters = [ facebook.notificationsFilter ]
+            facebook.populate()
+            facebook.nextNode()
             break
         case 2:
             facebook.filters = [ facebook.friendsFilter ]
+            facebook.populate()
+            facebook.nextNode()
             break
         case 3:
             facebook.filters = [ facebook.albumsFilter ]
+            facebook.populate()
+            facebook.nextNode()
             break
         case 4:
             facebook.filters = [ facebook.photosFilter ]
+            facebook.populate()
+            facebook.nextNode()
             break
         case 5:
             facebook.filters = [ facebook.commentsFilter ]
+            facebook.populate()
+            facebook.nextNode()
             break
         case 6:
-            facebook.filters = [ facebook.feedFilter ]
+            var component = Qt.createComponent(Qt.resolvedUrl("FilterDestructionTestPage.qml"));
+            if (component.status == Component.Ready) {
+                var page = component.createObject(root, {model: facebook});
+                page.load()
+                page.backClicked.connect(root.backHome)
+            }
             break
         case 7:
+            facebook.filters = [ facebook.feedFilter ]
+            facebook.populate()
+            facebook.nextNode()
+            break
+        case 8:
             facebook.filters = [ facebook.commentsFilter ]
+            facebook.populate()
+            facebook.nextNode()
+            break
+        case 9:
+            facebook.filters = [ facebook.likesFilter ]
+            facebook.populate()
+            facebook.nextNode()
             break
         }
         whichActive = which
-        facebook.populate()
-        facebook.nextNode()
     }
 
     Facebook {
@@ -109,6 +138,7 @@ Item {
         property QtObject photosFilter:        ContentItemTypeFilter { type: Facebook.Photo }
         property QtObject commentsFilter:      ContentItemTypeFilter { type: Facebook.Comment }
         property QtObject feedFilter:          ContentItemTypeFilter { type: Facebook.Post }
+        property QtObject likesFilter:         ContentItemTypeFilter { type: Facebook.Like }
     }
 
 
@@ -120,7 +150,7 @@ Item {
         model: ListModel {
             ListElement {
                 text: "Show posts"
-                which: 6
+                which: 7
             }
             ListElement {
                 text: "Show notifications"
@@ -133,6 +163,10 @@ Item {
             ListElement {
                 text: "Show albums"
                 which: 3
+            }
+            ListElement {
+                text: "Test filter destruction"
+                which: 6
             }
             ListElement {
                 text: "Quit"
@@ -159,17 +193,17 @@ Item {
 
     PostList {
         id: postList
-        visible: whichActive == 6
+        visible: whichActive == 7
         model: visible ? facebook : null
         onBackClicked: back(0)
-        onPostClicked: makeActive(7, postId)
+        onPostClicked: makeActive(8, postId)
     }
 
     PostCommentsList {
         id: postCommmentList
-        visible: whichActive == 7
+        visible: whichActive == 8
         model: visible ? facebook : null
-        onBackClicked: back(6)
+        onBackClicked: back(7)
     }
 
     NotificationsList {
@@ -199,16 +233,29 @@ Item {
         visible: whichActive == 4
         model: visible ? facebook : null
         onBackClicked: back(3)
-        onPhotoClicked: makeActive(5, photoId)
+        onPhotoClicked: {
+            photoCommentsList.photoId = photoId
+            makeActive(5, photoId)
+        }
     }
 
     PhotoCommentsList {
         id: photoCommentsList
-        property string backAlbumId
+        property string photoId
         visible: whichActive == 5
         model: visible ? facebook : null
         onBackClicked: back(4)
-
+        onShowLikesClicked: makeActive(9, photoId)
     }
+
+    LikesList {
+        id: likesList
+        visible: whichActive == 9
+        model: visible ? facebook : null
+        onBackClicked: back(5)
+    }
+
+
+
 
 }

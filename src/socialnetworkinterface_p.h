@@ -137,6 +137,7 @@ public:
     void setCacheEntry(const CacheEntry &cacheEntry);
     QList<CacheEntry> data() const;
     void setData(const QList<CacheEntry> &data);
+    void setFilters(const QSet<FilterInterface *> &filters);
     bool hasPrevious() const;
     bool hasNext() const;
     void setPreviousAndNext(bool hasPrevious, bool hasNext);
@@ -146,6 +147,7 @@ protected:
     QExplicitlySharedDataPointer<NodePrivate> d_ptr;
 private:
     Q_DECLARE_PRIVATE(Node)
+    friend class SocialNetworkInterfacePrivate;
 };
 
 class ArbitraryRequestHandler : public QObject
@@ -190,11 +192,11 @@ public:
         Prepend,
         Resort
     };
-    enum PagingInfo {
-        HaveNext = 0x1,
-        HavePrevious = 0x2
+    enum PagingFlag {
+        HaveNextFlag = 0x1,
+        HavePreviousFlag = 0x2
     };
-    Q_DECLARE_FLAGS(PagingInfos, PagingInfo)
+    Q_DECLARE_FLAGS(PagingFlags, PagingFlag)
 
     explicit SocialNetworkInterfacePrivate(SocialNetworkInterface *q);
     virtual ~SocialNetworkInterfacePrivate();
@@ -209,7 +211,7 @@ public:
 
     // Display helpers
     bool atLastNode() const;
-    void insertContent(const QList<CacheEntry> &newData, PagingInfos pagingInfos,
+    void insertContent(const QList<CacheEntry> &newData, PagingFlags pagingFlags,
                        UpdateMode updateMode = Replace);
     void updateNodePositionStatus();
     void updateRelatedData();
@@ -307,6 +309,6 @@ private:
     Q_DECLARE_PUBLIC(SocialNetworkInterface)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(SocialNetworkInterfacePrivate::PagingInfos)
+Q_DECLARE_OPERATORS_FOR_FLAGS(SocialNetworkInterfacePrivate::PagingFlags)
 
 #endif // SOCIALNETWORKINTERFACE_P_H
