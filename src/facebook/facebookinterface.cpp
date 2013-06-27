@@ -454,12 +454,6 @@ QNetworkReply * FacebookInterfacePrivate::deleteRequest(const QString &objectIde
 
 void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
 {
-    if (!reply) {
-        // if an error occurred, it might have been deleted by the error handler.
-        qWarning() << Q_FUNC_INFO << "network request finished but no reply!";
-        return;
-    }
-
     QByteArray replyData = reply->readAll();
     QUrl requestUrl = reply->request().url();
     deleteReply(reply);

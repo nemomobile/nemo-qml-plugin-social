@@ -42,6 +42,7 @@ SocialNetworkModelInterfacePrivate::SocialNetworkModelInterfacePrivate(SocialNet
     : status(SocialNetworkInterface::Initializing)
     , error(SocialNetworkInterface::NoError)
     , socialNetwork(0)
+    , nodeType(0)
     , node(0), hasPrevious(false), hasNext(false)
     , resortUpdatePosted(false)
     , q_ptr(q)
@@ -385,6 +386,12 @@ QString SocialNetworkModelInterface::nodeIdentifier() const
     return d->nodeIdentifier;
 }
 
+int SocialNetworkModelInterface::nodeType() const
+{
+    Q_D(const SocialNetworkModelInterface);
+    return d->nodeType;
+}
+
 IdentifiableContentItemInterface * SocialNetworkModelInterface::node() const
 {
     Q_D(const SocialNetworkModelInterface);
@@ -481,6 +488,15 @@ QObject * SocialNetworkModelInterface::relatedItem(int index) const
 }
 
 
+void SocialNetworkModelInterface::setNodeType(int nodeType)
+{
+    Q_D(SocialNetworkModelInterface);
+    if (d->nodeType != nodeType) {
+        d->nodeType = nodeType;
+        emit nodeTypeChanged();
+    }
+}
+
 void SocialNetworkModelInterface::populate()
 {
     Q_D(SocialNetworkModelInterface);
@@ -489,7 +505,7 @@ void SocialNetworkModelInterface::populate()
         return;
     }
 
-    d->socialNetwork->d_func()->populate(this, d->nodeIdentifier, d->filters);
+    d->socialNetwork->d_func()->populate(this, d->nodeIdentifier, d->nodeType, d->filters);
 }
 
 void SocialNetworkModelInterface::repopulate()
@@ -500,7 +516,7 @@ void SocialNetworkModelInterface::repopulate()
         return;
     }
 
-    d->socialNetwork->d_func()->populate(this, d->nodeIdentifier, d->filters, true);
+    d->socialNetwork->d_func()->populate(this, d->nodeIdentifier, d->nodeType, d->filters, true);
 }
 
 void SocialNetworkModelInterface::loadNext()

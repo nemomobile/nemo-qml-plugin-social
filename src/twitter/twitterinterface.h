@@ -68,8 +68,10 @@ public:
         NotInitialized = 0,
         Unknown = 1,
         User,
+        Tweet,
         Place,
-        Tweet
+        Friends = 128,
+        Followers = 129
     };
 
 public:
@@ -81,7 +83,7 @@ public:
     QString oauthTokenSecret() const;
     void setOAuthTokenSecret(const QString &tokenSecret);
     QString consumerKey() const;
-    void setConsumerKey(const QString &key);
+    void setConsumerKey(const QString &consumerKey);
     QString consumerSecret() const;
     void setConsumerSecret(const QString &secret);
 
@@ -90,42 +92,14 @@ Q_SIGNALS:
     void oauthTokenSecretChanged();
     void consumerKeyChanged();
     void consumerSecretChanged();
-
-    // SocialNetworkInterface
-public:
-    void componentComplete();
-    Q_INVOKABLE void populate();
-protected:
-    QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
-    QNetworkReply *postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
-    QNetworkReply *deleteRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &extraData);
-    QString dataSection(int type, const QVariantMap &data) const;
-    void updateInternalData(QList<CacheEntry*> data);
-    void populateDataForNode(IdentifiableContentItemInterface *currentNode);
-    void populateDataForNode(const QString &unseenNodeIdentifier);
-    ContentItemInterface *contentItemFromData(QObject *parent, const QVariantMap &data) const;
-
-    // private API for all Twitter adapters to use
 private:
-    QString currentUserIdentifier() const;
     QVariantMap twitterContentItemData(ContentItemInterface *contentItem);
     void setTwitterContentItemData(ContentItemInterface *contentItem, const QVariantMap &data);
     friend class TwitterPlaceInterfacePrivate;
     friend class TwitterTweetInterfacePrivate;
     friend class TwitterUserInterfacePrivate;
-
-    // impl. detail
-private:
-    void retrieveRelatedContent(IdentifiableContentItemInterface *whichNode);
-    void continuePopulateDataForUnseenNode(const QVariantMap &nodeData);
-    void continuePopulateDataForSeenNode(const QVariantMap &nodeData, const QUrl &requestUrl);
-
-    // private data.
 private:
     Q_DECLARE_PRIVATE(TwitterInterface)
-    Q_PRIVATE_SLOT(d_func(), void finishedHandler())
-    Q_PRIVATE_SLOT(d_func(), void errorHandler(QNetworkReply::NetworkError))
-    Q_PRIVATE_SLOT(d_func(), void sslErrorsHandler(const QList<QSslError>&))
 };
 
 #endif // TWITTERINTERFACE_H

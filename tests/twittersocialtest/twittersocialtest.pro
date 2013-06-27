@@ -24,5 +24,3 @@ qml.path = $${PREFIX}/share
 
 INSTALLS += target qml
 
-OTHER_FILES += \
-    twittersocialtest.qml

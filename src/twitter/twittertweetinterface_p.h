@@ -29,27 +29,23 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef TWITTERDATAUTIL_P_H
-#define TWITTERDATAUTIL_P_H
+#ifndef TWITTERTWEETINTERFACE_P_H
+#define TWITTERTWEETINTERFACE_P_H
 
-#include <QtCore/QVariant>
-#include <QtCore/QString>
-#include <QtCore/QByteArray>
-#include <QtCore/QPair>
-#include <QtCore/QList>
+#include "twittertweetinterface.h"
+#include "twitterinterface_p.h"
+#include "identifiablecontentiteminterface_p.h"
 
-class TwitterDataUtil {
+class TwitterTweetInterfacePrivate: public IdentifiableContentItemInterfacePrivate
+{
 public:
-    static QByteArray authorizationHeader(const QByteArray &oauthConsumerKey,
-                                          const QByteArray &oauthConsumerSecret,
-                                          const QByteArray &requestMethod,
-                                          const QByteArray &requestUrl,
-                                          const QList<QPair<QByteArray, QByteArray> > &parameters,
-                                          const QByteArray &oauthToken = QByteArray(),
-                                          const QByteArray &oauthTokenSecret = QByteArray(),
-                                          const QByteArray &oauthNonce = QByteArray(),
-                                          const QByteArray &oauthTimestamp = QByteArray());
-//    static QVariant parseReplyData(const QByteArray &replyData, bool *ok);
+    explicit TwitterTweetInterfacePrivate(TwitterTweetInterface *q);
+    void finishedHandler();
+    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+    TwitterInterfacePrivate::TwitterAction action;
+    TwitterUserInterface *user;
+private:
+    Q_DECLARE_PUBLIC(TwitterTweetInterface)
 };
 
-#endif // TWITTERDATAUTIL_P_H
+#endif // TWITTERTWEETINTERFACE_P_H

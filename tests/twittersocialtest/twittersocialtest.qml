@@ -46,6 +46,65 @@ Item {
     property string identifier      // provided by main.cpp
     property int whichActive: 0
 
+    function back(which) {
+        whichActive = which
+    }
+
+    function makeActive(which, nodeId) {
+        switch (which) {
+        case 1:
+            followingList.populate(nodeId)
+            break
+        case 2:
+            followersList.populate(nodeId)
+            break
+        }
+        whichActive = which
+    }
+
+    Twitter {
+        id: twitter
+        consumerKey: root.consumerKey
+        consumerSecret: root.consumerSecret
+        oauthToken: root.token
+        oauthTokenSecret: root.tokenSecret
+
+        property QtObject friendsFilter:    ContentItemTypeFilter { type: Twitter.Friends }
+        property QtObject followersFilter:    ContentItemTypeFilter { type: Twitter.Followers }
+    }
+
+    TwitterUser {
+        id: user
+        socialNetwork: twitter
+        onStatusChanged: {
+            if (status == Twitter.Idle && whichActive == -2) {
+                console.debug("=== Current user ===")
+                console.debug("Screen name :  " + user.screenName)
+                console.debug("Description :  " + user.description)
+                console.debug("Url :          " + user.url)
+                console.debug("Tweets:        " + user.statusesCount)
+                console.debug("Followers :    " + user.followersCount)
+                console.debug("Following:     " + user.friendsCount)
+                whichActive = 0
+            }
+        }
+    }
+
+    TwitterTweet {
+        id: tweet
+        socialNetwork: twitter
+        onStatusChanged: {
+            if (status == Twitter.Idle && whichActive == -3) {
+                console.debug("=== One tweet (Joona's about his slides) ===")
+                console.debug("Text:          " + tweet.text)
+                console.debug("Screen name:   " + tweet.user.screenName)
+                console.debug("User:          " + tweet.user.name)
+                console.debug("#favourites:   " + tweet.favoriteCount)
+                console.debug("#RT:           " + tweet.retweetCount)
+                whichActive = 0
+            }
+        }
+    }
 
     ListView {
         id: main
@@ -53,8 +112,20 @@ Item {
         anchors.fill: parent
         model: ListModel {
             ListElement {
-                text: "Show something"
+                text: "Get current user in terminal"
+                which: -2
+            }
+            ListElement {
+                text: "Get a tweet in terminal"
+                which: -3
+            }
+            ListElement {
+                text: "Show following"
                 which: 1
+            }
+            ListElement {
+                text: "Show followers"
+                which: 2
             }
             ListElement {
                 text: "Quit"
@@ -71,13 +142,30 @@ Item {
                 onClicked: {
                     if (model.which == -1) {
                         Qt.quit()
+                    } else if (model.which == -2) {
+                        whichActive = model.which
+                        user.identifier = root.identifier
+                    } else if (model.which == -3) {
+                        whichActive = model.which
+                        tweet.identifier = "349499121868095490"
                     } else {
-
+                        makeActive(model.which, root.identifier)
                     }
                 }
             }
         }
     }
 
-
+    TwitterUserList {
+        id: followingList
+        visible: whichActive == 1
+        filters: [twitter.friendsFilter]
+        onBackClicked: back(0)
+    }
+    TwitterUserList {
+        id: followersList
+        visible: whichActive == 2
+        filters: [twitter.followersFilter]
+        onBackClicked: back(0)
+    }
 }

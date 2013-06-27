@@ -375,7 +375,8 @@ void CacheEntry::deleteItem()
 }
 
 NodePrivate::NodePrivate()
-    : hasPrevious(false)
+    : type(SocialNetworkInterface::Unknown)
+    , hasPrevious(false)
     , hasNext(false)
     , status(Initializing)
 {
@@ -390,11 +391,12 @@ Node::Node()
 {
 }
 
-Node::Node(const QString &identifier, const QSet<FilterInterface *> &filters)
+Node::Node(const QString &identifier, int type, const QSet<FilterInterface *> &filters)
     : d_ptr(new NodePrivate())
 {
     Q_D(Node);
     d->identifier = identifier;
+    d->type = type;
     d->filters = filters;
     d->cacheEntry = CacheEntry();
 }
@@ -429,6 +431,12 @@ QString Node::identifier() const
 {
     Q_D(const Node);
     return d->identifier;
+}
+
+int Node::type() const
+{
+    Q_D(const Node);
+    return d->type;
 }
 
 QSet<FilterInterface *> Node::filters() const
@@ -986,6 +994,7 @@ CacheEntry SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &da
 
 void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
                                              const QString &identifier,
+                                             int type,
                                              const QList<FilterInterface *> &filters, bool reload)
 {
     // Refuse when not initialized
@@ -1004,7 +1013,7 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     QSet<FilterInterface *> filterSet = filters.toSet();
 
     // Create or get the node from cache
-    Node node = getOrCreateNode(identifier, filterSet);
+    Node node = getOrCreateNode(identifier, type, filterSet);
 
     // Purge the nodes if needed
     // This is needed if (eg) a model was associated to a Node,
@@ -1121,7 +1130,8 @@ void SocialNetworkInterfacePrivate::removeModel(SocialNetworkModelInterface *mod
 
 void SocialNetworkInterfacePrivate::loadNext(SocialNetworkModelInterface *model)
 {
-    Node node = getNode(model->nodeIdentifier(), model->d_func()->filters.toSet());
+    Node node = getNode(model->nodeIdentifier(), model->nodeType(),
+                        model->d_func()->filters.toSet());
     if (node.isNull()) {
         qWarning() << Q_FUNC_INFO << "The model is not loaded. Please call populate() first";
         return;
@@ -1133,7 +1143,8 @@ void SocialNetworkInterfacePrivate::loadNext(SocialNetworkModelInterface *model)
 
 void SocialNetworkInterfacePrivate::loadPrevious(SocialNetworkModelInterface *model)
 {
-    Node node = getNode(model->nodeIdentifier(), model->d_func()->filters.toSet());
+    Node node = getNode(model->nodeIdentifier(), model->nodeType(),
+                        model->d_func()->filters.toSet());
     if (node.isNull()) {
         qWarning() << Q_FUNC_INFO << "The model is not loaded. Please call populate() first";
         return;
@@ -1284,6 +1295,10 @@ bool SocialNetworkInterfacePrivate::matches(const Node &node, SocialNetworkModel
         return false;
     }
 
+    if (node.type() != model->nodeType()) {
+        return false;
+    }
+
     QList<FilterInterface *> modelFilters = model->d_func()->filters;
     QSet<FilterInterface *> nodeFilters = node.filters();
     if (nodeFilters.count() != modelFilters.count()) {
@@ -1340,10 +1355,11 @@ SocialNetworkInterface::Status SocialNetworkInterfacePrivate::correspondingStatu
     node into the cache.
 */
 Node SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
+                                                    int type,
                                                     const QSet<FilterInterface *> &filters)
 {
     Q_Q(SocialNetworkInterface);
-    Node node (identifier, filters);
+    Node node (identifier, type, filters);
     int index = nodes.indexOf(node);
     if (index == -1) {
         // Connect to filter destruction handler
@@ -1358,10 +1374,10 @@ Node SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
     }
 }
 
-Node SocialNetworkInterfacePrivate::getNode(const QString &identifier,
+Node SocialNetworkInterfacePrivate::getNode(const QString &identifier, int type,
                                             const QSet<FilterInterface *> &filters)
 {
-    Node node (identifier, filters);
+    Node node (identifier, type, filters);
     int index = nodes.indexOf(node);
     if (index == -1) {
         return Node();

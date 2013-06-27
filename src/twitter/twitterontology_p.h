@@ -147,18 +147,43 @@
 
 /* Connections of various types */
 
-#define TWITTER_ONTOLOGY_CONNECTION_TWEET_RETWEETS                  QLatin1String("statuses/retweets/%1.json")
-#define TWITTER_ONTOLOGY_CONNECTION_TWEET_RETWEETERS                QLatin1String("statuses/retweeters/ids.json")
+#define TWITTER_ONTOLOGY_CONNECTION_CURSOR_KEY                      QLatin1String("cursor")
+#define TWITTER_ONTOLOGY_CONNECTION_USER_ID_KEY                     QLatin1String("user_id")
+#define TWITTER_ONTOLOGY_CONNECTION_SCREEN_NAME_KEY                 QLatin1String("screen_name")
+#define TWITTER_ONTOLOGY_CONNECTION_INCLUDE_ENTITIES_KEY            QLatin1String("include_entities")
+#define TWITTER_ONTOLOGY_CONNECTION_SKIP_STATUS_KEY                 QLatin1String("skip_status")
+#define TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY       QLatin1String("include_user_entities")
 
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_TIMELINE_MENTIONS       QLatin1String("statuses/mentions_timeline.json")
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_TIMELINE_USER           QLatin1String("statuses/user_timeline.json")
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_TIMELINE_HOME           QLatin1String("statuses/home_timeline.json")
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_TIMELINE_RETWEETS       QLatin1String("statuses/retweets_of_me.json")
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_SEARCH                  QLatin1String("search/tweets.json")
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_DIRECTMESSAGES_TO       QLatin1String("direct_messages.json")
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_DIRECTMESSAGES_FROM     QLatin1String("direct_messages/sent.json")
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_FRIENDS_FOLLOWEES       QLatin1String("friends/ids.json")
-#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_FRIENDS_FOLLOWERS       QLatin1String("followers/ids.json")
+
+#define TWITTER_ONTOLOGY_CONNECTION_USERS_KEY                       QLatin1String("users")
+
+//#define TWITTER_ONTOLOGY_CONNECTION_TWEET_RETWEETS                  QLatin1String("statuses/retweets/%1.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_TWEET_RETWEETERS                QLatin1String("statuses/retweeters/ids.json")
+
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_TIMELINE_MENTIONS       QLatin1String("statuses/mentions_timeline.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_TIMELINE_USER           QLatin1String("statuses/user_timeline.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_TIMELINE_HOME           QLatin1String("statuses/home_timeline.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_TIMELINE_RETWEETS       QLatin1String("statuses/retweets_of_me.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_SEARCH                  QLatin1String("search/tweets.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_DIRECTMESSAGES_TO       QLatin1String("direct_messages.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_DIRECTMESSAGES_FROM     QLatin1String("direct_messages/sent.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_FRIENDS_FOLLOWEES       QLatin1String("friends/ids.json")
+//#define TWITTER_ONTOLOGY_CONNECTION_USER_ME_FRIENDS_FOLLOWERS       QLatin1String("followers/ids.json")
+
+
+
+
+#define TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW                   QLatin1String("statuses/show/%1.json")
+#define TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW_TRIM_USER_KEY     QLatin1String("trim_user")
+#define TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW_INCLUDE_MY_RETWEET_KEY QLatin1String("include_my_retweet")
+
+
+#define TWITTER_ONTOLOGY_CONNECTION_FRIENDS_LIST                    QLatin1String("friends/list.json")
+#define TWITTER_ONTOLOGY_CONNECTION_FOLLOWERS_LIST                  QLatin1String("followers/list.json")
+
+
+
+#define TWITTER_ONTOLOGY_CONNECTION_USERS_SHOW                      QLatin1String("users/show.json")
 
 #define TWITTER_ONTOLOGY_CONNECTION_PLACE_SIMILARPLACES             QLatin1String("geo/similar_places.json")
 #define TWITTER_ONTOLOGY_CONNECTION_PLACE_TRENDS                    QLatin1String("trends/place.json")   /* woeid ... */
@@ -184,6 +209,12 @@
 
 // <<< metadata
 #define TWITTER_ONTOLOGY_METADATA_ID                       QLatin1String("id_str")
+
+#define TWITTER_ONTOLOGY_METADATA_CURSOR                   QLatin1String("cursor")
+#define TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR              QLatin1String("next_cursor_str")
+#define TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR          QLatin1String("previous_cursor_str")
+#define TWITTER_ONTOLOGY_METADATA_NULL_CURSOR              QLatin1String("0")
+
 // >>> metadata
 
 // <<< user
@@ -226,5 +257,26 @@
 #define TWITTER_ONTOLOGY_USER_WITHHELDINCOUNTRIES          QLatin1String("withheld_in_countries")
 #define TWITTER_ONTOLOGY_USER_WITHHELDSCOPE                QLatin1String("withheld_scope")
 // >>> user
+
+// <<< tweet
+#define TWITTER_ONTOLOGY_TWEET                             QLatin1String("tweet")
+#define TWITTER_ONTOLOGY_TWEET_CREATEDAT                   QLatin1String("created_at")
+#define TWITTER_ONTOLOGY_TWEET_FAVORITECOUNT               QLatin1String("favorite_count")
+#define TWITTER_ONTOLOGY_TWEET_FAVORITED                   QLatin1String("favorited")
+#define TWITTER_ONTOLOGY_TWEET_FILTERLEVEL                 QLatin1String("filter_level")
+#define TWITTER_ONTOLOGY_TWEET_INREPLYTOSCREENNAME         QLatin1String("in_reply_to_screen_name")
+#define TWITTER_ONTOLOGY_TWEET_INREPLYTOSTATUSIDENTIFIER   QLatin1String("in_reply_to_status_id_str")
+#define TWITTER_ONTOLOGY_TWEET_INREPLYTOUSERIDENTIFIER     QLatin1String("in_reply_to_user_id_str")
+#define TWITTER_ONTOLOGY_TWEET_LANG                        QLatin1String("lang")
+#define TWITTER_ONTOLOGY_TWEET_POSSIBLYSENSITIVE           QLatin1String("possibly_sensitive")
+#define TWITTER_ONTOLOGY_TWEET_RETWEETCOUNT                QLatin1String("retweet_count")
+#define TWITTER_ONTOLOGY_TWEET_RETWEETED                   QLatin1String("retweeted")
+#define TWITTER_ONTOLOGY_TWEET_SOURCE                      QLatin1String("source")
+#define TWITTER_ONTOLOGY_TWEET_TEXT                        QLatin1String("text")
+#define TWITTER_ONTOLOGY_TWEET_TRUNCATED                   QLatin1String("truncated")
+#define TWITTER_ONTOLOGY_TWEET_USER                        QLatin1String("user")
+#define TWITTER_ONTOLOGY_TWEET_WITHHELDCOPYRIGHT           QLatin1String("withheld_copyright")
+#define TWITTER_ONTOLOGY_TWEET_WITHHELDSCOPE               QLatin1String("withheld_scope")
+// >>> tweet
 
 #endif // TWITTERONTOLOGY_P_H

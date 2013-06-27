@@ -33,7 +33,7 @@
 #include "twitterinterface.h"
 #include "twitterontology_p.h"
 // <<< include
-// Includes goes here
+#include "twitterinterface_p.h"
 // >>> include
 
 TwitterUserInterfacePrivate::TwitterUserInterfacePrivate(TwitterUserInterface *q)
@@ -243,8 +243,19 @@ bool TwitterUserInterface::remove()
 bool TwitterUserInterface::reload(const QStringList &whichFields)
 {
 // <<< reload
-    // TODO Implement reload if needed
-    return IdentifiableContentItemInterface::reload(whichFields);
+    Q_D(TwitterUserInterface);
+    Q_UNUSED(whichFields)
+
+    RequestInfo requestInfo = TwitterInterfacePrivate::requestUserInfo(d->identifier);
+    if (!d->request(IdentifiableContentItemInterfacePrivate::Get, requestInfo.objectIdentifier,
+                    requestInfo.extraPath, requestInfo.whichFields, requestInfo.postedData,
+                    requestInfo.extraData)) {
+        return false;
+    }
+
+    connect(d->reply(), SIGNAL(finished()), this, SLOT(reloadHandler()));
+    d->connectErrors();
+    return true;
 // >>> reload
 }
 

@@ -46,6 +46,15 @@
 
 class ContentItemInterface;
 
+struct RequestInfo
+{
+    QString objectIdentifier;
+    QString extraPath;
+    QStringList whichFields;
+    QVariantMap extraData;
+    QVariantMap postedData;
+};
+
 class TwitterInterfacePrivate : public SocialNetworkInterfacePrivate
 {
 public:
@@ -57,34 +66,18 @@ public:
     QString consumerSecret;
     QString currentUserIdentifier;
 
-    bool populatePending;
-    bool populateDataForUnseenPending;
-    bool continuationRequestActive;
-
-    int outOfBandConnectionsLimit;
-
-    enum InternalStatus {
-        Idle = 0,
-        PopulatingSeenNode,
-        PopulatingUnseenNode,
-        Other
-    };
-    InternalStatus internalStatus; // used for state machine in reply finished.
-
-    void setCurrentReply(QNetworkReply *newCurrentReply, const QString &whichNodeIdentifier);
-    QNetworkReply *currentReply; // this should never be set directly, always use the above mutator.
-
-    QUrl requestUrl(const QString &objectId, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
+    QNetworkRequest networkRequest(const QString &extraPath, const QVariantMap &extraData,
+                                   const QByteArray &requestMethod,
+                                   const QVariantMap &postData = QVariantMap());
 
     int detectTypeFromData(const QVariantMap &data) const;
+    void handlePopulateRelatedData(Node &node, const QVariantMap &relatedData,
+                                   const QUrl &requestUrl);
 
-    void connectFinishedAndErrors();
-
-    // Slots
-    void finishedHandler();
-    void errorHandler(QNetworkReply::NetworkError err);
-    void sslErrorsHandler(const QList<QSslError> &errs);
-    void deleteReply();
+    // Requests
+    static RequestInfo requestUserInfo(const QString &identifier);
+    static RequestInfo requestTweetInfo(const QString &identifier, bool trimUser = false,
+                                        bool includeMyRetweet = false, bool includeEntities = true);
 
 public:
     // the following is for identifiable content item "actions"
@@ -97,7 +90,25 @@ public:
         TweetAction,
         RetweetAction
     };
+protected:
+    // Reimplemented
+    void populateDataForNode(Node &node);
+    void populateRelatedDataforNode(Node &node);
+    bool validateCacheEntryForNode(const CacheEntry &cacheEntry);
+    QString dataSection(int type, const QVariantMap &data) const;
+    ContentItemInterface * contentItemFromData(const QVariantMap &data, QObject *parent = 0) const;
+    QNetworkReply * getRequest(const QString &objectIdentifier, const QString &extraPath,
+                               const QStringList &whichFields, const QVariantMap &extraData);
+    QNetworkReply * postRequest(const QString &objectIdentifier, const QString &extraPath,
+                                const QVariantMap &data, const QVariantMap &extraData);
+    QNetworkReply * deleteRequest(const QString &objectIdentifier, const QString &extraPath,
+                                  const QVariantMap &extraData);
+    virtual void handleFinished(Node &node, QNetworkReply *reply);
+
 private:
+    bool performRelatedDataRequest(Node &node, const QString &identifier,
+                                   const QList<FilterInterface *> &filters,
+                                   const QString &cursor = QString());
     Q_DECLARE_PUBLIC(TwitterInterface)
 };
 

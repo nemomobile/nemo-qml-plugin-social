@@ -1,0 +1,153 @@
+{
+    "name": "tweet",
+    "doc": "",
+    "identifiable": true,
+    "properties": [
+        {
+            "name": "annotations",
+            "type": "QVariant",
+            "doc": "Not supported yet, and not implemented by twitter yet",
+            "is_ontology": false,
+            "is_interface_property": false
+        },
+        {
+            "name": "contributors",
+            "type": "QVariant",
+            "doc": "Not supported yet",
+            "is_ontology": false,
+            "is_interface_property": false
+        },
+        {
+            "name": "coordinates",
+            "type": "QVariant",
+            "doc": "Not supported yet",
+            "is_ontology": false,
+            "is_interface_property": false
+        },
+        {
+            "name": "created_at",
+            "type": "QString",
+            "doc": ""
+        },
+        {
+            "name": "current_user_retweet",
+            "type": "QVariant",
+            "doc": "Not supported yet",
+            "is_ontology": false,
+            "is_interface_property": false
+        },
+        {
+            "name": "entities",
+            "type": "QVariant",
+            "doc": "Not supported yet",
+            "is_ontology": false,
+            "is_interface_property": false
+        },
+        {
+            "name": "favorite_count",
+            "type": "int",
+            "doc": ""
+        },
+        {
+            "name": "favorited",
+            "type": "bool",
+            "doc": ""
+        },
+        {
+            "name": "filter_level",
+            "type": "QString",
+            "doc": ""
+        },
+        {
+            "name": "in_reply_to_screen_name",
+            "type": "QString",
+            "doc": ""
+        },
+        {
+            "name": "in_reply_to_status_id_str",
+            "type": "QString",
+            "doc": "",
+            "alias": "in_reply_to_status_identifier"
+        },
+        {
+            "name": "in_reply_to_user_id_str",
+            "type": "QString",
+            "doc": "",
+            "alias": "in_reply_to_user_identifier"
+        },
+        {
+            "name": "lang",
+            "type": "QString",
+            "doc": ""
+        },
+        {
+            "name": "place",
+            "type": "QVariant",
+            "doc": "Not supported yet",
+            "is_ontology": false,
+            "is_interface_property": false
+        },
+        {
+            "name": "possibly_sensitive",
+            "type": "bool",
+            "doc": ""
+        },
+        {
+            "name": "scopes",
+            "type": "QVariant",
+            "doc": "Not supported yet",
+            "is_ontology": false,
+            "is_interface_property": false
+        },
+        {
+            "name": "retweet_count",
+            "type": "int",
+            "doc": ""
+        },
+        {
+            "name": "retweeted",
+            "type": "bool",
+            "doc": ""
+        },
+        {
+            "name": "source",
+            "type": "QString",
+            "doc": ""
+        },
+        {
+            "name": "text",
+            "type": "QString",
+            "doc": ""
+        },
+        {
+            "name": "truncated",
+            "type": "bool",
+            "doc": ""
+        },
+        {
+            "name": "user",
+            "type": "TwitterUserInterface",
+            "doc": "",
+            "is_pointer": true
+        },
+        {
+            "name": "withheld_copyright",
+            "type": "bool",
+            "doc": ""
+        },
+        {
+            "name": "withheld_in_countries",
+            "type": "QVariant",
+            "doc": "Not supported yet",
+            "is_ontology": false,
+            "is_interface_property": false
+        },
+        {
+            "name": "withheld_scope",
+            "type": "QString",
+            "doc": ""
+        }
+        
+    ],
+    "methods": []
+}
