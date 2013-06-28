@@ -35,22 +35,24 @@ import org.nemomobile.social 1.0
 Item {
     id: container
     anchors.fill: parent
-    property alias model: view.model
     signal backClicked
 
     Connections {
         target: root
-        onWhichActiveChanged: container.visible = (root.whichActive == 6)
+        onWhichActiveChanged: {
+            container.visible = (root.whichActive == 10)
+        }
     }
 
-    function load() {
-        facebook.filters = [ myFilter ]
-        facebook.populate()
-        facebook.nextNode()
+    function populate(nodeId) {
+        filterDestructionTestModel.nodeIdentifier = nodeId
+        filterDestructionTestModel.filters = [testFilter]
+        filterDestructionTestModel.populate()
+        view.positionViewAtBeginning()
     }
 
     ContentItemTypeFilter {
-        id: myFilter
+        id: testFilter
         type: Facebook.User
     }
 
@@ -58,7 +60,7 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " friends" : ""
+        text: "You have " + filterDestructionTestModel.count + " friends"
     }
 
     Button {
@@ -68,6 +70,10 @@ Item {
         text: "Back"
         onClicked: {
             container.backClicked()
+            // If we do not destroy the filter first, we might go into a race
+            // conditin in Qt 5 where the delegates are destroyed twice, and
+            // leads into a segfault :(
+            testFilter.destroy()
             container.destroy()
         }
     }
@@ -79,13 +85,14 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
+        model: filterDestructionTestModel
         footer: Item {
             width: view.width
             height: childrenRect.height
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: facebook.hasNextRelatedData ? "Load more" : "Cannot load more"
-                onClicked: facebook.loadNextRelatedData()
+                text: filterDestructionTestModel.hasNext ? "Load more" : "Cannot load more"
+                onClicked: filterDestructionTestModel.loadNext()
             }
         }
 

@@ -33,6 +33,8 @@
 #include "facebookinterface_p.h"
 #include "facebookontology_p.h"
 #include "socialnetworkinterface_p.h"
+#include "socialnetworkmodelinterface.h"
+#include "socialnetworkmodelinterface_p.h"
 
 #include "contentiteminterface.h"
 #include "contentiteminterface_p.h"
@@ -89,7 +91,7 @@ FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
     , prependingRelatedData(false)
     , appendingRelatedData(false)
     , internalStatus(Idle)
-    , currentReply(0)
+//    , currentReply(0)
 {
 }
 
@@ -157,8 +159,8 @@ int FacebookInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
     return FacebookInterface::Unknown;
 }
 
-void FacebookInterfacePrivate::populateRelatedDataForLastNode(const QVariantMap &relatedData,
-                                                              const QUrl &requestUrl)
+void FacebookInterfacePrivate::handlePopulateRelatedData(Node &node, const QVariantMap &relatedData,
+                                                         const QUrl &requestUrl)
 {
     // We receive the related data and transform it into ContentItems.
     // Finally, we populate the cache for the node and update the internal model data.
@@ -201,7 +203,7 @@ void FacebookInterfacePrivate::populateRelatedDataForLastNode(const QVariantMap 
         }
     }
 
-    lastNode().setExtraInfo(nodeExtra);
+    node.setExtraInfo(nodeExtra);
 
     bool havePreviousRelatedData = false;
     bool haveNextRelatedData = false;
@@ -214,35 +216,11 @@ void FacebookInterfacePrivate::populateRelatedDataForLastNode(const QVariantMap 
                               || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toBool();
     }
 
-    RelatedDataPagingFlags relatedDataPagingFlags = RelatedDataPagingFlags();
-    bool replacing = !prependingRelatedData && !appendingRelatedData;
+    node.setHavePreviousAndNextRelatedData(havePreviousRelatedData, haveNextRelatedData);
+    updateNodeModelRelatedData(node, relatedContent);
 
-    if (havePreviousRelatedData && (prependingRelatedData || replacing)) {
-        relatedDataPagingFlags = relatedDataPagingFlags | HavePreviousRelatedDataFlag;
-    }
-    if (haveNextRelatedData && (appendingRelatedData || replacing)) {
-        relatedDataPagingFlags = relatedDataPagingFlags | HaveNextRelatedDataFlag;
-    }
-
-
-    FacebookInterfacePrivate::UpdateMode updateMode = FacebookInterfacePrivate::Replace;
-    if (prependingRelatedData) {
-        updateMode = FacebookInterfacePrivate::Prepend;
-    }
-    if (appendingRelatedData) {
-        updateMode = FacebookInterfacePrivate::Append;
-    }
-
-    prependingRelatedData = false;
-    appendingRelatedData = false;
-
-    insertContent(relatedContent, relatedDataPagingFlags, updateMode);
-    internalStatus = Idle;
-    setStatus(SocialNetworkInterface::Idle);
-
-    if (atLastNode()) {
-        updateRelatedData();
-    }
+    node.setStatus(NodePrivate::Loaded);
+    setStatus(node, SocialNetworkInterface::Idle);
 }
 
 /*! \internal */
@@ -352,23 +330,6 @@ QNetworkReply *FacebookInterfacePrivate::uploadImage(const QString &objectId,
     return networkAccessManager->post(request, postData);
 }
 
-void FacebookInterfacePrivate::setCurrentReply(QNetworkReply *newCurrentReply, const QString &whichNodeIdentifier)
-{
-    deleteReply();
-    newCurrentReply->setProperty("whichNodeIdentifier", whichNodeIdentifier);
-    currentReply = newCurrentReply;
-}
-
-void FacebookInterfacePrivate::connectFinishedAndErrors()
-{
-    Q_Q(FacebookInterface);
-    QObject::connect(currentReply, SIGNAL(finished()), q, SLOT(finishedHandler()));
-    QObject::connect(currentReply, SIGNAL(error(QNetworkReply::NetworkError)),
-                     q, SLOT(errorHandler(QNetworkReply::NetworkError)));
-    QObject::connect(currentReply, SIGNAL(sslErrors(QList<QSslError>)),
-                     q, SLOT(sslErrorsHandler(QList<QSslError>)));
-}
-
 /*! \internal */
 void FacebookInterfacePrivate::updateCurrentUserIdentifierHandler(bool isError,
                                                                   const QVariantMap &data)
@@ -389,132 +350,271 @@ void FacebookInterfacePrivate::updateCurrentUserIdentifierHandler(bool isError,
     }
 }
 
-/*! \internal */
-void FacebookInterfacePrivate::finishedHandler()
+void FacebookInterfacePrivate::populateDataForNode(Node &node)
+{
+    setReply(node, getRequest(node.identifier(), QString(), QStringList(), QVariantMap()));
+}
+
+void FacebookInterfacePrivate::populateRelatedDataforNode(Node &node)
+{
+    if (!performRelatedDataRequest(node, node.identifier(), node.filters().toList())) {
+        setError(node, SocialNetworkInterface::DataUpdateError,
+                 QLatin1String("Cannot perform related data request"));
+    }
+}
+
+bool FacebookInterfacePrivate::validateCacheEntryForNode(const CacheEntry &cacheEntry)
+{
+    Q_UNUSED(cacheEntry)
+    // Case of friends loaded from the friendlist
+    // TODO XXX ^
+    return true;
+}
+
+
+ContentItemInterface * FacebookInterfacePrivate::contentItemFromData(const QVariantMap &data,
+                                                                     QObject *parent) const
+{
+    Q_Q(const FacebookInterface);
+    // Construct the appropriate FacebookWhateverInterface for the given data.
+    FacebookInterface::ContentItemType detectedType
+            = static_cast<FacebookInterface::ContentItemType>(detectTypeFromData(data));
+    switch (detectedType) {
+        case FacebookInterface::Like: {
+            FacebookLikeInterface *returnedInterface = new FacebookLikeInterface(parent);
+            returnedInterface->classBegin();
+            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(q));
+            q->setContentItemData(returnedInterface, data);
+            returnedInterface->componentComplete();
+            return returnedInterface;
+        }
+        break;
+
+        case FacebookInterface::Comment: {
+            FacebookCommentInterface *returnedInterface = new FacebookCommentInterface(parent);
+            returnedInterface->classBegin();
+            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(q));
+            q->setContentItemData(returnedInterface, data);
+            returnedInterface->componentComplete();
+            return returnedInterface;
+        }
+        break;
+
+        case FacebookInterface::Photo: {
+            FacebookPhotoInterface *returnedInterface = new FacebookPhotoInterface(parent);
+            returnedInterface->classBegin();
+            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(q));
+            q->setContentItemData(returnedInterface, data);
+            returnedInterface->componentComplete();
+            return returnedInterface;
+        }
+        break;
+
+        case FacebookInterface::Album: {
+            FacebookAlbumInterface *returnedInterface = new FacebookAlbumInterface(parent);
+            returnedInterface->classBegin();
+            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(q));
+            q->setContentItemData(returnedInterface, data);
+            returnedInterface->componentComplete();
+            return returnedInterface;
+        }
+        break;
+
+        case FacebookInterface::User: {
+            FacebookUserInterface *returnedInterface = new FacebookUserInterface(parent);
+            returnedInterface->classBegin();
+            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(q));
+            q->setContentItemData(returnedInterface, data);
+            returnedInterface->componentComplete();
+            return returnedInterface;
+        }
+        break;
+
+        case FacebookInterface::Notification: {
+            FacebookNotificationInterface *returnedInterface
+                    = new FacebookNotificationInterface(parent);
+            returnedInterface->classBegin();
+            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(q));
+            q->setContentItemData(returnedInterface, data);
+            returnedInterface->componentComplete();
+            return returnedInterface;
+        }
+        break;
+
+        case FacebookInterface::Post: {
+            FacebookPostInterface *returnedInterface = new FacebookPostInterface(parent);
+            returnedInterface->classBegin();
+            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(q));
+            q->setContentItemData(returnedInterface, data);
+            returnedInterface->componentComplete();
+            return returnedInterface;
+        }
+        break;
+
+        case FacebookInterface::Unknown: {
+            qWarning() << Q_FUNC_INFO << "Unable to detect the type of the content item";
+            IdentifiableContentItemInterface *returnedInterface
+                    = new IdentifiableContentItemInterface(parent);
+            returnedInterface->classBegin();
+            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(q));
+            q->setContentItemData(returnedInterface, data);
+            returnedInterface->componentComplete();
+            return returnedInterface;
+        }
+        break;
+
+        default: qWarning() << Q_FUNC_INFO << "unsupported type:" << detectedType; break;
+    }
+
+    return 0;
+}
+
+/*! \reimp */
+QNetworkReply * FacebookInterfacePrivate::getRequest(const QString &objectIdentifier,
+                                                     const QString &extraPath,
+                                                     const QStringList &whichFields,
+                                                     const QVariantMap &extraData)
 {
     Q_Q(FacebookInterface);
-    if (!currentReply) {
+    if (!q->isInitialized()) {
+        qWarning() << Q_FUNC_INFO << "cannot complete get request: not initialized";
+        return 0;
+    }
+
+    QUrl url = requestUrl(objectIdentifier, extraPath, whichFields, extraData);
+    return networkAccessManager->get(QNetworkRequest(url));
+}
+
+/*! \reimp */
+QNetworkReply * FacebookInterfacePrivate::postRequest(const QString &objectIdentifier,
+                                                      const QString &extraPath,
+                                                      const QVariantMap &data,
+                                                      const QVariantMap &extraData)
+{
+    Q_Q(FacebookInterface);
+    if (!q->isInitialized()) {
+        qWarning() << Q_FUNC_INFO << "cannot complete post request: not initialized";
+        return 0;
+    }
+
+    // image upload is handled specially.
+    if (extraData.value("isImageUpload").toBool()) {
+        return uploadImage(objectIdentifier, extraPath, data, extraData);
+    }
+
+    // create post data
+    QString multipartBoundary = QLatin1String("-------Sska2129ifcalksmqq3");
+    QByteArray postData;
+    foreach (const QString &key, data.keys()) {
+        postData.append("--"+multipartBoundary+"\r\n");
+        postData.append("Content-Disposition: form-data; name=\"");
+        postData.append(key);
+        postData.append("\"\r\n\r\n");
+        postData.append(data.value(key).toString());
+        postData.append("\r\n");
+    }
+    postData.append("--"+multipartBoundary+"\r\n");
+
+    // create request
+    QNetworkRequest request(requestUrl(objectIdentifier, extraPath, QStringList(), extraData));
+    request.setRawHeader("Accept",
+                         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Accept-Language", "en-us,en;q=0.5");
+    request.setRawHeader("Accept-Encoding", "gzip,deflate");
+    request.setRawHeader("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+    request.setRawHeader("Keep-Alive", "300");
+    request.setRawHeader("Connection", "keep-alive");
+    request.setRawHeader("Content-Type",
+                         QString("multipart/form-data; boundary="+multipartBoundary).toLatin1());
+    request.setHeader(QNetworkRequest::ContentLengthHeader, postData.size());
+
+    // perform POST request
+    return networkAccessManager->post(request, postData);
+}
+
+/*! \reimp */
+QNetworkReply * FacebookInterfacePrivate::deleteRequest(const QString &objectIdentifier,
+                                                        const QString &extraPath,
+                                                        const QVariantMap &extraData)
+{
+    Q_Q(FacebookInterface);
+    if (!q->isInitialized()) {
+        qWarning() << Q_FUNC_INFO << "cannot complete delete request: not initialized";
+        return 0;
+    }
+
+    return networkAccessManager->deleteResource(QNetworkRequest(requestUrl(objectIdentifier,
+                                                                           extraPath,
+                                                                           QStringList(),
+                                                                           extraData)));
+}
+
+void FacebookInterfacePrivate::handleFinish(Node &node, QNetworkReply *reply)
+{
+    if (!reply) {
         // if an error occurred, it might have been deleted by the error handler.
         qWarning() << Q_FUNC_INFO << "network request finished but no reply!";
         return;
     }
-    // TODO: remove the use of property, use the stack instead, it should contain all the info
-    if (currentReply->property("whichNodeIdentifier").toString() != q->nodeIdentifier()) {
-        // the data we've received is not for the current node.
-        // The client must have changed the node while the request was in process.
-        // Note that this should NEVER happen, as we should always use SNIP::setCurrentReply()
-        // which should delete the old reply (and thus the disconnect it from the finished handler).
-        qWarning() << Q_FUNC_INFO
-                   << "error: network request finished for non-current node:"
-                   << currentReply->property("whichNodeIdentifier").toString()
-                   << ", expected:" << q->nodeIdentifier();
-        return; // ignore this data, as otherwise we will corrupt the cache
-    }
 
-    QByteArray replyData = currentReply->readAll();
-    QUrl requestUrl = currentReply->request().url();
-    deleteReply();
+
+    QByteArray replyData = reply->readAll();
+    QUrl requestUrl = reply->request().url();
+    deleteReply(node);
     bool ok = false;
     QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok) {
         responseData.insert("response", replyData);
-        setError(SocialNetworkInterface::RequestError,
+        setError(node, SocialNetworkInterface::RequestError,
                  QLatin1String("Error populating node: response is invalid. "\
                                "Perhaps the requested object id was incorrect?  Response: ")
                  + QString::fromLatin1(replyData.constData()));
-        setStatus(SocialNetworkInterface::Error);
-        internalStatus = Idle;
         return;
     }
 
     if (responseData.contains(QLatin1String("error"))) {
         QString errorResponse = QLatin1String("\n    error:");
-        QVariantMap errMap = responseData.value(QLatin1String("error")).toMap();
-        QStringList keys = errMap.keys();
+        QVariantMap errorMap = responseData.value(QLatin1String("error")).toMap();
+        QStringList keys = errorMap.keys();
         foreach (const QString &key, keys) {
             errorResponse += QLatin1String("\n        ")
-                             + key + QLatin1String("=") + errMap.value(key).toString();
+                             + key + QLatin1String("=") + errorMap.value(key).toString();
         }
         qWarning() << Q_FUNC_INFO << "error response:" << errorResponse
                    << "while getting:" << requestUrl.toString();
 
-        setError(SocialNetworkInterface::RequestError,
+        setError(node, SocialNetworkInterface::RequestError,
                  QLatin1String("Error populating node: response is error.  Response: ")
                  + QString::fromLatin1(replyData.constData()));
-        setStatus(SocialNetworkInterface::Error);
-        internalStatus = Idle;
         return;
     }
 
-    switch (internalStatus) {
-    case PopulatingNodeData:
-        {
-            // TODO: some objects might need a second populating step
-            // Create a cache entry associated to the retrieved data
-            QString identifier;
-            if (responseData.contains(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER)) {
-                identifier = responseData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-            }
-            CacheEntry cacheEntry = createCacheEntry(responseData, identifier);
-            setLastNodeCacheEntry(cacheEntry);
-            if (atLastNode()) {
-                updateNode();
-            }
-            q->populateRelatedDataforLastNode();
+    switch (node.status()) {
+    case NodePrivate::LoadingNodeData:
+    {
+        // TODO: some objects might need a second populating step
+        // Create a cache entry associated to the retrieved data
+        QString identifier;
+        if (responseData.contains(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER)) {
+            identifier = responseData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
         }
+        CacheEntry cacheEntry = createCacheEntry(responseData, identifier);
+        node.setCacheEntry(cacheEntry);
+        updateNodeModelNode(node);
+
+        // Performing a reload
+        node.setStatus(NodePrivate::LoadingRelatedDataReplacing);
+        populateRelatedDataforNode(node);
+    }
         break;
-    case PopulatingNodeRelatedData:
-        populateRelatedDataForLastNode(responseData, requestUrl);
-        if (atLastNode()) {
-            updateRelatedData();
-        }
+    case NodePrivate::LoadingRelatedDataReplacing:
+    case NodePrivate::LoadingRelatedDataPrepending:
+    case NodePrivate::LoadingRelatedDataAppending:
+        handlePopulateRelatedData(node, responseData, requestUrl);
         break;
 
     default:
         break;
-    }
-}
-
-/*! \internal */
-void FacebookInterfacePrivate::errorHandler(QNetworkReply::NetworkError networkError)
-{
-    Q_Q(FacebookInterface);
-    if (networkError == QNetworkReply::UnknownContentError) {
-        // ignore this.  It's not actually an error, Facebook just formats some responses strangely.
-        return;
-    }
-    setError(SocialNetworkInterface::RequestError, networkErrorString(networkError));
-    setStatus(SocialNetworkInterface::Error);
-    internalStatus = Idle;
-
-    qWarning() << Q_FUNC_INFO << "Error: network error occurred:"
-               << networkError << ":" << q->errorMessage();
-
-}
-
-/*! \internal */
-void FacebookInterfacePrivate::sslErrorsHandler(const QList<QSslError> &sslErrors)
-{
-    QString newErrorMessage = QLatin1String("SSL error: ");
-    if (sslErrors.isEmpty()) {
-        newErrorMessage += QLatin1String("unknown SSL error");
-    } else {
-        foreach (const QSslError &error, sslErrors)
-            newErrorMessage += error.errorString() + QLatin1String("; ");
-        newErrorMessage.chop(2);
-    }
-
-    setStatus(SocialNetworkInterface::Error);
-    setError(SocialNetworkInterface::RequestError, newErrorMessage);
-}
-
-/*! \internal */
-void FacebookInterfacePrivate::deleteReply()
-{
-    if (currentReply) {
-        currentReply->disconnect();
-        currentReply->deleteLater();
-        currentReply = 0;
     }
 }
 
@@ -686,18 +786,16 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
     return true;
 }
 
-bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifier,
-                                                         const QList<FilterInterface *> &filters,
-                                                         const RequestFieldsMap &extra)
+bool FacebookInterfacePrivate::performRelatedDataRequest(Node &node, const QString &identifier,
+                                                         const QList<FilterInterface *> &filters)
 {
 
-    Q_Q(FacebookInterface);
     if (filters.isEmpty()) {
         // An empty filter should not create an error
         // Actually, nothing should be loaded in the node and
         // the request should be terminated
-        internalStatus = Idle;
-        setStatus(SocialNetworkInterface::Idle);
+        node.setStatus(NodePrivate::Loaded);
+        setStatus(node, SocialNetworkInterface::Idle);
         return true;
     }
 
@@ -712,6 +810,44 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
     QList<int> connectionTypes;
     RequestFieldsMap connectionFields;
 
+    // Create paging request
+    RequestFieldsMap requestFieldsMap;
+    switch (node.status()) {
+    case NodePrivate::LoadingRelatedDataAppending:
+    {
+        QVariantMap extraMap = node.extraInfo();
+
+        foreach (QString key, extraMap.keys()) {
+            int keyInteger = key.toInt();
+            QVariantMap entries
+                    = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toMap();
+
+            foreach(QString entryKey, entries.keys()) {
+                StringPair pair (entryKey, entries.value(entryKey).toString());
+                requestFieldsMap.insert(keyInteger, pair);
+            }
+        }
+    }
+        break;
+    case NodePrivate::LoadingRelatedDataPrepending:
+    {
+        QVariantMap extraMap = node.extraInfo();
+
+        foreach (QString key, extraMap.keys()) {
+            int keyInteger = key.toInt();
+            QVariantMap entries
+                    = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toMap();
+
+            foreach(QString entryKey, entries.keys()) {
+                StringPair pair (entryKey, entries.value(entryKey).toString());
+                requestFieldsMap.insert(keyInteger, pair);
+            }
+        }
+    }
+        break;
+    default:
+        break;
+    }
 
     foreach (FilterInterface *filter, filters) {
         ContentItemTypeFilterInterface *contentItemTypeFilter
@@ -737,8 +873,8 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
                 connectionFields.insert(type, limitEntry);
             }
 
-            if (extra.contains(type)) {
-                QList<QPair<QString, QString> > extraValues = extra.values(type);
+            if (requestFieldsMap.contains(type)) {
+                QList<QPair<QString, QString> > extraValues = requestFieldsMap.values(type);
                 QList<QPair<QString, QString> >::Iterator i;
                 for (i = extraValues.begin(); i != extraValues.end(); i++) {
                     connectionFields.insert(type, *i);
@@ -759,10 +895,8 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
                 extraData.insert(i->first, i->second);
             }
 
-            setCurrentReply(q->getRequest(identifier, FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS,
-                                          QStringList(), extraData), identifier);
-            connectFinishedAndErrors();
-            internalStatus = PopulatingNodeRelatedData;
+            setReply(node, getRequest(identifier, FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS,
+                                      QStringList(), extraData));
             return true;
         } else {
             qWarning() << Q_FUNC_INFO << "Notifications should not be requested with other filters";
@@ -832,9 +966,7 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
         }
     }
 
-    setCurrentReply(q->getRequest(identifier, QString(), fields, QVariantMap()), identifier);
-    connectFinishedAndErrors();
-    internalStatus = PopulatingNodeRelatedData;
+    setReply(node, getRequest(identifier, QString(), fields, QVariantMap()));
     return true;
 }
 
@@ -962,322 +1094,26 @@ void FacebookInterface::setAccessToken(const QString &token)
     }
 }
 
-/*! \reimp */
-QNetworkReply *FacebookInterface::getRequest(const QString &objectIdentifier,
-                                             const QString &extraPath,
-                                             const QStringList &whichFields,
-                                             const QVariantMap &extraData)
-{
-    Q_D(FacebookInterface);
-    if (!isInitialized()) {
-        qWarning() << Q_FUNC_INFO << "cannot complete get request: not initialized";
-        return 0;
-    }
 
-    QVariantMap modifiedExtraData = extraData;
-    QUrl geturl = d->requestUrl(objectIdentifier, extraPath, whichFields, modifiedExtraData);
-    return d->networkAccessManager->get(QNetworkRequest(geturl));
-}
 
 /*! \reimp */
-QNetworkReply *FacebookInterface::postRequest(const QString &objectIdentifier,
-                                              const QString &extraPath, const QVariantMap &data,
-                                              const QVariantMap &extraData)
-{
-    Q_D(FacebookInterface);
-    if (!isInitialized()) {
-        qWarning() << Q_FUNC_INFO << "cannot complete post request: not initialized";
-        return 0;
-    }
+//QString FacebookInterface::dataSection(int type, const QVariantMap &data) const
+//{
+//    switch (type) {
+//    case User:
+//        return data.value(FACEBOOK_ONTOLOGY_USER_NAME).toString();
+//    default:
+//        break;
+//    }
+//    return SocialNetworkInterface::dataSection(type, data);
+//}
 
-    // image upload is handled specially.
-    if (extraData.value("isImageUpload").toBool())
-        return d->uploadImage(objectIdentifier, extraPath, data, extraData);
-    
-    // create post data
-    QString multipartBoundary = QLatin1String("-------Sska2129ifcalksmqq3");
-    QByteArray postData;
-    foreach (const QString &key, data.keys()) {
-        postData.append("--"+multipartBoundary+"\r\n");
-        postData.append("Content-Disposition: form-data; name=\"");
-        postData.append(key);
-        postData.append("\"\r\n\r\n");
-        postData.append(data.value(key).toString());
-        postData.append("\r\n");
-    }
-    postData.append("--"+multipartBoundary+"\r\n");
-
-    // create request
-    QNetworkRequest request(d->requestUrl(objectIdentifier, extraPath, QStringList(), extraData));
-    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-    request.setRawHeader("Accept-Language", "en-us,en;q=0.5");
-    request.setRawHeader("Accept-Encoding", "gzip,deflate");
-    request.setRawHeader("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-    request.setRawHeader("Keep-Alive", "300");
-    request.setRawHeader("Connection", "keep-alive");
-    request.setRawHeader("Content-Type",QString("multipart/form-data; boundary="+multipartBoundary).toLatin1());
-    request.setHeader(QNetworkRequest::ContentLengthHeader, postData.size());
-
-    // perform POST request
-    return d->networkAccessManager->post(request, postData);
-}
-
-/*! \reimp */
-QNetworkReply *FacebookInterface::deleteRequest(const QString &objectIdentifier,
-                                                const QString &extraPath,
-                                                const QVariantMap &extraData)
-{
-    Q_D(FacebookInterface);
-    if (!isInitialized()) {
-        qWarning() << Q_FUNC_INFO << "cannot complete delete request: not initialized";
-        return 0;
-    }
-
-    return d->networkAccessManager->deleteResource(QNetworkRequest(d->requestUrl(objectIdentifier,
-                                                                                 extraPath,
-                                                                                 QStringList(),
-                                                                                 extraData)));
-}
-
-/*! \reimp */
-QString FacebookInterface::dataSection(int type, const QVariantMap &data) const
-{
-    switch (type) {
-    case User:
-        return data.value(FACEBOOK_ONTOLOGY_USER_NAME).toString();
-    default:
-        break;
-    }
-    return SocialNetworkInterface::dataSection(type, data);
-}
-
-/*! \internal */
+///*! \internal */
 QString FacebookInterface::currentUserIdentifier() const
 {
     Q_D(const FacebookInterface);
     // returns the object identifier associated with the "me" node, if loaded.
     return d->currentUserIdentifier;
-}
-
-void FacebookInterface::loadNextRelatedData()
-{
-    Q_D(FacebookInterface);
-    switch (status()) {
-    case Initializing:
-        qWarning() << Q_FUNC_INFO << "Cannot load next: not initialized";
-        return;
-    case Busy:
-        qWarning() << Q_FUNC_INFO << "Cannot load next: another action is already running";
-        return;
-    case Invalid:
-        qWarning() << Q_FUNC_INFO
-                   << "The social network is not in a valid state, no operation can be complete";
-        return;
-    default:
-        break;
-    }
-
-    if (!hasNextRelatedData()) {
-        return;
-    }
-
-    // Build the request field map
-    RequestFieldsMap requestFieldsMap;
-    QVariantMap extraMap = d->lastNode().extraInfo();
-
-    foreach (QString key, extraMap.keys()) {
-        int keyInteger = key.toInt();
-        QVariantMap entries
-                = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toMap();
-
-        foreach(QString entryKey, entries.keys()) {
-            StringPair pair (entryKey, entries.value(entryKey).toString());
-            requestFieldsMap.insert(keyInteger, pair);
-        }
-    }
-
-    d->appendingRelatedData = true;
-    if (!d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
-                                      requestFieldsMap)) {
-        d->setError(SocialNetworkInterface::DataUpdateError,
-                    QLatin1String("Cannot perform related data request"));
-    }
-}
-
-void FacebookInterface::loadPreviousRelatedData()
-{
-    Q_D(FacebookInterface);
-    switch (status()) {
-    case Initializing:
-        qWarning() << Q_FUNC_INFO << "Cannot load next: not initialized";
-        return;
-    case Busy:
-        qWarning() << Q_FUNC_INFO << "Cannot load next: another action is already running";
-        return;
-    case Invalid:
-        qWarning() << Q_FUNC_INFO
-                   << "The social network is not in a valid state, no operation can be complete";
-        return;
-    default:
-        break;
-    }
-
-    if (!hasPreviousRelatedData()) {
-        return;
-    }
-
-    // Build the request field map
-    RequestFieldsMap requestFieldsMap;
-    QVariantMap extraMap = d->lastNode().extraInfo();
-
-    foreach (QString key, extraMap.keys()) {
-        int keyInteger = key.toInt();
-        QVariantMap entries
-                = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toMap();
-
-        foreach(QString entryKey, entries.keys()) {
-            StringPair pair (entryKey, entries.value(entryKey).toString());
-            requestFieldsMap.insert(keyInteger, pair);
-        }
-    }
-
-    d->prependingRelatedData = true;
-    if (!d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
-                                      requestFieldsMap)) {
-        d->setError(SocialNetworkInterface::DataUpdateError,
-                    QLatin1String("Cannot perform related data request"));
-    }
-}
-
-/*! \reimp */
-ContentItemInterface *FacebookInterface::contentItemFromData(QObject *parent, const QVariantMap &data) const
-{
-    Q_D(const FacebookInterface);
-    // Construct the appropriate FacebookWhateverInterface for the given data.
-    FacebookInterface::ContentItemType detectedType = static_cast<FacebookInterface::ContentItemType>(d->detectTypeFromData(data));
-    switch (detectedType) {
-        case FacebookInterface::Like: {
-            FacebookLikeInterface *returnedInterface = new FacebookLikeInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(this));
-            setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
-        }
-        break;
-
-        case FacebookInterface::Comment: {
-            FacebookCommentInterface *returnedInterface = new FacebookCommentInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(this));
-            setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
-        }
-        break;
-
-        case FacebookInterface::Photo: {
-            FacebookPhotoInterface *returnedInterface = new FacebookPhotoInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(this));
-            setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
-        }
-        break;
-
-        case FacebookInterface::Album: {
-            FacebookAlbumInterface *returnedInterface = new FacebookAlbumInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(this));
-            setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
-        }
-        break;
-
-        case FacebookInterface::User: {
-            FacebookUserInterface *returnedInterface = new FacebookUserInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(this));
-            setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
-        }
-        break;
-
-        case FacebookInterface::Notification: {
-            FacebookNotificationInterface *returnedInterface
-                    = new FacebookNotificationInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(this));
-            setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
-        }
-        break;
-
-        case FacebookInterface::Post: {
-            FacebookPostInterface *retn = new FacebookPostInterface(parent);
-            retn->classBegin();
-            retn->setSocialNetwork(const_cast<FacebookInterface*>(this));
-            setContentItemData(retn, data);
-            retn->componentComplete();
-            return retn;
-        }
-        break;
-
-        case FacebookInterface::Unknown: {
-            qWarning() << Q_FUNC_INFO << "Unable to detect the type of the content item";
-            IdentifiableContentItemInterface *returnedInterface
-                    = new IdentifiableContentItemInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<FacebookInterface*>(this));
-            setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
-        }
-        break;
-
-        default: qWarning() << Q_FUNC_INFO << "unsupported type:" << detectedType; break;
-    }
-
-    return 0;
-}
-
-void FacebookInterface::populateDataForLastNode()
-{
-    Q_D(FacebookInterface);
-    const Node &node = d->lastNode();
-    d->internalStatus = FacebookInterfacePrivate::PopulatingNodeData;
-
-    if (node.isNull()) {
-        qWarning() << Q_FUNC_INFO << "Cannot retrieve related content for null node!";
-        return;
-    }
-
-    d->setCurrentReply(getRequest(node.identifier(), QString(), QStringList(), QVariantMap()),
-                       node.identifier());
-    d->connectFinishedAndErrors();
-}
-
-void FacebookInterface::populateRelatedDataforLastNode()
-{
-    Q_D(FacebookInterface);
-    if (!d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
-                           QMultiMap<int, QPair<QString, QString> >())) {
-        d->setError(SocialNetworkInterface::DataUpdateError,
-                    QLatin1String("Cannot perform related data request"));
-        d->internalStatus = FacebookInterfacePrivate::Idle;
-    }
-}
-
-bool FacebookInterface::validateCacheEntryForLastNode(const QVariantMap &cacheEntryData)
-{
-    Q_UNUSED(cacheEntryData)
-    // Case of friends loaded from the friendlist
-    // TODO XXX ^
-    return true;
 }
 
 /*! \internal */

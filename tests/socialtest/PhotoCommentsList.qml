@@ -34,27 +34,37 @@ import org.nemomobile.social 1.0
 
 Item {
     id: root
-    property alias model: view.model
+    anchors.fill: parent
     signal backClicked
     signal showLikesClicked
-    anchors.fill: parent
+    function populate(nodeId) {
+        model.nodeIdentifier = nodeId
+        model.populate()
+        view.positionViewAtBeginning()
+    }
+
+    SocialNetworkModel {
+        id: model
+        socialNetwork: facebook
+        filters: [ commentsFilter ]
+    }
 
     Image {
         id: backgroundImage
         opacity: 0.4
         anchors.fill: parent
-        source: model != null ? model.node.source : "" // full-size image url
+        source: model.node != null ? model.node.source : "" // full-size image url
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "There are " + model.count + " comments on this photo" : ""
+        text: "There are " + model.count + " comments on this photo"
     }
 
     Column {
-        id: column
+        id: buttons
         Button {
             text: "Likes"
             onClicked: root.showLikesClicked()
@@ -73,16 +83,19 @@ Item {
         id: view
         clip: true
         anchors.top: topLabel.bottom
-        anchors.bottom: column.top
+        anchors.bottom: buttons.top
         anchors.left: parent.left
         anchors.right: parent.right
+        model: model
         delegate: Item {
-            id: commentDelegate
             width: parent.width
-            height: childrenRect.height
+            height: column.height + 20
             Column {
-                width: parent.width
-                height: nameLabel.height + countLabel.height
+                id: column
+                anchors.left: parent.left; anchors.leftMargin: 10
+                anchors.right: parent.right; anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+
                 Text {
                     id: nameLabel
                     text: "From: " + contentItem.from.objectName

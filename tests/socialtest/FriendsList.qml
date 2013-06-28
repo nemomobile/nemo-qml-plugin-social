@@ -35,14 +35,29 @@ import org.nemomobile.social 1.0
 Item {
     id: container
     anchors.fill: parent
-    property alias model: view.model
     signal backClicked
+    function populate(nodeId) {
+        model.nodeIdentifier = nodeId
+        model.populate()
+        view.positionViewAtBeginning()
+    }
+
+    SocialNetworkModel {
+        id: model
+        socialNetwork: facebook
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.User
+                limit: 50
+            }
+        ]
+    }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " friends" : ""
+        text: "You have " + model.count + " friends"
     }
 
     Button {
@@ -60,13 +75,14 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
+        model: model
         footer: Item {
             width: view.width
             height: childrenRect.height
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: facebook.hasNextRelatedData ? "Load more" : "Cannot load more"
-                onClicked: facebook.loadNextRelatedData()
+                text: model.hasNext ? "Load more" : "Cannot load more"
+                onClicked: model.loadNext()
             }
         }
 

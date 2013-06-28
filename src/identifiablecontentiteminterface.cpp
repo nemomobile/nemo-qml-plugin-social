@@ -33,6 +33,7 @@
 #include "identifiablecontentiteminterface_p.h"
 
 #include "socialnetworkinterface.h"
+#include "socialnetworkinterface_p.h"
 #include "util_p.h"
 
 #include <QtDebug>
@@ -118,15 +119,16 @@ bool IdentifiableContentItemInterfacePrivate::request(RequestType requestType,
     QNetworkReply *reply = 0;
     switch (requestType) {
     case IdentifiableContentItemInterfacePrivate::Get:
-        reply = socialNetworkInterface->getRequest(objectIdentifier, extraPath, whichFields,
-                                                   extraData);
+        reply = socialNetworkInterface->d_func()->getRequest(objectIdentifier, extraPath,
+                                                             whichFields, extraData);
         break;
     case IdentifiableContentItemInterfacePrivate::Post:
-        reply = socialNetworkInterface->postRequest(objectIdentifier, extraPath, postData,
-                                                    extraData);
+        reply = socialNetworkInterface->d_func()->postRequest(objectIdentifier, extraPath,
+                                                              postData, extraData);
         break;
     default:
-        reply = socialNetworkInterface->deleteRequest(objectIdentifier, extraPath, extraData);
+        reply = socialNetworkInterface->d_func()->deleteRequest(objectIdentifier, extraPath,
+                                                                extraData);
         break;
     }
 

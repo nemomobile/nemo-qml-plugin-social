@@ -70,59 +70,50 @@ Item {
 
     function back(which) {
         whichActive = which
-        facebook.previousNode(which)
     }
 
     function makeActive(which, nodeId) {
-        facebook.nodeIdentifier = nodeId
         switch (which) {
         case 1:
-            facebook.filters = [ facebook.notificationsFilter ]
-            facebook.populate()
-            facebook.nextNode()
+            notificationsList.populate(nodeId)
             break
         case 2:
-            facebook.filters = [ facebook.friendsFilter ]
-            facebook.populate()
-            facebook.nextNode()
+            friendsList.populate(nodeId)
             break
         case 3:
-            facebook.filters = [ facebook.albumsFilter ]
-            facebook.populate()
-            facebook.nextNode()
+            albumsList.populate(nodeId)
             break
         case 4:
-            facebook.filters = [ facebook.photosFilter ]
-            facebook.populate()
-            facebook.nextNode()
+            photosGrid.populate(nodeId)
             break
         case 5:
-            facebook.filters = [ facebook.commentsFilter ]
-            facebook.populate()
-            facebook.nextNode()
+            photoCommentsList.populate(nodeId)
             break
         case 6:
-            var component = Qt.createComponent(Qt.resolvedUrl("FilterDestructionTestPage.qml"));
-            if (component.status == Component.Ready) {
-                var page = component.createObject(root, {model: facebook});
-                page.load()
-                page.backClicked.connect(root.backHome)
+            var component1 = Qt.createComponent(Qt.resolvedUrl("ModelDestructionTestPage.qml"));
+            if (component1.status == Component.Ready) {
+                var page1 = component1.createObject(root);
+                page1.populate(nodeId)
+                page1.backClicked.connect(root.backHome)
             }
             break
         case 7:
-            facebook.filters = [ facebook.feedFilter ]
-            facebook.populate()
-            facebook.nextNode()
+            postList.populate(nodeId)
             break
         case 8:
-            facebook.filters = [ facebook.commentsFilter ]
-            facebook.populate()
-            facebook.nextNode()
+            postCommmentList.populate(nodeId)
             break
         case 9:
-            facebook.filters = [ facebook.likesFilter ]
-            facebook.populate()
-            facebook.nextNode()
+            likesList.populate(nodeId)
+            break
+        case 10:
+            var component2 = Qt.createComponent(Qt.resolvedUrl("FilterDestructionTestPage.qml"));
+            if (component2.status == Component.Ready) {
+                var page2 = component2.createObject(root);
+                page2.populate(nodeId)
+                page2.backClicked.connect(root.backHome)
+            }
+
             break
         }
         whichActive = which
@@ -131,17 +122,17 @@ Item {
     Facebook {
         id: facebook
         accessToken: root.accessToken
-
-        property QtObject notificationsFilter: ContentItemTypeFilter { type: Facebook.Notification; limit: 10 }
-        property QtObject friendsFilter:       ContentItemTypeFilter { type: Facebook.User; limit: 50}
-        property QtObject albumsFilter:        ContentItemTypeFilter { type: Facebook.Album; limit: 10}
-        property QtObject photosFilter:        ContentItemTypeFilter { type: Facebook.Photo }
-        property QtObject commentsFilter:      ContentItemTypeFilter { type: Facebook.Comment }
-        property QtObject feedFilter:          ContentItemTypeFilter { type: Facebook.Post }
-        property QtObject likesFilter:         ContentItemTypeFilter { type: Facebook.Like }
     }
 
+    ContentItemTypeFilter {
+        id: commentsFilter
+        type: Facebook.Comment
+    }
 
+    ContentItemTypeFilter {
+        id: friendsFilter
+        type: Facebook.User
+    }
 
     ListView {
         id: main
@@ -165,8 +156,12 @@ Item {
                 which: 3
             }
             ListElement {
-                text: "Test filter destruction"
+                text: "Test model destruction"
                 which: 6
+            }
+            ListElement {
+                text: "Test filter destruction"
+                which: 10
             }
             ListElement {
                 text: "Quit"
@@ -194,7 +189,6 @@ Item {
     PostList {
         id: postList
         visible: whichActive == 7
-        model: visible ? facebook : null
         onBackClicked: back(0)
         onPostClicked: makeActive(8, postId)
     }
@@ -202,28 +196,24 @@ Item {
     PostCommentsList {
         id: postCommmentList
         visible: whichActive == 8
-        model: visible ? facebook : null
         onBackClicked: back(7)
     }
 
     NotificationsList {
         id: notificationsList
         visible: whichActive == 1
-        model: visible ? facebook : null
         onBackClicked: back(0)
     }
 
     FriendsList {
         id: friendsList
         visible: whichActive == 2
-        model: visible ? facebook : null
         onBackClicked: back(0)
     }
 
     AlbumsList {
         id: albumsList
         visible: whichActive == 3
-        model: visible ? facebook : null
         onBackClicked: back(0)
         onAlbumClicked: makeActive(4, albumId)
     }
@@ -231,7 +221,6 @@ Item {
     PhotosGrid {
         id: photosGrid
         visible: whichActive == 4
-        model: visible ? facebook : null
         onBackClicked: back(3)
         onPhotoClicked: {
             photoCommentsList.photoId = photoId
@@ -243,7 +232,6 @@ Item {
         id: photoCommentsList
         property string photoId
         visible: whichActive == 5
-        model: visible ? facebook : null
         onBackClicked: back(4)
         onShowLikesClicked: makeActive(9, photoId)
     }
@@ -251,11 +239,18 @@ Item {
     LikesList {
         id: likesList
         visible: whichActive == 9
-        model: visible ? facebook : null
         onBackClicked: back(5)
     }
 
+    SocialNetworkModel {
+        id: filterDestructionTestModel
+        socialNetwork: facebook
 
-
+        onStatusChanged: {
+            if (status == SocialNetwork.Invalid) {
+                console.debug("The status of the filter destruction test model is now Invalid")
+            }
+        }
+    }
 
 }
