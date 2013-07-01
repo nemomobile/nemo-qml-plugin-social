@@ -204,6 +204,7 @@ SocialNetworkInterfacePrivate::SocialNetworkInterfacePrivate(SocialNetworkInterf
     , currentNodePosition(-1)
     , nodeStackSize(5)
     , arbitraryRequestHandler(0)
+    , cacheMode(false)
 {
 }
 
@@ -472,6 +473,10 @@ void SocialNetworkInterfacePrivate::pushNode(IdentifiableContentItemInterface *n
 /*! \internal */
 void SocialNetworkInterfacePrivate::nextNode()
 {
+    if (!cacheMode) {
+        qWarning() << Q_FUNC_INFO << "Set cacheMode property to true to use nextNode()";
+        return;
+    }
     // the caller is responsible for emitting dataChanged() etc.
 
     if (currentNodePosition == -1 || nodeStack.size() == 0) {
@@ -490,6 +495,10 @@ void SocialNetworkInterfacePrivate::nextNode()
 /*! \internal */
 void SocialNetworkInterfacePrivate::prevNode()
 {
+    if (!cacheMode) {
+        qWarning() << Q_FUNC_INFO << "Set cacheMode property to true to use prevNode()";
+        return;
+    }
     // the caller is responsible for emitting dataChanged() etc.
 
     if (currentNodePosition == -1 || nodeStack.size() == 0) {
@@ -913,6 +922,20 @@ QString SocialNetworkInterface::errorMessage() const
     return d->errorMessage;
 }
 
+
+/*!
+    \qmlproperty bool SocialNetwork:cacheMode
+    Enables or disables cache mode for this Facebook element. When using
+    cacheMode, the node data will be cached and once fetched data can be populated
+    faster. Current cache limit is set to 5 nodes. If cache limit is exceeded, the
+    oldest data will be purged.
+ */
+bool SocialNetworkInterface::cacheMode() const
+{
+    Q_D(const SocialNetworkInterface);
+    return d->cacheMode;
+}
+
 /*!
     \qmlproperty QString SocialNetwork::nodeIdentifier
     Holds the identifier of the "central" content item.  This content item
@@ -959,7 +982,7 @@ void SocialNetworkInterface::setNodeIdentifier(const QString &contentItemIdentif
         d->repopulatingCurrentNode = true;
         d->pendingCurrentNodeIdentifier = contentItemIdentifier;
         populateDataForNode(contentItemIdentifier); // "unseen node" without pushing placeholder.
-    } else if (!cachedNode) {
+    } else if (!d->cacheMode || !cachedNode) {
         // Unseen node.
         // call derived class data populate:
         //   d->populateCache() etc once it's finished retrieving.
@@ -1030,6 +1053,15 @@ void SocialNetworkInterface::setRelevanceCriteria(const QVariantMap &relevanceCr
     if (d->relevanceCriteria != relevanceCriteria) {
         d->relevanceCriteria = relevanceCriteria;
         emit relevanceCriteriaChanged();
+    }
+}
+
+void SocialNetworkInterface::setCacheMode(bool enable)
+{
+    Q_D(SocialNetworkInterface);
+    if (d->cacheMode != enable) {
+        d->cacheMode = enable;
+        emit cacheModeChanged();
     }
 }
 

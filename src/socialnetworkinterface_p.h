@@ -165,6 +165,7 @@ private:
     QMultiHash<IdentifiableContentItemInterface*, CacheEntry*> nodeContent; // cache entries which are connections/related content for a given node
 
     ArbitraryRequestHandler *arbitraryRequestHandler;
+    bool cacheMode;
 
     Q_DECLARE_PUBLIC(SocialNetworkInterface)
 };

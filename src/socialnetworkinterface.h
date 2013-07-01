@@ -80,6 +80,7 @@ class SocialNetworkInterface : public QAbstractListModel, public QDeclarativePar
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(ErrorType error READ error NOTIFY errorChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
+    Q_PROPERTY(bool cacheMode READ cacheMode WRITE setCacheMode NOTIFY cacheModeChanged)
 
     Q_ENUMS(Status)
     Q_ENUMS(ErrorType)
@@ -144,6 +145,7 @@ public:
     Status status() const;
     ErrorType error() const;
     QString errorMessage() const;
+    bool cacheMode() const;
 
     QString nodeIdentifier() const;
     IdentifiableContentItemInterface *node() const;
@@ -155,6 +157,7 @@ public:
     // Property mutators.
     void setNodeIdentifier(const QString &contentItemIdentifier);
     void setRelevanceCriteria(const QVariantMap &relevanceCriteria);
+    void setCacheMode(bool enable);
 
 Q_SIGNALS:
     void statusChanged();
@@ -165,6 +168,7 @@ Q_SIGNALS:
     void nodeChanged();
     void relevanceCriteriaChanged();
     void countChanged();
+    void cacheModeChanged();
 
 public:
     Q_INVOKABLE bool arbitraryRequest(RequestType requestType, const QString &requestUri,
