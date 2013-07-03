@@ -29,40 +29,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebookpropertyinterface.h"
+#include "facebookuserpictureinterface.h"
 #include "facebookinterface.h"
 #include "facebookontology_p.h"
 #include "contentiteminterface_p.h"
 // <<< include
 // >>> include
 
-class FacebookPropertyInterfacePrivate: public ContentItemInterfacePrivate
+class FacebookUserPictureInterfacePrivate: public ContentItemInterfacePrivate
 {
 public:
-    explicit FacebookPropertyInterfacePrivate(FacebookPropertyInterface *q);
+    explicit FacebookUserPictureInterfacePrivate(FacebookUserPictureInterface *q);
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
 private:
-    Q_DECLARE_PUBLIC(FacebookPropertyInterface)
+    Q_DECLARE_PUBLIC(FacebookUserPictureInterface)
 };
 
-FacebookPropertyInterfacePrivate::FacebookPropertyInterfacePrivate(FacebookPropertyInterface *q)
+FacebookUserPictureInterfacePrivate::FacebookUserPictureInterfacePrivate(FacebookUserPictureInterface *q)
     : ContentItemInterfacePrivate(q)
 {
 }
 
-void FacebookPropertyInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
-                                                                 const QVariantMap &newData)
+void FacebookUserPictureInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                                    const QVariantMap &newData)
 {
-    Q_Q(FacebookPropertyInterface);
-    QVariant oldName = oldData.value(FACEBOOK_ONTOLOGY_PROPERTY_NAME);
-    QVariant newName = newData.value(FACEBOOK_ONTOLOGY_PROPERTY_NAME);
-    QVariant oldText = oldData.value(FACEBOOK_ONTOLOGY_PROPERTY_TEXT);
-    QVariant newText = newData.value(FACEBOOK_ONTOLOGY_PROPERTY_TEXT);
+    Q_Q(FacebookUserPictureInterface);
+    QVariant oldSource = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_SOURCE);
+    QVariant newSource = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_SOURCE);
+    QVariant oldIsSilhouette = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE);
+    QVariant newIsSilhouette = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE);
 
-    if (newName != oldName)
-        emit q->nameChanged();
-    if (newText != oldText)
-        emit q->textChanged();
+    if (newSource != oldSource)
+        emit q->sourceChanged();
+    if (newIsSilhouette != oldIsSilhouette)
+        emit q->isSilhouetteChanged();
 
     // Call super class implementation
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
@@ -71,39 +71,39 @@ void FacebookPropertyInterfacePrivate::emitPropertyChangeSignals(const QVariantM
 //-------------------------------
 
 /*!
-    \qmltype FacebookProperty
-    \instantiates FacebookPropertyInterface
-    An entry representing a property for a post
+    \qmltype FacebookUserPicture
+    \instantiates FacebookUserPictureInterface
+    An entry representing a picture
 */
-FacebookPropertyInterface::FacebookPropertyInterface(QObject *parent)
-    : ContentItemInterface(*(new FacebookPropertyInterfacePrivate(this)), parent)
+FacebookUserPictureInterface::FacebookUserPictureInterface(QObject *parent)
+    : ContentItemInterface(*(new FacebookUserPictureInterfacePrivate(this)), parent)
 {
 }
 
 /*! \reimp */
-int FacebookPropertyInterface::type() const
+int FacebookUserPictureInterface::type() const
 {
-    return FacebookInterface::Property;
+    return FacebookInterface::UserPicture;
 }
 
 
 /*!
-    \qmlproperty QString FacebookProperty::name
-    Holds the name of the property
+    \qmlproperty QUrl FacebookUserPicture::source
+    Holds the url to the image source of the picture.
 */
-QString FacebookPropertyInterface::name() const
+QUrl FacebookUserPictureInterface::source() const
 {
-    Q_D(const FacebookPropertyInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PROPERTY_NAME).toString();
+    Q_D(const FacebookUserPictureInterface);
+    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_SOURCE).toString());
 }
 
 /*!
-    \qmlproperty QString FacebookProperty::text
-    Holds the text contained in the property
+    \qmlproperty bool FacebookUserPicture::isSilhouette
+    Whether the picture is a default, anonymous silhouette image.
 */
-QString FacebookPropertyInterface::text() const
+bool FacebookUserPictureInterface::isSilhouette() const
 {
-    Q_D(const FacebookPropertyInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PROPERTY_TEXT).toString();
+    Q_D(const FacebookUserPictureInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE).toString() == QLatin1String("true");
 }
 

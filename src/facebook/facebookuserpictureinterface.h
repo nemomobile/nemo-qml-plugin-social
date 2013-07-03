@@ -29,8 +29,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKIMAGEINTERFACE_H
-#define FACEBOOKIMAGEINTERFACE_H
+#ifndef FACEBOOKUSERPICTUREINTERFACE_H
+#define FACEBOOKUSERPICTUREINTERFACE_H
 
 #include "contentiteminterface.h"
 
@@ -48,28 +48,25 @@
  * FacebookInterface.
  */
 
-class FacebookImageInterfacePrivate;
-class FacebookImageInterface: public ContentItemInterface
+class FacebookUserPictureInterfacePrivate;
+class FacebookUserPictureInterface: public ContentItemInterface
 {
     Q_OBJECT
     Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
-    Q_PROPERTY(int width READ width NOTIFY widthChanged)
-    Q_PROPERTY(int height READ height NOTIFY heightChanged)
+    Q_PROPERTY(bool isSilhouette READ isSilhouette NOTIFY isSilhouetteChanged)
 public:
-    explicit FacebookImageInterface(QObject *parent = 0);
+    explicit FacebookUserPictureInterface(QObject *parent = 0);
 
     // Overrides.
     int type() const;
     // Accessors
     QUrl source() const;
-    int width() const;
-    int height() const;
+    bool isSilhouette() const;
 Q_SIGNALS:
     void sourceChanged();
-    void widthChanged();
-    void heightChanged();
+    void isSilhouetteChanged();
 private:
-    Q_DECLARE_PRIVATE(FacebookImageInterface)
+    Q_DECLARE_PRIVATE(FacebookUserPictureInterface)
 };
 
-#endif // FACEBOOKIMAGEINTERFACE_H
+#endif // FACEBOOKUSERPICTUREINTERFACE_H

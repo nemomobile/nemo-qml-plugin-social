@@ -80,7 +80,7 @@ void FacebookPhotoInterfacePrivate::finishedHandler()
                     emit q->likedChanged();
                 } else if (action == FacebookInterfacePrivate::DeleteTagAction) {
                     if (pendingTagToRemoveIndex != -1) {
-                        FacebookTagInterface *doomedTag = tags.takeAt(pendingTagToRemoveIndex);
+                        FacebookPhotoTagInterface *doomedTag = tags.takeAt(pendingTagToRemoveIndex);
                         pendingTagToRemoveIndex = -1;
                         doomedTag->deleteLater();
                         emit q->tagsChanged();
@@ -214,7 +214,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
 
     if (newTagsList != oldTagsList) {
         // Clear the old tags
-        foreach (FacebookTagInterface *tag, tags) {
+        foreach (FacebookPhotoTagInterface *tag, tags) {
             tag->deleteLater();
         }
         tags.clear();
@@ -222,7 +222,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         // Update with the new tag data
         foreach (QVariant tag, newTagsList) {
             QVariantMap tagMap = tag.toMap();
-            FacebookTagInterface *tagInterface = new FacebookTagInterface(q);
+            FacebookPhotoTagInterface *tagInterface = new FacebookPhotoTagInterface(q);
             qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(tagInterface, tagMap);
             tags.append(tagInterface);
         }
@@ -279,7 +279,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
 
     if (newImagesList != oldImagesList) {
         // Clear the old images
-        foreach (FacebookImageInterface *image, images) {
+        foreach (FacebookPhotoImageInterface *image, images) {
             image->deleteLater();
         }
         images.clear();
@@ -287,7 +287,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         // Update with the new tag data
         foreach (QVariant image, newImagesList) {
             QVariantMap imageMap = image.toMap();
-            FacebookImageInterface *imageInterface = new FacebookImageInterface(q);
+            FacebookPhotoImageInterface *imageInterface = new FacebookPhotoImageInterface(q);
             qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(imageInterface, imageMap);
             images.append(imageInterface);
         }
@@ -328,8 +328,8 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
                          newData.value(FACEBOOK_ONTOLOGY_METADATA_ID));
     IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(oldDataWithId, newDataWithId);
 }
-void FacebookPhotoInterfacePrivate::tags_append(QDeclarativeListProperty<FacebookTagInterface> *list,
-                                                FacebookTagInterface *data)
+void FacebookPhotoInterfacePrivate::tags_append(QDeclarativeListProperty<FacebookPhotoTagInterface> *list,
+                                                FacebookPhotoTagInterface *data)
 {
     FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
     if (interface) {
@@ -338,8 +338,8 @@ void FacebookPhotoInterfacePrivate::tags_append(QDeclarativeListProperty<Faceboo
     }
 }
 
-FacebookTagInterface * FacebookPhotoInterfacePrivate::tags_at(QDeclarativeListProperty<FacebookTagInterface> *list,
-                                                              int index)
+FacebookPhotoTagInterface * FacebookPhotoInterfacePrivate::tags_at(QDeclarativeListProperty<FacebookPhotoTagInterface> *list,
+                                                                   int index)
 {
     FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
     if (interface
@@ -350,18 +350,18 @@ FacebookTagInterface * FacebookPhotoInterfacePrivate::tags_at(QDeclarativeListPr
     return 0;
 }
 
-void FacebookPhotoInterfacePrivate::tags_clear(QDeclarativeListProperty<FacebookTagInterface> *list)
+void FacebookPhotoInterfacePrivate::tags_clear(QDeclarativeListProperty<FacebookPhotoTagInterface> *list)
 {
     FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
     if (interface) {
-        foreach (FacebookTagInterface *entry, interface->d_func()->tags) {
+        foreach (FacebookPhotoTagInterface *entry, interface->d_func()->tags) {
             entry->deleteLater();
         }
         interface->d_func()->tags.clear();
     }
 }
 
-int FacebookPhotoInterfacePrivate::tags_count(QDeclarativeListProperty<FacebookTagInterface> *list)
+int FacebookPhotoInterfacePrivate::tags_count(QDeclarativeListProperty<FacebookPhotoTagInterface> *list)
 {
     FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
     if (interface) {
@@ -412,8 +412,8 @@ int FacebookPhotoInterfacePrivate::name_tags_count(QDeclarativeListProperty<Face
     return 0;
 }
 
-void FacebookPhotoInterfacePrivate::images_append(QDeclarativeListProperty<FacebookImageInterface> *list,
-                                                  FacebookImageInterface *data)
+void FacebookPhotoInterfacePrivate::images_append(QDeclarativeListProperty<FacebookPhotoImageInterface> *list,
+                                                  FacebookPhotoImageInterface *data)
 {
     FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
     if (interface) {
@@ -422,8 +422,8 @@ void FacebookPhotoInterfacePrivate::images_append(QDeclarativeListProperty<Faceb
     }
 }
 
-FacebookImageInterface * FacebookPhotoInterfacePrivate::images_at(QDeclarativeListProperty<FacebookImageInterface> *list,
-                                                                  int index)
+FacebookPhotoImageInterface * FacebookPhotoInterfacePrivate::images_at(QDeclarativeListProperty<FacebookPhotoImageInterface> *list,
+                                                                       int index)
 {
     FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
     if (interface
@@ -434,18 +434,18 @@ FacebookImageInterface * FacebookPhotoInterfacePrivate::images_at(QDeclarativeLi
     return 0;
 }
 
-void FacebookPhotoInterfacePrivate::images_clear(QDeclarativeListProperty<FacebookImageInterface> *list)
+void FacebookPhotoInterfacePrivate::images_clear(QDeclarativeListProperty<FacebookPhotoImageInterface> *list)
 {
     FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
     if (interface) {
-        foreach (FacebookImageInterface *entry, interface->d_func()->images) {
+        foreach (FacebookPhotoImageInterface *entry, interface->d_func()->images) {
             entry->deleteLater();
         }
         interface->d_func()->images.clear();
     }
 }
 
-int FacebookPhotoInterfacePrivate::images_count(QDeclarativeListProperty<FacebookImageInterface> *list)
+int FacebookPhotoInterfacePrivate::images_count(QDeclarativeListProperty<FacebookPhotoImageInterface> *list)
 {
     FacebookPhotoInterface *interface = qobject_cast<FacebookPhotoInterface *>(list->object);
     if (interface) {
@@ -871,12 +871,12 @@ FacebookObjectReferenceInterface * FacebookPhotoInterface::from() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookTagInterface> FacebookPhoto::tags
+    \qmlproperty QDeclarativeListProperty<FacebookPhotoTagInterface> FacebookPhoto::tags
     Holds the tags which have been uploaded for this photo
 */
-QDeclarativeListProperty<FacebookTagInterface> FacebookPhotoInterface::tags()
+QDeclarativeListProperty<FacebookPhotoTagInterface> FacebookPhotoInterface::tags()
 {
-    return QDeclarativeListProperty<FacebookTagInterface>(
+    return QDeclarativeListProperty<FacebookPhotoTagInterface>(
                 this, 0,
                 &FacebookPhotoInterfacePrivate::tags_append,
                 &FacebookPhotoInterfacePrivate::tags_count,
@@ -971,12 +971,12 @@ int FacebookPhotoInterface::width() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookImageInterface> FacebookPhoto::images
+    \qmlproperty QDeclarativeListProperty<FacebookPhotoImageInterface> FacebookPhoto::images
     Holds links to and metadata about scaled versions of the photo
 */
-QDeclarativeListProperty<FacebookImageInterface> FacebookPhotoInterface::images()
+QDeclarativeListProperty<FacebookPhotoImageInterface> FacebookPhotoInterface::images()
 {
-    return QDeclarativeListProperty<FacebookImageInterface>(
+    return QDeclarativeListProperty<FacebookPhotoImageInterface>(
                 this, 0,
                 &FacebookPhotoInterfacePrivate::images_append,
                 &FacebookPhotoInterfacePrivate::images_count,

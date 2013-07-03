@@ -51,21 +51,16 @@
 #include "contentitemtypefilterinterface.h"
 
 // facebook implementation headers
-#include "facebook/facebookactioninterface.h"
+#include "facebook/facebookinterface.h"
+#include "facebook/facebookobjectreferenceinterface.h"
 #include "facebook/facebookalbuminterface.h"
 #include "facebook/facebookcommentinterface.h"
-#include "facebook/facebookinterface.h"
-#include "facebook/facebooklikeinterface.h"
-#include "facebook/facebookobjectreferenceinterface.h"
+#include "facebook/facebooknotificationinterface.h"
 #include "facebook/facebookphotointerface.h"
 #include "facebook/facebookpostinterface.h"
-#include "facebook/facebookpropertyinterface.h"
-#include "facebook/facebookpictureinterface.h"
-#include "facebook/facebooktaginterface.h"
-#include "facebook/facebooknametaginterface.h"
-#include "facebook/facebookimageinterface.h"
-#include "facebook/facebookcoverinterface.h"
 #include "facebook/facebookuserinterface.h"
+
+#include "facebook/facebooklikeinterface.h"
 
 class Q_DECL_EXPORT NemoSocialPlugin : public QDeclarativeExtensionPlugin
 {
@@ -100,20 +95,22 @@ public:
 
         // creatable types from the facebook implementation
         qmlRegisterType<FacebookInterface>(uri, 1, 0, "Facebook");
-        qmlRegisterType<FacebookActionInterface>(uri, 1, 0, "FacebookAction");
+        qmlRegisterType<FacebookObjectReferenceInterface>(uri, 1, 0, "FacebookObjectReference");
         qmlRegisterType<FacebookAlbumInterface>(uri, 1, 0, "FacebookAlbum");
         qmlRegisterType<FacebookCommentInterface>(uri, 1, 0, "FacebookComment");
-        qmlRegisterType<FacebookLikeInterface>(uri, 1, 0, "FacebookLike");
-        qmlRegisterType<FacebookObjectReferenceInterface>(uri, 1, 0, "FacebookObjectReference");
+        qmlRegisterType<FacebookNotificationInterface>(uri, 1, 0, "FacebookNotification");
         qmlRegisterType<FacebookPhotoInterface>(uri, 1, 0, "FacebookPhoto");
-        qmlRegisterType<FacebookPictureInterface>(uri, 1, 0, "FacebookPicture");
         qmlRegisterType<FacebookPostInterface>(uri, 1, 0, "FacebookPost");
-        qmlRegisterType<FacebookPropertyInterface>(uri, 1, 0, "FacebookProperty");
-        qmlRegisterType<FacebookTagInterface>(uri, 1, 0, "FacebookTag");
-        qmlRegisterType<FacebookNameTagInterface>(uri, 1, 0, "FacebookNameTag");
-        qmlRegisterType<FacebookNameTagInterface>(uri, 1, 0, "FacebookImage");
-        qmlRegisterType<FacebookCoverInterface>(uri, 1, 0, "FacebookCover");
         qmlRegisterType<FacebookUserInterface>(uri, 1, 0, "FacebookUser");
+
+        qmlRegisterType<FacebookLikeInterface>(uri, 1, 0, "FacebookLike");
+        qmlRegisterType<FacebookNameTagInterface>(uri, 1, 0, "FacebookNameTag");
+        qmlRegisterType<FacebookPhotoImageInterface>(uri, 1, 0, "FacebookPhotoImage");
+        qmlRegisterType<FacebookPhotoTagInterface>(uri, 1, 0, "FacebookPhotoTag");
+        qmlRegisterType<FacebookPostActionInterface>(uri, 1, 0, "FacebookPostAction");
+        qmlRegisterType<FacebookPostPropertyInterface>(uri, 1, 0, "FacebookPostProperty");
+        qmlRegisterType<FacebookUserCoverInterface>(uri, 1, 0, "FacebookUserCover");
+        qmlRegisterType<FacebookUserPictureInterface>(uri, 1, 0, "FacebookUserPicture");
     }
 };
 

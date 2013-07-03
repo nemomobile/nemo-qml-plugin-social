@@ -59,7 +59,7 @@
         },
         {
             "name": "properties",
-            "type": "FacebookPropertyInterface",
+            "type": "FacebookPostPropertyInterface",
             "doc": "Holds a list of properties for the attached content.",
             "is_list": true
         },
@@ -70,7 +70,7 @@
         },
         {
             "name": "actions",
-            "type": "FacebookActionInterface",
+            "type": "FacebookPostActionInterface",
             "doc": "Holds a list of actions that can be done with this post. (not generated yet)",
             "is_list": true
         },

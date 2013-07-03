@@ -29,8 +29,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKTAGINTERFACE_H
-#define FACEBOOKTAGINTERFACE_H
+#ifndef FACEBOOKPOSTACTIONINTERFACE_H
+#define FACEBOOKPOSTACTIONINTERFACE_H
 
 #include "contentiteminterface.h"
 
@@ -48,37 +48,25 @@
  * FacebookInterface.
  */
 
-class FacebookTagInterfacePrivate;
-class FacebookTagInterface: public ContentItemInterface
+class FacebookPostActionInterfacePrivate;
+class FacebookPostActionInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString userIdentifier READ userIdentifier NOTIFY userIdentifierChanged)
-    Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
-    Q_PROPERTY(QString text READ text NOTIFY textChanged)
-    Q_PROPERTY(float x READ x NOTIFY xChanged)
-    Q_PROPERTY(float y READ y NOTIFY yChanged)
-    Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString link READ link NOTIFY linkChanged)
 public:
-    explicit FacebookTagInterface(QObject *parent = 0);
+    explicit FacebookPostActionInterface(QObject *parent = 0);
 
     // Overrides.
     int type() const;
     // Accessors
-    QString userIdentifier() const;
-    QString userName() const;
-    QString text() const;
-    float x() const;
-    float y() const;
-    QString createdTime() const;
+    QString name() const;
+    QString link() const;
 Q_SIGNALS:
-    void userIdentifierChanged();
-    void userNameChanged();
-    void textChanged();
-    void xChanged();
-    void yChanged();
-    void createdTimeChanged();
+    void nameChanged();
+    void linkChanged();
 private:
-    Q_DECLARE_PRIVATE(FacebookTagInterface)
+    Q_DECLARE_PRIVATE(FacebookPostActionInterface)
 };
 
-#endif // FACEBOOKTAGINTERFACE_H
+#endif // FACEBOOKPOSTACTIONINTERFACE_H

@@ -115,7 +115,6 @@
 // >>> photo
 
 // <<< picture
-#define FACEBOOK_ONTOLOGY_PICTURE                          QLatin1String("picture")
 #define FACEBOOK_ONTOLOGY_PICTURE_SOURCE                   QLatin1String("source")
 #define FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE             QLatin1String("is_silhouette")
 // >>> picture
@@ -180,14 +179,12 @@
 // >>> user
 
 // <<< image
-#define FACEBOOK_ONTOLOGY_IMAGE                            QLatin1String("image")
 #define FACEBOOK_ONTOLOGY_IMAGE_SOURCE                     QLatin1String("source")
 #define FACEBOOK_ONTOLOGY_IMAGE_WIDTH                      QLatin1String("width")
 #define FACEBOOK_ONTOLOGY_IMAGE_HEIGHT                     QLatin1String("height")
 // >>> image
 
 // <<< like
-#define FACEBOOK_ONTOLOGY_LIKE                             QLatin1String("like")
 #define FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER              QLatin1String("id")
 #define FACEBOOK_ONTOLOGY_LIKE_USERNAME                    QLatin1String("name")
 // >>> like
@@ -212,7 +209,6 @@
 // >>> cover
 
 // <<< name_tag
-#define FACEBOOK_ONTOLOGY_NAME_TAG                         QLatin1String("name_tag")
 #define FACEBOOK_ONTOLOGY_NAME_TAG_USERIDENTIFIER          QLatin1String("id")
 #define FACEBOOK_ONTOLOGY_NAME_TAG_USERNAME                QLatin1String("name")
 #define FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE             QLatin1String("type")
@@ -221,7 +217,6 @@
 // >>> name_tag
 
 // <<< property
-#define FACEBOOK_ONTOLOGY_PROPERTY                         QLatin1String("property")
 #define FACEBOOK_ONTOLOGY_PROPERTY_NAME                    QLatin1String("name")
 #define FACEBOOK_ONTOLOGY_PROPERTY_TEXT                    QLatin1String("text")
 // >>> property
@@ -236,9 +231,43 @@
 // >>> tag
 
 // <<< action
-#define FACEBOOK_ONTOLOGY_ACTION                           QLatin1String("action")
 #define FACEBOOK_ONTOLOGY_ACTION_NAME                      QLatin1String("name")
 #define FACEBOOK_ONTOLOGY_ACTION_LINK                      QLatin1String("link")
 // >>> action
+
+// <<< photo_tag
+#define FACEBOOK_ONTOLOGY_PHOTO_TAG_USERIDENTIFIER         QLatin1String("id")
+#define FACEBOOK_ONTOLOGY_PHOTO_TAG_USERNAME               QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_PHOTO_TAG_X                      QLatin1String("x")
+#define FACEBOOK_ONTOLOGY_PHOTO_TAG_Y                      QLatin1String("y")
+#define FACEBOOK_ONTOLOGY_PHOTO_TAG_CREATEDTIME            QLatin1String("created_time")
+// >>> photo_tag
+
+// <<< user_cover
+#define FACEBOOK_ONTOLOGY_USER_COVER_PHOTOIDENTIFIER       QLatin1String("id")
+#define FACEBOOK_ONTOLOGY_USER_COVER_SOURCE                QLatin1String("source")
+#define FACEBOOK_ONTOLOGY_USER_COVER_OFFSETY               QLatin1String("offset_y")
+// >>> user_cover
+
+// <<< photo_image
+#define FACEBOOK_ONTOLOGY_PHOTO_IMAGE_SOURCE               QLatin1String("source")
+#define FACEBOOK_ONTOLOGY_PHOTO_IMAGE_WIDTH                QLatin1String("width")
+#define FACEBOOK_ONTOLOGY_PHOTO_IMAGE_HEIGHT               QLatin1String("height")
+// >>> photo_image
+
+// <<< user_picture
+#define FACEBOOK_ONTOLOGY_USER_PICTURE_SOURCE              QLatin1String("source")
+#define FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE        QLatin1String("is_silhouette")
+// >>> user_picture
+
+// <<< post_action
+#define FACEBOOK_ONTOLOGY_POST_ACTION_NAME                 QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_POST_ACTION_LINK                 QLatin1String("link")
+// >>> post_action
+
+// <<< post_property
+#define FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME               QLatin1String("name")
+#define FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT               QLatin1String("text")
+// >>> post_property
 
 #endif // FACEBOOKONTOLOGY_P_H

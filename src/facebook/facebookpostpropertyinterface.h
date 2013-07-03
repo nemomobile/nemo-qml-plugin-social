@@ -29,8 +29,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKCOVERINTERFACE_H
-#define FACEBOOKCOVERINTERFACE_H
+#ifndef FACEBOOKPOSTPROPERTYINTERFACE_H
+#define FACEBOOKPOSTPROPERTYINTERFACE_H
 
 #include "contentiteminterface.h"
 
@@ -48,28 +48,25 @@
  * FacebookInterface.
  */
 
-class FacebookCoverInterfacePrivate;
-class FacebookCoverInterface: public ContentItemInterface
+class FacebookPostPropertyInterfacePrivate;
+class FacebookPostPropertyInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString photoIdentifier READ photoIdentifier NOTIFY photoIdentifierChanged)
-    Q_PROPERTY(QString source READ source NOTIFY sourceChanged)
-    Q_PROPERTY(int offsetY READ offsetY NOTIFY offsetYChanged)
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString text READ text NOTIFY textChanged)
 public:
-    explicit FacebookCoverInterface(QObject *parent = 0);
+    explicit FacebookPostPropertyInterface(QObject *parent = 0);
 
     // Overrides.
     int type() const;
     // Accessors
-    QString photoIdentifier() const;
-    QString source() const;
-    int offsetY() const;
+    QString name() const;
+    QString text() const;
 Q_SIGNALS:
-    void photoIdentifierChanged();
-    void sourceChanged();
-    void offsetYChanged();
+    void nameChanged();
+    void textChanged();
 private:
-    Q_DECLARE_PRIVATE(FacebookCoverInterface)
+    Q_DECLARE_PRIVATE(FacebookPostPropertyInterface)
 };
 
-#endif // FACEBOOKCOVERINTERFACE_H
+#endif // FACEBOOKPOSTPROPERTYINTERFACE_H

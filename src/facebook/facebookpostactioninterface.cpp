@@ -29,40 +29,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebookpictureinterface.h"
+#include "facebookpostactioninterface.h"
 #include "facebookinterface.h"
 #include "facebookontology_p.h"
 #include "contentiteminterface_p.h"
 // <<< include
 // >>> include
 
-class FacebookPictureInterfacePrivate: public ContentItemInterfacePrivate
+class FacebookPostActionInterfacePrivate: public ContentItemInterfacePrivate
 {
 public:
-    explicit FacebookPictureInterfacePrivate(FacebookPictureInterface *q);
+    explicit FacebookPostActionInterfacePrivate(FacebookPostActionInterface *q);
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
 private:
-    Q_DECLARE_PUBLIC(FacebookPictureInterface)
+    Q_DECLARE_PUBLIC(FacebookPostActionInterface)
 };
 
-FacebookPictureInterfacePrivate::FacebookPictureInterfacePrivate(FacebookPictureInterface *q)
+FacebookPostActionInterfacePrivate::FacebookPostActionInterfacePrivate(FacebookPostActionInterface *q)
     : ContentItemInterfacePrivate(q)
 {
 }
 
-void FacebookPictureInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
-                                                                const QVariantMap &newData)
+void FacebookPostActionInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                                   const QVariantMap &newData)
 {
-    Q_Q(FacebookPictureInterface);
-    QVariant oldSource = oldData.value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE);
-    QVariant newSource = newData.value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE);
-    QVariant oldIsSilhouette = oldData.value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE);
-    QVariant newIsSilhouette = newData.value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE);
+    Q_Q(FacebookPostActionInterface);
+    QVariant oldName = oldData.value(FACEBOOK_ONTOLOGY_POST_ACTION_NAME);
+    QVariant newName = newData.value(FACEBOOK_ONTOLOGY_POST_ACTION_NAME);
+    QVariant oldLink = oldData.value(FACEBOOK_ONTOLOGY_POST_ACTION_LINK);
+    QVariant newLink = newData.value(FACEBOOK_ONTOLOGY_POST_ACTION_LINK);
 
-    if (newSource != oldSource)
-        emit q->sourceChanged();
-    if (newIsSilhouette != oldIsSilhouette)
-        emit q->isSilhouetteChanged();
+    if (newName != oldName)
+        emit q->nameChanged();
+    if (newLink != oldLink)
+        emit q->linkChanged();
 
     // Call super class implementation
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
@@ -71,39 +71,39 @@ void FacebookPictureInterfacePrivate::emitPropertyChangeSignals(const QVariantMa
 //-------------------------------
 
 /*!
-    \qmltype FacebookPicture
-    \instantiates FacebookPictureInterface
-    An entry representing a picture
+    \qmltype FacebookPostAction
+    \instantiates FacebookPostActionInterface
+    An entry representing a action for a post
 */
-FacebookPictureInterface::FacebookPictureInterface(QObject *parent)
-    : ContentItemInterface(*(new FacebookPictureInterfacePrivate(this)), parent)
+FacebookPostActionInterface::FacebookPostActionInterface(QObject *parent)
+    : ContentItemInterface(*(new FacebookPostActionInterfacePrivate(this)), parent)
 {
 }
 
 /*! \reimp */
-int FacebookPictureInterface::type() const
+int FacebookPostActionInterface::type() const
 {
-    return FacebookInterface::Picture;
+    return FacebookInterface::PostAction;
 }
 
 
 /*!
-    \qmlproperty QUrl FacebookPicture::source
-    Holds the url to the image source of the picture.
+    \qmlproperty QString FacebookPostAction::name
+    Holds the name of the action
 */
-QUrl FacebookPictureInterface::source() const
+QString FacebookPostActionInterface::name() const
 {
-    Q_D(const FacebookPictureInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE).toString());
+    Q_D(const FacebookPostActionInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_POST_ACTION_NAME).toString();
 }
 
 /*!
-    \qmlproperty bool FacebookPicture::isSilhouette
-    Whether the picture is a default, anonymous silhouette image.
+    \qmlproperty QString FacebookPostAction::link
+    Holds the link used to perform the action
 */
-bool FacebookPictureInterface::isSilhouette() const
+QString FacebookPostActionInterface::link() const
 {
-    Q_D(const FacebookPictureInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE).toString() == QLatin1String("true");
+    Q_D(const FacebookPostActionInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_POST_ACTION_LINK).toString();
 }
 

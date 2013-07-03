@@ -29,40 +29,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebookactioninterface.h"
+#include "facebookpostpropertyinterface.h"
 #include "facebookinterface.h"
 #include "facebookontology_p.h"
 #include "contentiteminterface_p.h"
 // <<< include
 // >>> include
 
-class FacebookActionInterfacePrivate: public ContentItemInterfacePrivate
+class FacebookPostPropertyInterfacePrivate: public ContentItemInterfacePrivate
 {
 public:
-    explicit FacebookActionInterfacePrivate(FacebookActionInterface *q);
+    explicit FacebookPostPropertyInterfacePrivate(FacebookPostPropertyInterface *q);
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
 private:
-    Q_DECLARE_PUBLIC(FacebookActionInterface)
+    Q_DECLARE_PUBLIC(FacebookPostPropertyInterface)
 };
 
-FacebookActionInterfacePrivate::FacebookActionInterfacePrivate(FacebookActionInterface *q)
+FacebookPostPropertyInterfacePrivate::FacebookPostPropertyInterfacePrivate(FacebookPostPropertyInterface *q)
     : ContentItemInterfacePrivate(q)
 {
 }
 
-void FacebookActionInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
-                                                               const QVariantMap &newData)
+void FacebookPostPropertyInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                                     const QVariantMap &newData)
 {
-    Q_Q(FacebookActionInterface);
-    QVariant oldName = oldData.value(FACEBOOK_ONTOLOGY_ACTION_NAME);
-    QVariant newName = newData.value(FACEBOOK_ONTOLOGY_ACTION_NAME);
-    QVariant oldLink = oldData.value(FACEBOOK_ONTOLOGY_ACTION_LINK);
-    QVariant newLink = newData.value(FACEBOOK_ONTOLOGY_ACTION_LINK);
+    Q_Q(FacebookPostPropertyInterface);
+    QVariant oldName = oldData.value(FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME);
+    QVariant newName = newData.value(FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME);
+    QVariant oldText = oldData.value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT);
+    QVariant newText = newData.value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT);
 
     if (newName != oldName)
         emit q->nameChanged();
-    if (newLink != oldLink)
-        emit q->linkChanged();
+    if (newText != oldText)
+        emit q->textChanged();
 
     // Call super class implementation
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
@@ -71,39 +71,39 @@ void FacebookActionInterfacePrivate::emitPropertyChangeSignals(const QVariantMap
 //-------------------------------
 
 /*!
-    \qmltype FacebookAction
-    \instantiates FacebookActionInterface
-    An entry representing a action for a post
+    \qmltype FacebookPostProperty
+    \instantiates FacebookPostPropertyInterface
+    An entry representing a property for a post
 */
-FacebookActionInterface::FacebookActionInterface(QObject *parent)
-    : ContentItemInterface(*(new FacebookActionInterfacePrivate(this)), parent)
+FacebookPostPropertyInterface::FacebookPostPropertyInterface(QObject *parent)
+    : ContentItemInterface(*(new FacebookPostPropertyInterfacePrivate(this)), parent)
 {
 }
 
 /*! \reimp */
-int FacebookActionInterface::type() const
+int FacebookPostPropertyInterface::type() const
 {
-    return FacebookInterface::Action;
+    return FacebookInterface::PostProperty;
 }
 
 
 /*!
-    \qmlproperty QString FacebookAction::name
-    Holds the name of the action
+    \qmlproperty QString FacebookPostProperty::name
+    Holds the name of the property
 */
-QString FacebookActionInterface::name() const
+QString FacebookPostPropertyInterface::name() const
 {
-    Q_D(const FacebookActionInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ACTION_NAME).toString();
+    Q_D(const FacebookPostPropertyInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME).toString();
 }
 
 /*!
-    \qmlproperty QString FacebookAction::link
-    Holds the link used to perform the action
+    \qmlproperty QString FacebookPostProperty::text
+    Holds the text contained in the property
 */
-QString FacebookActionInterface::link() const
+QString FacebookPostPropertyInterface::text() const
 {
-    Q_D(const FacebookActionInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ACTION_LINK).toString();
+    Q_D(const FacebookPostPropertyInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT).toString();
 }
 

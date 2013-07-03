@@ -1,5 +1,5 @@
 {
-    "name": "property",
+    "name": "post_property",
     "doc": "An entry representing a property for a post",
     "identifiable": false,
     "properties": [

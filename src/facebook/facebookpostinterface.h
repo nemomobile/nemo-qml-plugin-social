@@ -44,8 +44,8 @@
 #include <QtCore/QString>
 #include "facebooknametaginterface.h"
 #include <QtCore/QUrl>
-#include "facebookpropertyinterface.h"
-#include "facebookactioninterface.h"
+#include "facebookpostpropertyinterface.h"
+#include "facebookpostactioninterface.h"
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -67,9 +67,9 @@ class FacebookPostInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(QString caption READ caption NOTIFY captionChanged)
     Q_PROPERTY(QString description READ description NOTIFY descriptionChanged)
     Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
-    Q_PROPERTY(QDeclarativeListProperty<FacebookPropertyInterface> properties READ properties NOTIFY propertiesChanged)
+    Q_PROPERTY(QDeclarativeListProperty<FacebookPostPropertyInterface> properties READ properties NOTIFY propertiesChanged)
     Q_PROPERTY(QUrl icon READ icon NOTIFY iconChanged)
-    Q_PROPERTY(QDeclarativeListProperty<FacebookActionInterface> actions READ actions NOTIFY actionsChanged)
+    Q_PROPERTY(QDeclarativeListProperty<FacebookPostActionInterface> actions READ actions NOTIFY actionsChanged)
     Q_PROPERTY(QString postType READ postType NOTIFY postTypeChanged)
     Q_PROPERTY(QString story READ story NOTIFY storyChanged)
     Q_PROPERTY(QDeclarativeListProperty<FacebookNameTagInterface> storyTags READ storyTags NOTIFY storyTagsChanged)
@@ -107,9 +107,9 @@ public:
     QString caption() const;
     QString description() const;
     QUrl source() const;
-    QDeclarativeListProperty<FacebookPropertyInterface> properties();
+    QDeclarativeListProperty<FacebookPostPropertyInterface> properties();
     QUrl icon() const;
-    QDeclarativeListProperty<FacebookActionInterface> actions();
+    QDeclarativeListProperty<FacebookPostActionInterface> actions();
     QString postType() const;
     QString story() const;
     QDeclarativeListProperty<FacebookNameTagInterface> storyTags();

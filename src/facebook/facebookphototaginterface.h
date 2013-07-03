@@ -29,12 +29,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKPICTUREINTERFACE_H
-#define FACEBOOKPICTUREINTERFACE_H
+#ifndef FACEBOOKPHOTOTAGINTERFACE_H
+#define FACEBOOKPHOTOTAGINTERFACE_H
 
 #include "contentiteminterface.h"
 
-#include <QtCore/QUrl>
+#include <QtCore/QString>
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -48,25 +48,37 @@
  * FacebookInterface.
  */
 
-class FacebookPictureInterfacePrivate;
-class FacebookPictureInterface: public ContentItemInterface
+class FacebookPhotoTagInterfacePrivate;
+class FacebookPhotoTagInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
-    Q_PROPERTY(bool isSilhouette READ isSilhouette NOTIFY isSilhouetteChanged)
+    Q_PROPERTY(QString userIdentifier READ userIdentifier NOTIFY userIdentifierChanged)
+    Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
+    Q_PROPERTY(QString text READ text NOTIFY textChanged)
+    Q_PROPERTY(float x READ x NOTIFY xChanged)
+    Q_PROPERTY(float y READ y NOTIFY yChanged)
+    Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
 public:
-    explicit FacebookPictureInterface(QObject *parent = 0);
+    explicit FacebookPhotoTagInterface(QObject *parent = 0);
 
     // Overrides.
     int type() const;
     // Accessors
-    QUrl source() const;
-    bool isSilhouette() const;
+    QString userIdentifier() const;
+    QString userName() const;
+    QString text() const;
+    float x() const;
+    float y() const;
+    QString createdTime() const;
 Q_SIGNALS:
-    void sourceChanged();
-    void isSilhouetteChanged();
+    void userIdentifierChanged();
+    void userNameChanged();
+    void textChanged();
+    void xChanged();
+    void yChanged();
+    void createdTimeChanged();
 private:
-    Q_DECLARE_PRIVATE(FacebookPictureInterface)
+    Q_DECLARE_PRIVATE(FacebookPhotoTagInterface)
 };
 
-#endif // FACEBOOKPICTUREINTERFACE_H
+#endif // FACEBOOKPHOTOTAGINTERFACE_H

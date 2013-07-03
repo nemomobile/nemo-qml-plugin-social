@@ -39,16 +39,15 @@
 #include "identifiablecontentiteminterface.h"
 #include "contentitemtypefilterinterface.h"
 
-#include "facebookcommentinterface.h"
-#include "facebookphotointerface.h"
-#include "facebookalbuminterface.h"
-#include "facebookuserinterface.h"
-#include "facebooklikeinterface.h"
 #include "facebookobjectreferenceinterface.h"
-#include "facebookpictureinterface.h"
-#include "facebookpostinterface.h"
-#include "facebooktaginterface.h"
+#include "facebookalbuminterface.h"
+#include "facebookcommentinterface.h"
 #include "facebooknotificationinterface.h"
+#include "facebookphotointerface.h"
+#include "facebookpostinterface.h"
+#include "facebookuserinterface.h"
+
+#include "facebooklikeinterface.h"
 
 #include "util_p.h"
 
@@ -745,32 +744,27 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
             case FacebookInterface::Photo: {
                 connectionTypes << FacebookInterface::Like
                                 << FacebookInterface::Comment
-                                << FacebookInterface::Picture
-                                << FacebookInterface::Tag;
+                                << FacebookInterface::PhotoTag;
                 connectionWhichFields << QStringList()
                                       << QStringList()
-                                      << QStringList()
                                       << QStringList();
-                connectionLimits << -1 << -1 << -1 << -1;
+                connectionLimits << -1 << -1 << -1;
             }
             break;
 
             case FacebookInterface::Album: {
                 connectionTypes << FacebookInterface::Like
                                 << FacebookInterface::Comment
-                                << FacebookInterface::Picture
                                 << FacebookInterface::Photo;
                 connectionWhichFields << QStringList()
                                       << QStringList()
-                                      << QStringList()
                                       << QStringList();
-                connectionLimits << -1 << -1 << -1 << -1;
+                connectionLimits << -1 << -1 << -1;
             }
             break;
 
             case FacebookInterface::User: {
                 connectionTypes << FacebookInterface::Like
-                                << FacebookInterface::Picture
                                 << FacebookInterface::Photo
                                 << FacebookInterface::Album
                                 << FacebookInterface::Notification
@@ -779,9 +773,8 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
                                       << QStringList()
                                       << QStringList()
                                       << QStringList()
-                                      << QStringList()
                                       << QStringList();
-                connectionLimits << -1 << -1 << -1 << -1 << -1 << -1;
+                connectionLimits << -1 << -1 << -1 << -1 << -1;
             }
             break;
 
@@ -847,8 +840,7 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
                 case FacebookInterface::Unknown:         qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: NotInitialized";  break;
                 case FacebookInterface::ObjectReference: qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: ObjectReference"; break;
                 case FacebookInterface::Like:     addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);    break;
-                case FacebookInterface::Tag:      addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS);     break;
-                case FacebookInterface::Picture:  addExtra = false; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_PICTURE);  break;
+                case FacebookInterface::PhotoTag:      addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS);     break;
                 case FacebookInterface::Location: addExtra = true; append = false; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_LOCATIONS); break; // not supported?
                 case FacebookInterface::Comment:  addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS); break;
                 case FacebookInterface::User:     addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS);  break; // subscriptions etc?
@@ -970,7 +962,7 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
             } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS)) {
                 FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Comment);
             } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Tag);
+                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::PhotoTag);
             } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS)) {
                 FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Photo);
             } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS)) {
@@ -990,7 +982,7 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
             FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(commentsObject, FacebookInterface::Comment);
         } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS) {
             QVariantMap tagsObject = relatedData.value(key).toMap();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(tagsObject, FacebookInterface::Tag);
+            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(tagsObject, FacebookInterface::PhotoTag);
         } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS) {
             QVariantMap photosObject = relatedData.value(key).toMap();
             FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(photosObject, FacebookInterface::Photo);
@@ -1200,14 +1192,15 @@ ContentItemInterface *FacebookInterface::contentItemFromData(QObject *parent, co
             return retn;
         }
         break;
-    case FacebookInterface::Post: {
-        FacebookPostInterface *retn = new FacebookPostInterface(parent);
-        retn->classBegin();
-        retn->setSocialNetwork(const_cast<FacebookInterface*>(this));
-        setContentItemData(retn, data);
-        retn->componentComplete();
-        return retn;
-    }
+
+        case FacebookInterface::Post: {
+            FacebookPostInterface *retn = new FacebookPostInterface(parent);
+            retn->classBegin();
+            retn->setSocialNetwork(const_cast<FacebookInterface*>(this));
+            setContentItemData(retn, data);
+            retn->componentComplete();
+            return retn;
+        }
         break;
 
         case FacebookInterface::Unknown: {

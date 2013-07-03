@@ -36,9 +36,9 @@
 
 #include <QtCore/QString>
 #include <QtCore/QUrl>
-#include "facebookcoverinterface.h"
+#include "facebookusercoverinterface.h"
 #include "facebookobjectreferenceinterface.h"
-#include "facebookpictureinterface.h"
+#include "facebookuserpictureinterface.h"
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -65,13 +65,13 @@ class FacebookUserInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(bool verified READ verified NOTIFY verifiedChanged)
     Q_PROPERTY(QString bio READ bio NOTIFY bioChanged)
     Q_PROPERTY(QString birthday READ birthday NOTIFY birthdayChanged)
-    Q_PROPERTY(FacebookCoverInterface * cover READ cover NOTIFY coverChanged)
+    Q_PROPERTY(FacebookUserCoverInterface * cover READ cover NOTIFY coverChanged)
     Q_PROPERTY(QString email READ email NOTIFY emailChanged)
     Q_PROPERTY(FacebookObjectReferenceInterface * hometown READ hometown NOTIFY hometownChanged)
     Q_PROPERTY(FacebookUserInterface::Genders interestedIn READ interestedIn NOTIFY interestedInChanged)
     Q_PROPERTY(FacebookObjectReferenceInterface * location READ location NOTIFY locationChanged)
     Q_PROPERTY(QString political READ political NOTIFY politicalChanged)
-    Q_PROPERTY(FacebookPictureInterface * picture READ picture NOTIFY pictureChanged)
+    Q_PROPERTY(FacebookUserPictureInterface * picture READ picture NOTIFY pictureChanged)
     Q_PROPERTY(QString quotes READ quotes NOTIFY quotesChanged)
     Q_PROPERTY(FacebookUserInterface::RelationshipStatus relationshipStatus READ relationshipStatus NOTIFY relationshipStatusChanged)
     Q_PROPERTY(QString religion READ religion NOTIFY religionChanged)
@@ -131,13 +131,13 @@ public:
     bool verified() const;
     QString bio() const;
     QString birthday() const;
-    FacebookCoverInterface * cover() const;
+    FacebookUserCoverInterface * cover() const;
     QString email() const;
     FacebookObjectReferenceInterface * hometown() const;
     FacebookUserInterface::Genders interestedIn() const;
     FacebookObjectReferenceInterface * location() const;
     QString political() const;
-    FacebookPictureInterface * picture() const;
+    FacebookUserPictureInterface * picture() const;
     QString quotes() const;
     FacebookUserInterface::RelationshipStatus relationshipStatus() const;
     QString religion() const;

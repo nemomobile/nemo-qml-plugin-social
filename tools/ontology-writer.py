@@ -79,9 +79,10 @@ def generate(ontology_file, structure_file):
     name = struct.name.lower()
     keys = []
     prefix = struct.name.upper()
-    defaultKey = "#define " + formattingtools.ontologyKey("", prefix)
-    defaultKey = formattingtools.addSpaces(defaultKey, 58) + " QLatin1String(\"" + name + "\")"
-    keys.append(defaultKey)
+    if struct.identifiable:
+        defaultKey = "#define " + formattingtools.ontologyKey("", prefix)
+        defaultKey = formattingtools.addSpaces(defaultKey, 58) + " QLatin1String(\"" + name + "\")"
+        keys.append(defaultKey)
     for property in struct.ontologyProperties:
         splitted = formattingtools.split(property.name)
         key = "#define " + formattingtools.ontologyKey(splitted, prefix)

@@ -1,5 +1,5 @@
 {
-    "name": "action",
+    "name": "post_action",
     "doc": "An entry representing a action for a post",
     "identifiable": false,
     "properties": [

@@ -266,7 +266,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
 
     if (newPropertiesList != oldPropertiesList) {
         // Clear the old properties
-        foreach (FacebookPropertyInterface *property, properties) {
+        foreach (FacebookPostPropertyInterface *property, properties) {
             property->deleteLater();
         }
         properties.clear();
@@ -274,7 +274,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         // Update with the new properties data
         foreach (QVariant property, newPropertiesList) {
             QVariantMap propertyMap = property.toMap();
-            FacebookPropertyInterface *propertyInterface = new FacebookPropertyInterface(q);
+            FacebookPostPropertyInterface *propertyInterface = new FacebookPostPropertyInterface(q);
             qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(propertyInterface, propertyMap);
             properties.append(propertyInterface);
         }
@@ -289,7 +289,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
 
     if (newActionsList != oldActionsList) {
         // Clear the old actions
-        foreach (FacebookActionInterface *action, actions) {
+        foreach (FacebookPostActionInterface *action, actions) {
             action->deleteLater();
         }
         actions.clear();
@@ -297,7 +297,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         // Update with the new actions data
         foreach (QVariant action, newActionsList) {
             QVariantMap actionMap = action.toMap();
-            FacebookActionInterface *actionInterface = new FacebookActionInterface(q);
+            FacebookPostActionInterface *actionInterface = new FacebookPostActionInterface(q);
             qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(actionInterface, actionMap);
             actions.append(actionInterface);
         }
@@ -492,8 +492,8 @@ int FacebookPostInterfacePrivate::message_tags_count(QDeclarativeListProperty<Fa
     return 0;
 }
 
-void FacebookPostInterfacePrivate::properties_append(QDeclarativeListProperty<FacebookPropertyInterface> *list,
-                                                     FacebookPropertyInterface *data)
+void FacebookPostInterfacePrivate::properties_append(QDeclarativeListProperty<FacebookPostPropertyInterface> *list,
+                                                     FacebookPostPropertyInterface *data)
 {
     FacebookPostInterface *interface = qobject_cast<FacebookPostInterface *>(list->object);
     if (interface) {
@@ -502,8 +502,8 @@ void FacebookPostInterfacePrivate::properties_append(QDeclarativeListProperty<Fa
     }
 }
 
-FacebookPropertyInterface * FacebookPostInterfacePrivate::properties_at(QDeclarativeListProperty<FacebookPropertyInterface> *list,
-                                                                        int index)
+FacebookPostPropertyInterface * FacebookPostInterfacePrivate::properties_at(QDeclarativeListProperty<FacebookPostPropertyInterface> *list,
+                                                                            int index)
 {
     FacebookPostInterface *interface = qobject_cast<FacebookPostInterface *>(list->object);
     if (interface
@@ -514,18 +514,18 @@ FacebookPropertyInterface * FacebookPostInterfacePrivate::properties_at(QDeclara
     return 0;
 }
 
-void FacebookPostInterfacePrivate::properties_clear(QDeclarativeListProperty<FacebookPropertyInterface> *list)
+void FacebookPostInterfacePrivate::properties_clear(QDeclarativeListProperty<FacebookPostPropertyInterface> *list)
 {
     FacebookPostInterface *interface = qobject_cast<FacebookPostInterface *>(list->object);
     if (interface) {
-        foreach (FacebookPropertyInterface *entry, interface->d_func()->properties) {
+        foreach (FacebookPostPropertyInterface *entry, interface->d_func()->properties) {
             entry->deleteLater();
         }
         interface->d_func()->properties.clear();
     }
 }
 
-int FacebookPostInterfacePrivate::properties_count(QDeclarativeListProperty<FacebookPropertyInterface> *list)
+int FacebookPostInterfacePrivate::properties_count(QDeclarativeListProperty<FacebookPostPropertyInterface> *list)
 {
     FacebookPostInterface *interface = qobject_cast<FacebookPostInterface *>(list->object);
     if (interface) {
@@ -534,8 +534,8 @@ int FacebookPostInterfacePrivate::properties_count(QDeclarativeListProperty<Face
     return 0;
 }
 
-void FacebookPostInterfacePrivate::actions_append(QDeclarativeListProperty<FacebookActionInterface> *list,
-                                                  FacebookActionInterface *data)
+void FacebookPostInterfacePrivate::actions_append(QDeclarativeListProperty<FacebookPostActionInterface> *list,
+                                                  FacebookPostActionInterface *data)
 {
     FacebookPostInterface *interface = qobject_cast<FacebookPostInterface *>(list->object);
     if (interface) {
@@ -544,8 +544,8 @@ void FacebookPostInterfacePrivate::actions_append(QDeclarativeListProperty<Faceb
     }
 }
 
-FacebookActionInterface * FacebookPostInterfacePrivate::actions_at(QDeclarativeListProperty<FacebookActionInterface> *list,
-                                                                   int index)
+FacebookPostActionInterface * FacebookPostInterfacePrivate::actions_at(QDeclarativeListProperty<FacebookPostActionInterface> *list,
+                                                                       int index)
 {
     FacebookPostInterface *interface = qobject_cast<FacebookPostInterface *>(list->object);
     if (interface
@@ -556,18 +556,18 @@ FacebookActionInterface * FacebookPostInterfacePrivate::actions_at(QDeclarativeL
     return 0;
 }
 
-void FacebookPostInterfacePrivate::actions_clear(QDeclarativeListProperty<FacebookActionInterface> *list)
+void FacebookPostInterfacePrivate::actions_clear(QDeclarativeListProperty<FacebookPostActionInterface> *list)
 {
     FacebookPostInterface *interface = qobject_cast<FacebookPostInterface *>(list->object);
     if (interface) {
-        foreach (FacebookActionInterface *entry, interface->d_func()->actions) {
+        foreach (FacebookPostActionInterface *entry, interface->d_func()->actions) {
             entry->deleteLater();
         }
         interface->d_func()->actions.clear();
     }
 }
 
-int FacebookPostInterfacePrivate::actions_count(QDeclarativeListProperty<FacebookActionInterface> *list)
+int FacebookPostInterfacePrivate::actions_count(QDeclarativeListProperty<FacebookPostActionInterface> *list)
 {
     FacebookPostInterface *interface = qobject_cast<FacebookPostInterface *>(list->object);
     if (interface) {
@@ -916,12 +916,12 @@ QUrl FacebookPostInterface::source() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookPropertyInterface> FacebookPost::properties
+    \qmlproperty QDeclarativeListProperty<FacebookPostPropertyInterface> FacebookPost::properties
     Holds a list of properties for the attached content.
 */
-QDeclarativeListProperty<FacebookPropertyInterface> FacebookPostInterface::properties()
+QDeclarativeListProperty<FacebookPostPropertyInterface> FacebookPostInterface::properties()
 {
-    return QDeclarativeListProperty<FacebookPropertyInterface>(
+    return QDeclarativeListProperty<FacebookPostPropertyInterface>(
                 this, 0,
                 &FacebookPostInterfacePrivate::properties_append,
                 &FacebookPostInterfacePrivate::properties_count,
@@ -940,12 +940,12 @@ QUrl FacebookPostInterface::icon() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookActionInterface> FacebookPost::actions
+    \qmlproperty QDeclarativeListProperty<FacebookPostActionInterface> FacebookPost::actions
     Holds a list of actions that can be done with this post. (not generated yet)
 */
-QDeclarativeListProperty<FacebookActionInterface> FacebookPostInterface::actions()
+QDeclarativeListProperty<FacebookPostActionInterface> FacebookPostInterface::actions()
 {
-    return QDeclarativeListProperty<FacebookActionInterface>(
+    return QDeclarativeListProperty<FacebookPostActionInterface>(
                 this, 0,
                 &FacebookPostInterfacePrivate::actions_append,
                 &FacebookPostInterfacePrivate::actions_count,

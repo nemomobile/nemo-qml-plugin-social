@@ -1,46 +1,46 @@
 INCLUDEPATH += .. .
 
 HEADERS += \
+    $$PWD/facebookontology_p.h \
+    $$PWD/facebookinterface.h \
+    $$PWD/facebookinterface_p.h \
+    $$PWD/facebookobjectreferenceinterface.h \
+    $$PWD/facebookobjectreferenceinterface_p.h \
     $$PWD/facebookalbuminterface.h \
     $$PWD/facebookalbuminterface_p.h \
     $$PWD/facebookcommentinterface.h \
     $$PWD/facebookcommentinterface_p.h \
-    $$PWD/facebookinterface.h \
-    $$PWD/facebookinterface_p.h \
     $$PWD/facebooknotificationinterface.h \
     $$PWD/facebooknotificationinterface_p.h \
-    $$PWD/facebookobjectreferenceinterface.h \
-    $$PWD/facebookobjectreferenceinterface_p.h \
-    $$PWD/facebookontology_p.h \
-    $$PWD/facebooklikeinterface.h \
     $$PWD/facebookphotointerface.h \
     $$PWD/facebookphotointerface_p.h \
-    $$PWD/facebookactioninterface.h \
-    $$PWD/facebookpropertyinterface.h \
     $$PWD/facebookpostinterface.h \
     $$PWD/facebookpostinterface_p.h \
-    $$PWD/facebookpictureinterface.h \
-    $$PWD/facebooktaginterface.h \
-    $$PWD/facebooknametaginterface.h \
-    $$PWD/facebookimageinterface.h \
     $$PWD/facebookuserinterface.h \
     $$PWD/facebookuserinterface_p.h \
-    $$PWD/facebookcoverinterface.h \
+    $$PWD/facebooklikeinterface.h \
+    $$PWD/facebooknametaginterface.h \
+    $$PWD/facebookphotoimageinterface.h \
+    $$PWD/facebookphototaginterface.h \
+    $$PWD/facebookpostactioninterface.h \
+    $$PWD/facebookpostpropertyinterface.h \
+    $$PWD/facebookusercoverinterface.h \
+    $$PWD/facebookuserpictureinterface.h
 
 SOURCES += \
+    $$PWD/facebookinterface.cpp \
+    $$PWD/facebookobjectreferenceinterface.cpp \
     $$PWD/facebookalbuminterface.cpp \
     $$PWD/facebookcommentinterface.cpp \
-    $$PWD/facebookinterface.cpp \
     $$PWD/facebooknotificationinterface.cpp \
-    $$PWD/facebookobjectreferenceinterface.cpp \
-    $$PWD/facebooklikeinterface.cpp \
     $$PWD/facebookphotointerface.cpp \
-    $$PWD/facebookactioninterface.cpp \
-    $$PWD/facebookpropertyinterface.cpp \
     $$PWD/facebookpostinterface.cpp \
-    $$PWD/facebookpictureinterface.cpp \
-    $$PWD/facebooktaginterface.cpp \
-    $$PWD/facebookimageinterface.cpp \
-    $$PWD/facebooknametaginterface.cpp \
     $$PWD/facebookuserinterface.cpp \
-    $$PWD/facebookcoverinterface.cpp \
+    $$PWD/facebooklikeinterface.cpp \
+    $$PWD/facebooknametaginterface.cpp \
+    $$PWD/facebookphotoimageinterface.cpp \
+    $$PWD/facebookphototaginterface.cpp \
+    $$PWD/facebookpostactioninterface.cpp \
+    $$PWD/facebookpostpropertyinterface.cpp \
+    $$PWD/facebookusercoverinterface.cpp \
+    $$PWD/facebookuserpictureinterface.cpp

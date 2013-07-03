@@ -411,10 +411,10 @@ FacebookUserInterface::FacebookUserInterface(QObject *parent)
 {
 // <<< constructor
     Q_D(FacebookUserInterface);
-    d->cover = new FacebookCoverInterface(this);
+    d->cover = new FacebookUserCoverInterface(this);
     d->hometown = new FacebookObjectReferenceInterface(this);
     d->location = new FacebookObjectReferenceInterface(this);
-    d->picture = new FacebookPictureInterface(this);
+    d->picture = new FacebookUserPictureInterface(this);
     d->significantOther = new FacebookObjectReferenceInterface(this);
 // >>> constructor
 }
@@ -729,10 +729,10 @@ QString FacebookUserInterface::birthday() const
 }
 
 /*!
-    \qmlproperty FacebookCoverInterface * FacebookUser::cover
+    \qmlproperty FacebookUserCoverInterface * FacebookUser::cover
     Holds the cover of the user.
 */
-FacebookCoverInterface * FacebookUserInterface::cover() const
+FacebookUserCoverInterface * FacebookUserInterface::cover() const
 {
     Q_D(const FacebookUserInterface);
     return d->cover;
@@ -790,10 +790,10 @@ QString FacebookUserInterface::political() const
 }
 
 /*!
-    \qmlproperty FacebookPictureInterface * FacebookUser::picture
+    \qmlproperty FacebookUserPictureInterface * FacebookUser::picture
     Holds a reference to the picture associated with the user.
 */
-FacebookPictureInterface * FacebookUserInterface::picture() const
+FacebookUserPictureInterface * FacebookUserInterface::picture() const
 {
     Q_D(const FacebookUserInterface);
     return d->picture;

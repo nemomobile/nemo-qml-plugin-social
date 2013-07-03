@@ -29,43 +29,43 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebooktaginterface.h"
+#include "facebookphototaginterface.h"
 #include "facebookinterface.h"
 #include "facebookontology_p.h"
 #include "contentiteminterface_p.h"
 // <<< include
 // >>> include
 
-class FacebookTagInterfacePrivate: public ContentItemInterfacePrivate
+class FacebookPhotoTagInterfacePrivate: public ContentItemInterfacePrivate
 {
 public:
-    explicit FacebookTagInterfacePrivate(FacebookTagInterface *q);
+    explicit FacebookPhotoTagInterfacePrivate(FacebookPhotoTagInterface *q);
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     QString userName;
     QString text;
 private:
-    Q_DECLARE_PUBLIC(FacebookTagInterface)
+    Q_DECLARE_PUBLIC(FacebookPhotoTagInterface)
 };
 
-FacebookTagInterfacePrivate::FacebookTagInterfacePrivate(FacebookTagInterface *q)
+FacebookPhotoTagInterfacePrivate::FacebookPhotoTagInterfacePrivate(FacebookPhotoTagInterface *q)
     : ContentItemInterfacePrivate(q)
 // <<< custom
 // >>> custom
 {
 }
 
-void FacebookTagInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
-                                                            const QVariantMap &newData)
+void FacebookPhotoTagInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                                 const QVariantMap &newData)
 {
-    Q_Q(FacebookTagInterface);
-    QVariant oldUserIdentifier = oldData.value(FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER);
-    QVariant newUserIdentifier = newData.value(FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER);
-    QVariant oldX = oldData.value(FACEBOOK_ONTOLOGY_TAG_X);
-    QVariant newX = newData.value(FACEBOOK_ONTOLOGY_TAG_X);
-    QVariant oldY = oldData.value(FACEBOOK_ONTOLOGY_TAG_Y);
-    QVariant newY = newData.value(FACEBOOK_ONTOLOGY_TAG_Y);
-    QVariant oldCreatedTime = oldData.value(FACEBOOK_ONTOLOGY_TAG_CREATEDTIME);
-    QVariant newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_TAG_CREATEDTIME);
+    Q_Q(FacebookPhotoTagInterface);
+    QVariant oldUserIdentifier = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_TAG_USERIDENTIFIER);
+    QVariant newUserIdentifier = newData.value(FACEBOOK_ONTOLOGY_PHOTO_TAG_USERIDENTIFIER);
+    QVariant oldX = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_TAG_X);
+    QVariant newX = newData.value(FACEBOOK_ONTOLOGY_PHOTO_TAG_X);
+    QVariant oldY = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_TAG_Y);
+    QVariant newY = newData.value(FACEBOOK_ONTOLOGY_PHOTO_TAG_Y);
+    QVariant oldCreatedTime = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_TAG_CREATEDTIME);
+    QVariant newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_PHOTO_TAG_CREATEDTIME);
 
     if (newUserIdentifier != oldUserIdentifier)
         emit q->userIdentifierChanged();
@@ -104,12 +104,12 @@ void FacebookTagInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &o
 //-------------------------------
 
 /*!
-    \qmltype FacebookTag
-    \instantiates FacebookTagInterface
+    \qmltype FacebookPhotoTag
+    \instantiates FacebookPhotoTagInterface
     An entry representing a tag
 */
-FacebookTagInterface::FacebookTagInterface(QObject *parent)
-    : ContentItemInterface(*(new FacebookTagInterfacePrivate(this)), parent)
+FacebookPhotoTagInterface::FacebookPhotoTagInterface(QObject *parent)
+    : ContentItemInterface(*(new FacebookPhotoTagInterfacePrivate(this)), parent)
 {
 // <<< constructor
     // TODO Implement initialization of custom attributes if needed
@@ -117,51 +117,51 @@ FacebookTagInterface::FacebookTagInterface(QObject *parent)
 }
 
 /*! \reimp */
-int FacebookTagInterface::type() const
+int FacebookPhotoTagInterface::type() const
 {
-    return FacebookInterface::Tag;
+    return FacebookInterface::PhotoTag;
 }
 
 
 /*!
-    \qmlproperty QString FacebookTag::userIdentifier
+    \qmlproperty QString FacebookPhotoTag::userIdentifier
     Holds the identifier of the tagged entity
 */
-QString FacebookTagInterface::userIdentifier() const
+QString FacebookPhotoTagInterface::userIdentifier() const
 {
-    Q_D(const FacebookTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_TAG_USERIDENTIFIER).toString();
+    Q_D(const FacebookPhotoTagInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_USERIDENTIFIER).toString();
 }
 
 /*!
-    \qmlproperty QString FacebookTag::userName
+    \qmlproperty QString FacebookPhotoTag::userName
     Holds the name of the tagged entity
 */
-QString FacebookTagInterface::userName() const
+QString FacebookPhotoTagInterface::userName() const
 {
-    Q_D(const FacebookTagInterface);
+    Q_D(const FacebookPhotoTagInterface);
     return d->userName;
 }
 
 /*!
-    \qmlproperty QString FacebookTag::text
+    \qmlproperty QString FacebookPhotoTag::text
     Holds text that is used to tag something
 */
-QString FacebookTagInterface::text() const
+QString FacebookPhotoTagInterface::text() const
 {
-    Q_D(const FacebookTagInterface);
+    Q_D(const FacebookPhotoTagInterface);
     return d->text;
 }
 
 /*!
-    \qmlproperty float FacebookTag::x
+    \qmlproperty float FacebookPhotoTag::x
     Holds the x position of the tagged entity or text in the photo.
     This coordinate is a percentage from the left edge of the photo.
 */
-float FacebookTagInterface::x() const
+float FacebookPhotoTagInterface::x() const
 {
-    Q_D(const FacebookTagInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_TAG_X).toString();
+    Q_D(const FacebookPhotoTagInterface);
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_X).toString();
     bool ok;
     float number = numberString.toFloat(&ok);
     if (ok) {
@@ -171,14 +171,14 @@ float FacebookTagInterface::x() const
 }
 
 /*!
-    \qmlproperty float FacebookTag::y
+    \qmlproperty float FacebookPhotoTag::y
     Holds the y position of the tagged entity or text in the photo.
     This coordinate is a percentage from the top edge of the photo.
 */
-float FacebookTagInterface::y() const
+float FacebookPhotoTagInterface::y() const
 {
-    Q_D(const FacebookTagInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_TAG_Y).toString();
+    Q_D(const FacebookPhotoTagInterface);
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_Y).toString();
     bool ok;
     float number = numberString.toFloat(&ok);
     if (ok) {
@@ -188,12 +188,12 @@ float FacebookTagInterface::y() const
 }
 
 /*!
-    \qmlproperty QString FacebookTag::createdTime
+    \qmlproperty QString FacebookPhotoTag::createdTime
     Holds the creation time of the tag in an ISO8601-formatted string.
 */
-QString FacebookTagInterface::createdTime() const
+QString FacebookPhotoTagInterface::createdTime() const
 {
-    Q_D(const FacebookTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_TAG_CREATEDTIME).toString();
+    Q_D(const FacebookPhotoTagInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_CREATEDTIME).toString();
 }
 
