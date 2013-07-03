@@ -84,8 +84,8 @@ QVariant FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(const QString &key, const QVarian
 FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
     : SocialNetworkInterfacePrivate(q)
     , currentUserIdentifier(FACEBOOK_ME)
-    , prepending(false)
-    , appending(false)
+    , prependingRelatedData(false)
+    , appendingRelatedData(false)
     , internalStatus(Idle)
     , currentReply(0)
 {
@@ -131,14 +131,19 @@ int FacebookInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
         }
     }
 
-    qWarning() << Q_FUNC_INFO << "No type information available in object metadata - attempting to heuristically detect type";
-    if (data.value(FACEBOOK_ONTOLOGY_COMMENT_MESSAGE).isValid() && data.value(FACEBOOK_ONTOLOGY_COMMENT_LIKECOUNT).isValid())
+    qWarning() << Q_FUNC_INFO << "No type information available in object metadata - "\
+                                 "attempting to heuristically detect type";
+    if (data.value(FACEBOOK_ONTOLOGY_COMMENT_MESSAGE).isValid()
+        && data.value(FACEBOOK_ONTOLOGY_COMMENT_LIKECOUNT).isValid())
         return FacebookInterface::Comment;
-    else if (data.value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).isValid() && data.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).isValid())
+    else if (data.value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).isValid()
+             && data.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).isValid())
         return FacebookInterface::Album;
-    else if (data.value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).isValid() && data.value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).isValid())
+    else if (data.value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).isValid()
+             && data.value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).isValid())
         return FacebookInterface::Photo;
-    else if (data.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).isValid() || data.value(FACEBOOK_ONTOLOGY_USER_GENDER).isValid())
+    else if (data.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).isValid()
+             || data.value(FACEBOOK_ONTOLOGY_USER_GENDER).isValid())
         return FacebookInterface::User;
     else if (data.value(FACEBOOK_ONTOLOGY_POST_ACTIONS).isValid() && data.value(FACEBOOK_ONTOLOGY_POST_POSTTYPE).isValid())
         return FacebookInterface::Post;
@@ -196,38 +201,40 @@ void FacebookInterfacePrivate::populateRelatedDataForLastNode(const QVariantMap 
 
     lastNode().setExtraInfo(nodeExtra);
 
-    bool havePrevious = false;
-    bool haveNext = false;
+    bool havePreviousRelatedData = false;
+    bool haveNextRelatedData = false;
 
     foreach (QString key, nodeExtra.keys()) {
         QVariantMap paging = nodeExtra.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING).toMap();
-        havePrevious = havePrevious || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toBool();
-        haveNext = haveNext || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toBool();
+        havePreviousRelatedData = havePreviousRelatedData
+                                  || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toBool();
+        haveNextRelatedData = haveNextRelatedData
+                              || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toBool();
     }
 
-    PagingFlags pagingFlags = PagingFlags();
-    bool replacing = !prepending && !appending;
+    RelatedDataPagingFlags relatedDataPagingFlags = RelatedDataPagingFlags();
+    bool replacing = !prependingRelatedData && !appendingRelatedData;
 
-    if (havePrevious && (prepending || replacing)) {
-        pagingFlags = pagingFlags | HavePreviousFlag;
+    if (havePreviousRelatedData && (prependingRelatedData || replacing)) {
+        relatedDataPagingFlags = relatedDataPagingFlags | HavePreviousRelatedDataFlag;
     }
-    if (haveNext && (appending || replacing)) {
-        pagingFlags = pagingFlags | HaveNextFlag;
+    if (haveNextRelatedData && (appendingRelatedData || replacing)) {
+        relatedDataPagingFlags = relatedDataPagingFlags | HaveNextRelatedDataFlag;
     }
 
 
     FacebookInterfacePrivate::UpdateMode updateMode = FacebookInterfacePrivate::Replace;
-    if (prepending) {
+    if (prependingRelatedData) {
         updateMode = FacebookInterfacePrivate::Prepend;
     }
-    if (appending) {
+    if (appendingRelatedData) {
         updateMode = FacebookInterfacePrivate::Append;
     }
 
-    prepending = false;
-    appending = false;
+    prependingRelatedData = false;
+    appendingRelatedData = false;
 
-    insertContent(relatedContent, pagingFlags, updateMode);
+    insertContent(relatedContent, relatedDataPagingFlags, updateMode);
     setStatus(SocialNetworkInterface::Idle);
 }
 
@@ -243,8 +250,8 @@ QUrl FacebookInterfacePrivate::requestUrl(const QString &objectId, const QString
     if (!whichFields.isEmpty())
         queryItems.append(qMakePair<QString, QString>(QLatin1String("fields"), joinedFields));
     QStringList extraDataKeys = extraData.keys();
-    foreach (const QString &edk, extraDataKeys)
-        queryItems.append(qMakePair<QString, QString>(edk, extraData.value(edk).toString()));
+    foreach (const QString &key, extraDataKeys)
+        queryItems.append(qMakePair<QString, QString>(key, extraData.value(key).toString()));
 
     QUrl returnedUrl;
     returnedUrl.setScheme("https");
@@ -276,19 +283,21 @@ QNetworkReply *FacebookInterfacePrivate::uploadImage(const QString &objectId,
     QNetworkRequest request;
     QUrl url("https://graph.facebook.com");
     QString path = objectId;
-    if (!extraPath.isEmpty())
+    if (!extraPath.isEmpty()) {
         path += QLatin1String("/") + extraPath;
+    }
     url.setPath(path);
     request.setUrl(url);
 
     QString multipartBoundary = QLatin1String("-------Sska2129ifcalksmqq3");
     QString filePath = data.value("source").toUrl().toLocalFile();
     QString mimeType = QLatin1String("image/jpeg");
-    if (filePath.endsWith("png"))
+    if (filePath.endsWith("png")) {
         mimeType = QLatin1String("image/png"); // XXX TODO: more mimetypes?  better way to do this?
+    }
 
     QFile f(filePath, q);
-    if(!f.open(QIODevice::ReadOnly)){
+    if(!f.open(QIODevice::ReadOnly)) {
         qWarning() << Q_FUNC_INFO << "Error opening image file:" << filePath;
         return 0;
     }
@@ -347,8 +356,10 @@ void FacebookInterfacePrivate::connectFinishedAndErrors()
 {
     Q_Q(FacebookInterface);
     QObject::connect(currentReply, SIGNAL(finished()), q, SLOT(finishedHandler()));
-    QObject::connect(currentReply, SIGNAL(error(QNetworkReply::NetworkError)), q, SLOT(errorHandler(QNetworkReply::NetworkError)));
-    QObject::connect(currentReply, SIGNAL(sslErrors(QList<QSslError>)), q, SLOT(sslErrorsHandler(QList<QSslError>)));
+    QObject::connect(currentReply, SIGNAL(error(QNetworkReply::NetworkError)),
+                     q, SLOT(errorHandler(QNetworkReply::NetworkError)));
+    QObject::connect(currentReply, SIGNAL(sslErrors(QList<QSslError>)),
+                     q, SLOT(sslErrorsHandler(QList<QSslError>)));
 }
 
 /*! \internal */
@@ -413,9 +424,11 @@ void FacebookInterfacePrivate::finishedHandler()
         QVariantMap errMap = responseData.value(QLatin1String("error")).toMap();
         QStringList keys = errMap.keys();
         foreach (const QString &key, keys) {
-            errorResponse += QLatin1String("\n        ") + key + QLatin1String("=") + errMap.value(key).toString();
+            errorResponse += QLatin1String("\n        ")
+                             + key + QLatin1String("=") + errMap.value(key).toString();
         }
-        qWarning() << Q_FUNC_INFO << "error response:" << errorResponse << "while getting:" << requestUrl.toString();
+        qWarning() << Q_FUNC_INFO << "error response:" << errorResponse
+                   << "while getting:" << requestUrl.toString();
 
         setError(SocialNetworkInterface::RequestError,
                  QLatin1String("Error populating node: response is error.  Response: ")
@@ -443,7 +456,7 @@ void FacebookInterfacePrivate::finishedHandler()
             q->populateRelatedDataforLastNode();
         }
         break;
-    case PopulatingNodeModelData:
+    case PopulatingNodeRelatedData:
         populateRelatedDataForLastNode(responseData, requestUrl);
         break;
 
@@ -471,14 +484,14 @@ void FacebookInterfacePrivate::errorHandler(QNetworkReply::NetworkError networkE
 }
 
 /*! \internal */
-void FacebookInterfacePrivate::sslErrorsHandler(const QList<QSslError> &errs)
+void FacebookInterfacePrivate::sslErrorsHandler(const QList<QSslError> &sslErrors)
 {
     QString newErrorMessage = QLatin1String("SSL error: ");
-    if (errs.isEmpty()) {
+    if (sslErrors.isEmpty()) {
         newErrorMessage += QLatin1String("unknown SSL error");
     } else {
-        foreach (const QSslError &sslE, errs)
-            newErrorMessage += sslE.errorString() + QLatin1String("; ");
+        foreach (const QSslError &error, sslErrors)
+            newErrorMessage += error.errorString() + QLatin1String("; ");
         newErrorMessage.chop(2);
     }
 
@@ -566,31 +579,31 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
                     = pagingMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS).toMap();
 
             // If it is using cursors, we should build a nice cursor query
-            QVariantMap data;
+            QVariantMap extraData;
             QVariantMap paging;
             paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS,
                           pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS));
             paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT,
                           pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT));
-            data.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING, paging);
+            extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING, paging);
 
             if (cursorsMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER)) {
                 QVariantMap next;
                 next.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER,
                             cursorsMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER).toString());
-                data.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, next);
+                extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, next);
             }
 
             if (cursorsMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE)) {
                 QVariantMap previous;
                 previous.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE,
                                 cursorsMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE).toString());
-                data.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, previous);
+                extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, previous);
             }
-            nodeExtra.insert(QString::number(type), data);
+            nodeExtra.insert(QString::number(type), extraData);
         } else {
             // If not, we should parse the next and previous url and extract relevant data
-            QVariantMap data;
+            QVariantMap extraData;
             QUrl previousUrl = QUrl(pagingMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toString());
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
@@ -609,7 +622,7 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
                 }
             }
             if (!previous.isEmpty()) {
-                data.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, previous);
+                extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, previous);
             }
 
 
@@ -629,7 +642,7 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
                 }
             }
             if (!next.isEmpty()) {
-                data.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, next);
+                extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, next);
             }
 
             // Let's guess previous and next in paging
@@ -638,14 +651,14 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
 
             if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS)) {
                 hasPrevious = true;
-                if (prepending && list.isEmpty()) {
+                if (prependingRelatedData && list.isEmpty()) {
                     hasPrevious = false;
                 }
             }
 
             if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT)) {
                 hasNext = true;
-                if (prepending && list.isEmpty()) {
+                if (prependingRelatedData && list.isEmpty()) {
                     hasNext = false;
                 }
             }
@@ -654,10 +667,10 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(const QVariantMap &relat
             paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, hasPrevious);
             paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, hasNext);
 
-            data.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING, paging);
+            extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING, paging);
 
 
-            nodeExtra.insert(QString::number(type), data);
+            nodeExtra.insert(QString::number(type), extraData);
         }
     }
 
@@ -932,7 +945,10 @@ void FacebookInterface::setAccessToken(const QString &token)
 }
 
 /*! \reimp */
-QNetworkReply *FacebookInterface::getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData)
+QNetworkReply *FacebookInterface::getRequest(const QString &objectIdentifier,
+                                             const QString &extraPath,
+                                             const QStringList &whichFields,
+                                             const QVariantMap &extraData)
 {
     Q_D(FacebookInterface);
     if (!isInitialized()) {
@@ -946,7 +962,9 @@ QNetworkReply *FacebookInterface::getRequest(const QString &objectIdentifier, co
 }
 
 /*! \reimp */
-QNetworkReply *FacebookInterface::postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData)
+QNetworkReply *FacebookInterface::postRequest(const QString &objectIdentifier,
+                                              const QString &extraPath, const QVariantMap &data,
+                                              const QVariantMap &extraData)
 {
     Q_D(FacebookInterface);
     if (!isInitialized()) {
@@ -987,7 +1005,9 @@ QNetworkReply *FacebookInterface::postRequest(const QString &objectIdentifier, c
 }
 
 /*! \reimp */
-QNetworkReply *FacebookInterface::deleteRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &extraData)
+QNetworkReply *FacebookInterface::deleteRequest(const QString &objectIdentifier,
+                                                const QString &extraPath,
+                                                const QVariantMap &extraData)
 {
     Q_D(FacebookInterface);
     if (!isInitialized()) {
@@ -995,7 +1015,10 @@ QNetworkReply *FacebookInterface::deleteRequest(const QString &objectIdentifier,
         return 0;
     }
 
-    return d->networkAccessManager->deleteResource(QNetworkRequest(d->requestUrl(objectIdentifier, extraPath, QStringList(), extraData)));
+    return d->networkAccessManager->deleteResource(QNetworkRequest(d->requestUrl(objectIdentifier,
+                                                                                 extraPath,
+                                                                                 QStringList(),
+                                                                                 extraData)));
 }
 
 /*! \reimp */
@@ -1018,7 +1041,7 @@ QString FacebookInterface::currentUserIdentifier() const
     return d->currentUserIdentifier;
 }
 
-void FacebookInterface::loadNext()
+void FacebookInterface::loadNextRelatedData()
 {
     Q_D(FacebookInterface);
     switch (status()) {
@@ -1036,7 +1059,7 @@ void FacebookInterface::loadNext()
         break;
     }
 
-    if (!hasNext()) {
+    if (!hasNextRelatedData()) {
         return;
     }
 
@@ -1055,12 +1078,12 @@ void FacebookInterface::loadNext()
         }
     }
 
-    d->appending = true;
+    d->appendingRelatedData = true;
     d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
                                  requestFieldsMap);
 }
 
-void FacebookInterface::loadPrevious()
+void FacebookInterface::loadPreviousRelatedData()
 {
     Q_D(FacebookInterface);
     switch (status()) {
@@ -1078,7 +1101,7 @@ void FacebookInterface::loadPrevious()
         break;
     }
 
-    if (!hasPrevious()) {
+    if (!hasPreviousRelatedData()) {
         return;
     }
 
@@ -1097,7 +1120,7 @@ void FacebookInterface::loadPrevious()
         }
     }
 
-    d->appending = true;
+    d->appendingRelatedData = true;
     d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
                                  requestFieldsMap);
 
@@ -1226,7 +1249,7 @@ void FacebookInterface::populateRelatedDataforLastNode()
         d->setError(SocialNetworkInterface::DataUpdateError,
                     QLatin1String("Cannot perform related data request"));
     } else {
-        d->internalStatus = FacebookInterfacePrivate::PopulatingNodeModelData;
+        d->internalStatus = FacebookInterfacePrivate::PopulatingNodeRelatedData;
     }
 }
 
@@ -1256,7 +1279,9 @@ void FacebookInterface::updateCurrentUserIdentifier()
 }
 
 /*! \internal */
-FacebookObjectReferenceInterface *FacebookInterface::objectReference(QObject *parent, int type, QString identifier, QString name)
+FacebookObjectReferenceInterface *FacebookInterface::objectReference(QObject *parent, int type,
+                                                                     QString identifier,
+                                                                     QString name)
 {
     // constructs a FacebookObjectReference which will be exposed as a Q_PROPERTY
     // of some content item which requires it (eg, significantOther, etc).
@@ -1266,11 +1291,12 @@ FacebookObjectReferenceInterface *FacebookInterface::objectReference(QObject *pa
     data.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, identifier);
     data.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, name);
 
-    FacebookObjectReferenceInterface *fori = new FacebookObjectReferenceInterface(parent);
-    fori->classBegin();
-    setContentItemData(fori, data);
-    fori->componentComplete();
-    return fori;
+    FacebookObjectReferenceInterface *facebookObjectReference
+            = new FacebookObjectReferenceInterface(parent);
+    facebookObjectReference->classBegin();
+    setContentItemData(facebookObjectReference, data);
+    facebookObjectReference->componentComplete();
+    return facebookObjectReference;
 }
 
 /*! \internal */
@@ -1280,7 +1306,8 @@ QVariantMap FacebookInterface::facebookContentItemData(ContentItemInterface *con
 }
 
 /*! \internal */
-void FacebookInterface::setFacebookContentItemData(ContentItemInterface *contentItem, const QVariantMap &data)
+void FacebookInterface::setFacebookContentItemData(ContentItemInterface *contentItem,
+                                                   const QVariantMap &data)
 {
     // TODO: Using FacebookInterface, that have many friends, to call a private method
     // seems to be wrong. There should be a pretty way to change an object, and

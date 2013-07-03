@@ -87,10 +87,10 @@ public:
         m_internalState = PopulateModelData;
         m_timer->start(500);
     }
-    bool publicDeleteLastNode()
+    void publicDeleteLastNode()
     {
         Q_D(SocialNetworkInterface);
-        return d->publicDeleteLastNode();
+        d->publicDeleteLastNode();
     }
 
 private:
@@ -211,7 +211,7 @@ private slots:
 
         // We remove the last node to test if the cache got
         // cleared as well
-        QCOMPARE(sni->publicDeleteLastNode() == true, true);
+        sni->publicDeleteLastNode();
         QCOMPARE(sni->publicNodeStack().isEmpty() == true, true);
         QCOMPARE(sni->publicCache().isEmpty() == true, true);
 
@@ -268,21 +268,21 @@ private slots:
         // Now we should have 2 nodes, with identical model data
         // Check the refcount of these model data
         const Node &node1 = sni->publicNodeStack().at(0);
-        foreach (CacheEntry entry, node1.data()) {
+        foreach (CacheEntry entry, node1.relatedData()) {
             QCOMPARE(entry.refcount(), 2);
         }
         const Node &node2 = sni->publicNodeStack().at(1);
-        foreach (CacheEntry entry, node2.data()) {
+        foreach (CacheEntry entry, node2.relatedData()) {
             QCOMPARE(entry.refcount(), 2);
         }
 
         // Remove one node and check if the cache entry associated to the second
         // node got derefed
-        QCOMPARE(sni->publicDeleteLastNode() == true, true);
+        sni->publicDeleteLastNode();
         QCOMPARE(sni->publicCache().contains(identifier2) == false, true);
 
         // Remove the second node, and everything should be removed
-        QCOMPARE(sni->publicDeleteLastNode() == true, true);
+        sni->publicDeleteLastNode();
         QCOMPARE(sni->publicNodeStack().isEmpty() == true, true);
         QCOMPARE(sni->publicCache().isEmpty() == true, true);
         sni->deleteLater();

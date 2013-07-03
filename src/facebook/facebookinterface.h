@@ -99,8 +99,8 @@ Q_SIGNALS:
     void accessTokenChanged();
     void currentUserIdentifierChanged();
 public:
-    Q_INVOKABLE void loadNext();
-    Q_INVOKABLE void loadPrevious();
+    Q_INVOKABLE void loadNextRelatedData();
+    Q_INVOKABLE void loadPreviousRelatedData();
 protected:
     QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply *postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
@@ -114,7 +114,8 @@ protected:
     // private API for all Facebook adapters to use
 private:
     void updateCurrentUserIdentifier();
-    FacebookObjectReferenceInterface *objectReference(QObject *parent, int type, QString identifier, QString name);
+    FacebookObjectReferenceInterface *objectReference(QObject *parent, int type,
+                                                      QString identifier, QString name);
     QVariantMap facebookContentItemData(ContentItemInterface *contentItem);
     void setFacebookContentItemData(ContentItemInterface *contentItem, const QVariantMap &data);
     friend class FacebookObjectReferenceInterface;

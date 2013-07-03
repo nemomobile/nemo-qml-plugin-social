@@ -76,8 +76,8 @@ class SocialNetworkInterface : public QAbstractListModel, public QDeclarativePar
                NOTIFY relevanceCriteriaChanged)
     Q_PROPERTY(bool hasPreviousNode READ hasPreviousNode NOTIFY hasPreviousNodeChanged)
     Q_PROPERTY(bool hasNextNode READ hasNextNode NOTIFY hasNextNodeChanged)
-    Q_PROPERTY(bool hasPrevious READ hasPrevious NOTIFY hasPreviousChanged)
-    Q_PROPERTY(bool hasNext READ hasNext NOTIFY hasNextChanged)
+    Q_PROPERTY(bool hasPreviousRelatedData READ hasPreviousRelatedData NOTIFY hasPreviousRelatedDataChanged)
+    Q_PROPERTY(bool hasNextRelatedData READ hasNextRelatedData NOTIFY hasRelatedDataNextChanged)
     Q_PROPERTY(QDeclarativeListProperty<FilterInterface> filters READ filters)
     Q_PROPERTY(QDeclarativeListProperty<SorterInterface> sorters READ sorters)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
@@ -143,8 +143,8 @@ public:
     Q_INVOKABLE void previousNode();
     Q_INVOKABLE void popNode();
     Q_INVOKABLE QObject *relatedItem(int index) const;
-    Q_INVOKABLE virtual void loadNext();
-    Q_INVOKABLE virtual void loadPrevious();
+    Q_INVOKABLE virtual void loadNextRelatedData();
+    Q_INVOKABLE virtual void loadPreviousRelatedData();
 
     // Property accessors.
     Status status() const;
@@ -156,8 +156,8 @@ public:
     QVariantMap relevanceCriteria() const;
     bool hasPreviousNode() const;
     bool hasNextNode() const;
-    bool hasPrevious() const;
-    bool hasNext() const;
+    bool hasPreviousRelatedData() const;
+    bool hasNextRelatedData() const;
     QDeclarativeListProperty<FilterInterface> filters();
     QDeclarativeListProperty<SorterInterface> sorters();
     int count() const;
@@ -176,8 +176,8 @@ Q_SIGNALS:
     void relevanceCriteriaChanged();
     void hasPreviousNodeChanged();
     void hasNextNodeChanged();
-    void hasPreviousChanged();
-    void hasNextChanged();
+    void hasPreviousRelatedDataChanged();
+    void hasRelatedDataNextChanged();
     void countChanged();
 
 public:

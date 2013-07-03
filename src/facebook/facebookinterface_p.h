@@ -57,16 +57,15 @@ public:
     QString accessToken;
     QString currentUserIdentifier;
 
-    bool prepending;
-    bool appending;
+    bool prependingRelatedData;
+    bool appendingRelatedData;
 
     enum InternalStatus {
+        // Maybe other entries will come, like PopulatingNodeModelAdditionalData
         Idle = 0,
         PopulatingNodeData,
         PopulatingNodeAdditionalData,
-        PopulatingNodeModelData//,
-        //PopulatingUnseenNode,
-        //Other
+        PopulatingNodeRelatedData
     };
     InternalStatus internalStatus; // used for state machine in reply finished.
 
@@ -86,7 +85,7 @@ public:
     void updateCurrentUserIdentifierHandler(bool isError, const QVariantMap &data);
     void finishedHandler();
     void errorHandler(QNetworkReply::NetworkError networkError);
-    void sslErrorsHandler(const QList<QSslError> &errs);
+    void sslErrorsHandler(const QList<QSslError> &sslErrors);
     void deleteReply();
 
 public:

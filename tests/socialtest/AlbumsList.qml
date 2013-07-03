@@ -67,8 +67,8 @@ Item {
             height: childrenRect.height
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: facebook.hasNext ? "Load more" : "Cannot load more"
-                onClicked: facebook.loadNext()
+                text: facebook.hasNextRelatedData ? "Load more" : "Cannot load more"
+                onClicked: facebook.loadNextRelatedData()
             }
         }
         delegate: ButtonBackground {

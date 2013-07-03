@@ -113,9 +113,9 @@ struct NodePrivate: public QSharedData
     CacheEntry cacheEntry;
     // A list of cache entries, that represents the data displayed in the model
     // for this node
-    QList<CacheEntry> data;
-    bool hasPrevious;
-    bool hasNext;
+    QList<CacheEntry> relatedData;
+    bool hasPreviousRelatedData;
+    bool hasNextRelatedData;
     // A set of extra informations, used to store, for example, cursors or
     // indexes for next and previous
     QVariantMap extraInfo;
@@ -135,12 +135,12 @@ public:
     QSet<FilterInterface *> filters() const;
     CacheEntry cacheEntry() const;
     void setCacheEntry(const CacheEntry &cacheEntry);
-    QList<CacheEntry> data() const;
-    void setData(const QList<CacheEntry> &data);
+    QList<CacheEntry> relatedData() const;
+    void setRelatedData(const QList<CacheEntry> &relatedData);
     void setFilters(const QSet<FilterInterface *> &filters);
-    bool hasPrevious() const;
-    bool hasNext() const;
-    void setPreviousAndNext(bool hasPrevious, bool hasNext);
+    bool hasPreviousRelatedData() const;
+    bool hasNextRelatedData() const;
+    void setHavePreviousAndNextRelatedData(bool hasPreviousRelatedData, bool hasNextRelatedData);
     QVariantMap extraInfo() const;
     void setExtraInfo(const QVariantMap &extraInfo);
 protected:
@@ -192,11 +192,11 @@ public:
         Prepend,
         Resort
     };
-    enum PagingFlag {
-        HaveNextFlag = 0x1,
-        HavePreviousFlag = 0x2
+    enum RelatedDataPagingFlag {
+        HaveNextRelatedDataFlag = 0x1,
+        HavePreviousRelatedDataFlag = 0x2
     };
-    Q_DECLARE_FLAGS(PagingFlags, PagingFlag)
+    Q_DECLARE_FLAGS(RelatedDataPagingFlags, RelatedDataPagingFlag)
 
     explicit SocialNetworkInterfacePrivate(SocialNetworkInterface *q);
     virtual ~SocialNetworkInterfacePrivate();
@@ -211,7 +211,8 @@ public:
 
     // Display helpers
     bool atLastNode() const;
-    void insertContent(const QList<CacheEntry> &newData, PagingFlags pagingFlags,
+    void insertContent(const QList<CacheEntry> &newData,
+                       RelatedDataPagingFlags relatedDataPagingFlags,
                        UpdateMode updateMode = Replace);
     void updateNodePositionStatus();
     void updateRelatedData();
@@ -239,8 +240,8 @@ private:
     QList<CacheEntry> internalData;
     bool hasPreviousNode;
     bool hasNextNode;
-    bool hasPrevious;
-    bool hasNext;
+    bool hasPreviousRelatedData;
+    bool hasNextRelatedData;
 
     static QHash<int, QByteArray> roleNames();
 
@@ -267,13 +268,13 @@ private:
 
     Node currentNode() const;
     void checkCacheEntryRefcount(const CacheEntry &entry);
-    bool deleteLastNode();
+    void deleteLastNode();
 
     // Slots
     void itemDataChangedHandler();
 
     // Display helpers
-    void updateNextAndPrevious();
+    void updateHavePreviousAndNextRelatedData();
 
     // Arbitrary request handler
     ArbitraryRequestHandler *arbitraryRequestHandler;
@@ -299,9 +300,9 @@ public:
     {
         return filters;
     }
-    inline bool publicDeleteLastNode()
+    inline void publicDeleteLastNode()
     {
-        return deleteLastNode();
+        deleteLastNode();
     }
 
 #endif
@@ -309,6 +310,6 @@ private:
     Q_DECLARE_PUBLIC(SocialNetworkInterface)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(SocialNetworkInterfacePrivate::PagingFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(SocialNetworkInterfacePrivate::RelatedDataPagingFlags)
 
 #endif // SOCIALNETWORKINTERFACE_P_H
