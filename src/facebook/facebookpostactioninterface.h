@@ -29,55 +29,44 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-import QtQuick 1.1
-import org.nemomobile.social 1.0
+#ifndef FACEBOOKPOSTACTIONINTERFACE_H
+#define FACEBOOKPOSTACTIONINTERFACE_H
 
-Item {
-    id: container
-    property alias model: view.model
-    signal backClicked
-    anchors.fill: parent
+#include "contentiteminterface.h"
 
-    Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " notifications" : ""
-    }
+#include <QtCore/QString>
 
-    Button {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
-    }
+/*
+ * NOTE: if you construct one of these in C++ directly,
+ * you MUST call classBegin() and componentCompleted()
+ * directly after construction.
+ */
 
-    ListView {
-        id: view
-        clip: true
-        anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        delegate: Item {
-            width: view.width
-            height: column.height + 20
-            Column {
-                id: column
-                anchors.left: parent.left; anchors.leftMargin: 10
-                anchors.right: parent.right; anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
+/*
+ * NOTE: this is an unidentifiable content item which
+ * is read only and only creatable by the top level
+ * FacebookInterface.
+ */
 
-                Text {
-                    text: "From: " + model.contentItem.from.objectName
-                }
-                Text {
-                    anchors.left: parent.left; anchors.right: parent.right
-                    wrapMode: Text.WordWrap
-                    text: "Title: " + model.contentItem.title
-                }
-            }
-        }
-    }
-}
+class FacebookPostActionInterfacePrivate;
+class FacebookPostActionInterface: public ContentItemInterface
+{
+    Q_OBJECT
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString link READ link NOTIFY linkChanged)
+public:
+    explicit FacebookPostActionInterface(QObject *parent = 0);
+
+    // Overrides.
+    int type() const;
+    // Accessors
+    QString name() const;
+    QString link() const;
+Q_SIGNALS:
+    void nameChanged();
+    void linkChanged();
+private:
+    Q_DECLARE_PRIVATE(FacebookPostActionInterface)
+};
+
+#endif // FACEBOOKPOSTACTIONINTERFACE_H

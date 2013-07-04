@@ -45,30 +45,30 @@ public:
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     FacebookInterfacePrivate::FacebookAction action;
     FacebookObjectReferenceInterface *from;
-    QList<FacebookTagInterface *> tags;
+    QList<FacebookPhotoTagInterface *> tags;
     QList<FacebookNameTagInterface *> nameTags;
-    QList<FacebookImageInterface *> images;
+    QList<FacebookPhotoImageInterface *> images;
     bool liked;
 private:
     Q_DECLARE_PUBLIC(FacebookPhotoInterface)
-    static void tags_append(QDeclarativeListProperty<FacebookTagInterface> *list,
-                            FacebookTagInterface *data);
-    static FacebookTagInterface * tags_at(QDeclarativeListProperty<FacebookTagInterface> *list,
-                                          int index);
-    static void tags_clear(QDeclarativeListProperty<FacebookTagInterface> *list);
-    static int tags_count(QDeclarativeListProperty<FacebookTagInterface> *list);
+    static void tags_append(QDeclarativeListProperty<FacebookPhotoTagInterface> *list,
+                            FacebookPhotoTagInterface *data);
+    static FacebookPhotoTagInterface * tags_at(QDeclarativeListProperty<FacebookPhotoTagInterface> *list,
+                                               int index);
+    static void tags_clear(QDeclarativeListProperty<FacebookPhotoTagInterface> *list);
+    static int tags_count(QDeclarativeListProperty<FacebookPhotoTagInterface> *list);
     static void name_tags_append(QDeclarativeListProperty<FacebookNameTagInterface> *list,
                                  FacebookNameTagInterface *data);
     static FacebookNameTagInterface * name_tags_at(QDeclarativeListProperty<FacebookNameTagInterface> *list,
                                                    int index);
     static void name_tags_clear(QDeclarativeListProperty<FacebookNameTagInterface> *list);
     static int name_tags_count(QDeclarativeListProperty<FacebookNameTagInterface> *list);
-    static void images_append(QDeclarativeListProperty<FacebookImageInterface> *list,
-                              FacebookImageInterface *data);
-    static FacebookImageInterface * images_at(QDeclarativeListProperty<FacebookImageInterface> *list,
-                                              int index);
-    static void images_clear(QDeclarativeListProperty<FacebookImageInterface> *list);
-    static int images_count(QDeclarativeListProperty<FacebookImageInterface> *list);
+    static void images_append(QDeclarativeListProperty<FacebookPhotoImageInterface> *list,
+                              FacebookPhotoImageInterface *data);
+    static FacebookPhotoImageInterface * images_at(QDeclarativeListProperty<FacebookPhotoImageInterface> *list,
+                                                   int index);
+    static void images_clear(QDeclarativeListProperty<FacebookPhotoImageInterface> *list);
+    static int images_count(QDeclarativeListProperty<FacebookPhotoImageInterface> *list);
 private:
     int pendingTagToRemoveIndex;
 };

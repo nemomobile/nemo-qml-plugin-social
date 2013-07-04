@@ -29,12 +29,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKIMAGEINTERFACE_H
-#define FACEBOOKIMAGEINTERFACE_H
+#ifndef FACEBOOKPOSTPROPERTYINTERFACE_H
+#define FACEBOOKPOSTPROPERTYINTERFACE_H
 
 #include "contentiteminterface.h"
 
-#include <QtCore/QUrl>
+#include <QtCore/QString>
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -48,28 +48,25 @@
  * FacebookInterface.
  */
 
-class FacebookImageInterfacePrivate;
-class FacebookImageInterface: public ContentItemInterface
+class FacebookPostPropertyInterfacePrivate;
+class FacebookPostPropertyInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
-    Q_PROPERTY(int width READ width NOTIFY widthChanged)
-    Q_PROPERTY(int height READ height NOTIFY heightChanged)
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString text READ text NOTIFY textChanged)
 public:
-    explicit FacebookImageInterface(QObject *parent = 0);
+    explicit FacebookPostPropertyInterface(QObject *parent = 0);
 
     // Overrides.
     int type() const;
     // Accessors
-    QUrl source() const;
-    int width() const;
-    int height() const;
+    QString name() const;
+    QString text() const;
 Q_SIGNALS:
-    void sourceChanged();
-    void widthChanged();
-    void heightChanged();
+    void nameChanged();
+    void textChanged();
 private:
-    Q_DECLARE_PRIVATE(FacebookImageInterface)
+    Q_DECLARE_PRIVATE(FacebookPostPropertyInterface)
 };
 
-#endif // FACEBOOKIMAGEINTERFACE_H
+#endif // FACEBOOKPOSTPROPERTYINTERFACE_H

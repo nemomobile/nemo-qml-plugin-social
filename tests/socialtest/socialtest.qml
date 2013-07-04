@@ -82,6 +82,12 @@ Item {
         case 5:
             facebook.filters = [ facebook.commentsFilter ]
             break
+        case 6:
+            facebook.filters = [ facebook.feedFilter ]
+            break
+        case 7:
+            facebook.filters = [ facebook.commentsFilter ]
+            break
         }
         whichActive = which
     }
@@ -95,6 +101,7 @@ Item {
         property QtObject albumsFilter:        ContentItemTypeFilter { type: Facebook.Album }
         property QtObject photosFilter:        ContentItemTypeFilter { type: Facebook.Photo }
         property QtObject commentsFilter:      ContentItemTypeFilter { type: Facebook.Comment }
+        property QtObject feedFilter:          ContentItemTypeFilter { type: Facebook.Post }
     }
 
 
@@ -104,6 +111,10 @@ Item {
         visible: whichActive == 0
         anchors.fill: parent
         model: ListModel {
+            ListElement {
+                text: "Show posts"
+                which: 6
+            }
             ListElement {
                 text: "Show notifications"
                 which: 1
@@ -136,6 +147,28 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    PostList {
+        id: postList
+        visible: whichActive == 6
+        model: visible ? facebook : null
+        onBackClicked: makeActive(0, facebook.currentUserIdentifier)
+        onPostClicked: {
+            postCommmentList.backPostId = model.node.identifier
+            makeActive(7, postId)
+        }
+    }
+
+    PostCommentsList {
+        id: postCommmentList
+        property string backPostId
+        visible: whichActive == 7
+        model: visible ? facebook : null
+        onBackClicked: {
+            makeActive(6, backPostId) // back to photos page
+            facebook.nodeIdentifier = backPostId // shouldn't need this... force
         }
     }
 

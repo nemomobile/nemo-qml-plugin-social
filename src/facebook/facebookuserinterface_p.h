@@ -44,11 +44,11 @@ public:
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     FacebookInterfacePrivate::FacebookAction action;
     FacebookUserInterface::Gender gender;
-    FacebookCoverInterface *cover;
+    FacebookUserCoverInterface *cover;
     FacebookObjectReferenceInterface *hometown;
     FacebookUserInterface::Genders interestedIn;
     FacebookObjectReferenceInterface *location;
-    FacebookPictureInterface *picture;
+    FacebookUserPictureInterface *picture;
     FacebookUserInterface::RelationshipStatus relationshipStatus;
     FacebookObjectReferenceInterface *significantOther;
 private:

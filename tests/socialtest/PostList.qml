@@ -34,15 +34,16 @@ import org.nemomobile.social 1.0
 
 Item {
     id: container
+    anchors.fill: parent
     property alias model: view.model
     signal backClicked
-    anchors.fill: parent
+    signal postClicked(string postId)
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " notifications" : ""
+        text: model != null ? "There is " + model.count + " posts" : ""
     }
 
     Button {
@@ -60,11 +61,14 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
-        delegate: Item {
+        delegate: ButtonBackground {
             width: view.width
             height: column.height + 20
+            onClicked: container.postClicked(model.contentItem.identifier)
             Column {
                 id: column
+                property string message: model.contentItem.message
+                property string story: model.contentItem.story
                 anchors.left: parent.left; anchors.leftMargin: 10
                 anchors.right: parent.right; anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
@@ -74,8 +78,9 @@ Item {
                 }
                 Text {
                     anchors.left: parent.left; anchors.right: parent.right
+                    text: column.message != "" ? column.message
+                                               : (column.story != "" ? column.story : "<No text>")
                     wrapMode: Text.WordWrap
-                    text: "Title: " + model.contentItem.title
                 }
             }
         }

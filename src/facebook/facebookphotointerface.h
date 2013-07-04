@@ -42,10 +42,10 @@
 #endif
 #include <QtCore/QString>
 #include "facebookobjectreferenceinterface.h"
-#include "facebooktaginterface.h"
+#include "facebookphototaginterface.h"
 #include "facebooknametaginterface.h"
 #include <QtCore/QUrl>
-#include "facebookimageinterface.h"
+#include "facebookphotoimageinterface.h"
 #include <QtCore/QVariantMap>
 
 /*
@@ -60,7 +60,7 @@ class FacebookPhotoInterface: public IdentifiableContentItemInterface
     Q_OBJECT
     Q_PROPERTY(QString albumIdentifier READ albumIdentifier NOTIFY albumIdentifierChanged)
     Q_PROPERTY(FacebookObjectReferenceInterface * from READ from NOTIFY fromChanged)
-    Q_PROPERTY(QDeclarativeListProperty<FacebookTagInterface> tags READ tags NOTIFY tagsChanged)
+    Q_PROPERTY(QDeclarativeListProperty<FacebookPhotoTagInterface> tags READ tags NOTIFY tagsChanged)
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
     Q_PROPERTY(QDeclarativeListProperty<FacebookNameTagInterface> nameTags READ nameTags NOTIFY nameTagsChanged)
     Q_PROPERTY(QUrl icon READ icon NOTIFY iconChanged)
@@ -68,7 +68,7 @@ class FacebookPhotoInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
     Q_PROPERTY(int height READ height NOTIFY heightChanged)
     Q_PROPERTY(int width READ width NOTIFY widthChanged)
-    Q_PROPERTY(QDeclarativeListProperty<FacebookImageInterface> images READ images NOTIFY imagesChanged)
+    Q_PROPERTY(QDeclarativeListProperty<FacebookPhotoImageInterface> images READ images NOTIFY imagesChanged)
     Q_PROPERTY(QUrl link READ link NOTIFY linkChanged)
     Q_PROPERTY(QVariantMap place READ place NOTIFY placeChanged)
     Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
@@ -96,7 +96,7 @@ public:
     // Accessors
     QString albumIdentifier() const;
     FacebookObjectReferenceInterface * from() const;
-    QDeclarativeListProperty<FacebookTagInterface> tags();
+    QDeclarativeListProperty<FacebookPhotoTagInterface> tags();
     QString name() const;
     QDeclarativeListProperty<FacebookNameTagInterface> nameTags();
     QUrl icon() const;
@@ -104,7 +104,7 @@ public:
     QUrl source() const;
     int height() const;
     int width() const;
-    QDeclarativeListProperty<FacebookImageInterface> images();
+    QDeclarativeListProperty<FacebookPhotoImageInterface> images();
     QUrl link() const;
     QVariantMap place() const;
     QString createdTime() const;

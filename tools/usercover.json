@@ -1,5 +1,5 @@
 {
-    "name": "cover",
+    "name": "user_cover",
     "doc": "The cover of an user",
     "identifiable": false,
     "properties": [

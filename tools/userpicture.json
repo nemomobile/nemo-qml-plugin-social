@@ -1,5 +1,5 @@
 {
-    "name": "picture",
+    "name": "user_picture",
     "doc": "An entry representing a picture",
     "identifiable": false,
     "properties": [

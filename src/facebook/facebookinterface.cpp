@@ -39,15 +39,15 @@
 #include "identifiablecontentiteminterface.h"
 #include "contentitemtypefilterinterface.h"
 
-#include "facebookcommentinterface.h"
-#include "facebookphotointerface.h"
-#include "facebookalbuminterface.h"
-#include "facebookuserinterface.h"
-#include "facebooklikeinterface.h"
 #include "facebookobjectreferenceinterface.h"
-#include "facebookpictureinterface.h"
-#include "facebooktaginterface.h"
+#include "facebookalbuminterface.h"
+#include "facebookcommentinterface.h"
 #include "facebooknotificationinterface.h"
+#include "facebookphotointerface.h"
+#include "facebookpostinterface.h"
+#include "facebookuserinterface.h"
+
+#include "facebooklikeinterface.h"
 
 #include "util_p.h"
 
@@ -100,20 +100,25 @@ int FacebookInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
 {
     // attempt to detect the type directly from the Facebook metadata field
     if (data.contains(FACEBOOK_ONTOLOGY_METADATA)
-            && data.value(FACEBOOK_ONTOLOGY_METADATA).type() == QVariant::Map
-            && !data.value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString().isEmpty()) {
-        QString typeStr = data.value(FACEBOOK_ONTOLOGY_METADATA).toMap().value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString();
-        if (typeStr == FACEBOOK_ONTOLOGY_USER)
-            return FacebookInterface::User;
-        else if (typeStr == FACEBOOK_ONTOLOGY_ALBUM)
-            return FacebookInterface::Album;
-        else if (typeStr == FACEBOOK_ONTOLOGY_COMMENT)
-            return FacebookInterface::Comment;
-        else if (typeStr == FACEBOOK_ONTOLOGY_PHOTO)
-            return FacebookInterface::Photo;
+            && data.value(FACEBOOK_ONTOLOGY_METADATA).type() == QVariant::Map) {
 
-        qWarning() << Q_FUNC_INFO << "Unsupported type:" << typeStr;
-        return FacebookInterface::Unknown;
+        QVariantMap metadata = data.value(FACEBOOK_ONTOLOGY_METADATA).toMap();
+        if (!metadata.value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString().isEmpty()) {
+
+            QString typeStr = metadata.value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString();
+            if (typeStr == FACEBOOK_ONTOLOGY_USER)
+                return FacebookInterface::User;
+            else if (typeStr == FACEBOOK_ONTOLOGY_ALBUM)
+                return FacebookInterface::Album;
+            else if (typeStr == FACEBOOK_ONTOLOGY_COMMENT)
+                return FacebookInterface::Comment;
+            else if (typeStr == FACEBOOK_ONTOLOGY_PHOTO)
+                return FacebookInterface::Photo;
+            else if (typeStr == FACEBOOK_ONTOLOGY_POST)
+                return FacebookInterface::Post;
+            qWarning() << Q_FUNC_INFO << "Unsupported type:" << typeStr;
+            return FacebookInterface::Unknown;
+        }
     }
 
     // it's possible that we've already tagged the type already
@@ -133,6 +138,8 @@ int FacebookInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
         return FacebookInterface::Photo;
     else if (data.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).isValid() || data.value(FACEBOOK_ONTOLOGY_USER_GENDER).isValid())
         return FacebookInterface::User;
+    else if (data.value(FACEBOOK_ONTOLOGY_POST_ACTIONS).isValid() && data.value(FACEBOOK_ONTOLOGY_POST_POSTTYPE).isValid())
+        return FacebookInterface::Post;
 
     qWarning() << Q_FUNC_INFO << "Unable to heuristically detect type!";
     foreach (const QString &datakey, data.keys())
@@ -737,32 +744,27 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
             case FacebookInterface::Photo: {
                 connectionTypes << FacebookInterface::Like
                                 << FacebookInterface::Comment
-                                << FacebookInterface::Picture
-                                << FacebookInterface::Tag;
+                                << FacebookInterface::PhotoTag;
                 connectionWhichFields << QStringList()
                                       << QStringList()
-                                      << QStringList()
                                       << QStringList();
-                connectionLimits << -1 << -1 << -1 << -1;
+                connectionLimits << -1 << -1 << -1;
             }
             break;
 
             case FacebookInterface::Album: {
                 connectionTypes << FacebookInterface::Like
                                 << FacebookInterface::Comment
-                                << FacebookInterface::Picture
                                 << FacebookInterface::Photo;
                 connectionWhichFields << QStringList()
                                       << QStringList()
-                                      << QStringList()
                                       << QStringList();
-                connectionLimits << -1 << -1 << -1 << -1;
+                connectionLimits << -1 << -1 << -1;
             }
             break;
 
             case FacebookInterface::User: {
                 connectionTypes << FacebookInterface::Like
-                                << FacebookInterface::Picture
                                 << FacebookInterface::Photo
                                 << FacebookInterface::Album
                                 << FacebookInterface::Notification
@@ -771,9 +773,8 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
                                       << QStringList()
                                       << QStringList()
                                       << QStringList()
-                                      << QStringList()
                                       << QStringList();
-                connectionLimits << -1 << -1 << -1 << -1 << -1 << -1;
+                connectionLimits << -1 << -1 << -1 << -1 << -1;
             }
             break;
 
@@ -839,8 +840,7 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
                 case FacebookInterface::Unknown:         qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: NotInitialized";  break;
                 case FacebookInterface::ObjectReference: qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter: ObjectReference"; break;
                 case FacebookInterface::Like:     addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);    break;
-                case FacebookInterface::Tag:      addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS);     break;
-                case FacebookInterface::Picture:  addExtra = false; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_PICTURE);  break;
+                case FacebookInterface::PhotoTag:      addExtra = true;  append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS);     break;
                 case FacebookInterface::Location: addExtra = true; append = false; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_LOCATIONS); break; // not supported?
                 case FacebookInterface::Comment:  addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS); break;
                 case FacebookInterface::User:     addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS);  break; // subscriptions etc?
@@ -848,6 +848,7 @@ void FacebookInterface::retrieveRelatedContent(IdentifiableContentItemInterface 
                 case FacebookInterface::Photo:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS);   break;
                 case FacebookInterface::Event:    addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_EVENTS);   break;
                 case FacebookInterface::Notification: addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS);   break;
+                case FacebookInterface::Post: addExtra = true; append = true; totalFieldsQuery.append(FACEBOOK_ONTOLOGY_CONNECTIONS_FEED);   break;
                 default: break;
             }
 
@@ -961,7 +962,7 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
             } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS)) {
                 FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Comment);
             } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS)) {
-                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Tag);
+                FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::PhotoTag);
             } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS)) {
                 FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(relatedData, FacebookInterface::Photo);
             } else if (reqPath.endsWith(FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS)) {
@@ -981,7 +982,7 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
             FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(commentsObject, FacebookInterface::Comment);
         } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS) {
             QVariantMap tagsObject = relatedData.value(key).toMap();
-            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(tagsObject, FacebookInterface::Tag);
+            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(tagsObject, FacebookInterface::PhotoTag);
         } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS) {
             QVariantMap photosObject = relatedData.value(key).toMap();
             FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(photosObject, FacebookInterface::Photo);
@@ -995,6 +996,9 @@ qWarning() << "        " << key << " = " << FACEBOOK_DEBUG_VALUE_STRING_FROM_DAT
         } else if (key == FACEBOOK_ONTOLOGY_METADATA_PAGING) {
             QVariantMap pagingObject = relatedData.value(key).toMap();
             continuationRequestUri = pagingObject.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toString();
+        } else if (key == FACEBOOK_ONTOLOGY_CONNECTIONS_FEED) {
+            QVariantMap feedObject = relatedData.value(key).toMap();
+            FACEBOOK_CREATE_UNCACHED_ENTRY_FROM_DATA(feedObject, FacebookInterface::Post);
         } else if (key == FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER
                 || key == FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTPICTURE) {
             // can ignore this data - it's for the current node, which we already know.
@@ -1189,6 +1193,16 @@ ContentItemInterface *FacebookInterface::contentItemFromData(QObject *parent, co
         }
         break;
 
+        case FacebookInterface::Post: {
+            FacebookPostInterface *retn = new FacebookPostInterface(parent);
+            retn->classBegin();
+            retn->setSocialNetwork(const_cast<FacebookInterface*>(this));
+            setContentItemData(retn, data);
+            retn->componentComplete();
+            return retn;
+        }
+        break;
+
         case FacebookInterface::Unknown: {
             qWarning() << Q_FUNC_INFO << "Unable to detect the type of the content item";
             IdentifiableContentItemInterface *retn = new IdentifiableContentItemInterface(parent);
@@ -1217,7 +1231,7 @@ void FacebookInterface::updateCurrentUserIdentifier()
     QVariantMap queryItems;
     queryItems.insert(QLatin1String("access_token"), d->accessToken);
     queryItems.insert(QLatin1String("fields"), QLatin1String("id"));
-    arbitraryRequest(SocialNetworkInterface::Get, QLatin1String("https://graph.facebook.com/me"),
+    arbitraryRequest(SocialNetworkInterface::GetRequest, QLatin1String("https://graph.facebook.com/me"),
                      queryItems);
     connect(this, SIGNAL(arbitraryRequestResponseReceived(bool,QVariantMap)),
             this, SLOT(updateCurrentUserIdentifierHandler(bool,QVariantMap)));
