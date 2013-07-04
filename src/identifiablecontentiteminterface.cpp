@@ -288,8 +288,15 @@ void IdentifiableContentItemInterfacePrivate::reloadHandler()
     if (!ok)
         responseData.insert("response", replyData);
     if (ok && !responseData.value("id").toString().isEmpty()) {
-        if (data() != responseData)
-            setData(responseData);
+        // We should merge new data, replacing old data with new one
+        // but keeping missing data (if the new data do not have everything)
+        if (data() != responseData) {
+            QVariantMap currentData = data();
+            foreach (QString key, responseData.keys()) {
+                currentData.insert(key, responseData.value(key));
+            }
+            setData(currentData);
+        }
         status = SocialNetworkInterface::Idle;
         emit q->statusChanged();
         emit q->responseReceived(responseData);

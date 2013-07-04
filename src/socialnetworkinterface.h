@@ -74,6 +74,10 @@ class SocialNetworkInterface : public QAbstractListModel, public QDeclarativePar
     Q_PROPERTY(IdentifiableContentItemInterface *node READ node NOTIFY nodeChanged)
     Q_PROPERTY(QVariantMap relevanceCriteria READ relevanceCriteria WRITE setRelevanceCriteria
                NOTIFY relevanceCriteriaChanged)
+    Q_PROPERTY(bool hasPreviousNode READ hasPreviousNode NOTIFY hasPreviousNodeChanged)
+    Q_PROPERTY(bool hasNextNode READ hasNextNode NOTIFY hasNextNodeChanged)
+    Q_PROPERTY(bool hasPreviousRelatedData READ hasPreviousRelatedData NOTIFY hasPreviousRelatedDataChanged)
+    Q_PROPERTY(bool hasNextRelatedData READ hasNextRelatedData NOTIFY hasRelatedDataNextChanged)
     Q_PROPERTY(QDeclarativeListProperty<FilterInterface> filters READ filters)
     Q_PROPERTY(QDeclarativeListProperty<SorterInterface> sorters READ sorters)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
@@ -132,13 +136,15 @@ public:
     int rowCount(const QModelIndex &index = QModelIndex()) const;
     int columnCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
     // Invokable api.
-    Q_INVOKABLE virtual void populate(); // count/startIndex?
+    Q_INVOKABLE void populate();
     Q_INVOKABLE void nextNode();
     Q_INVOKABLE void previousNode();
+    Q_INVOKABLE void popNode();
     Q_INVOKABLE QObject *relatedItem(int index) const;
+    Q_INVOKABLE virtual void loadNextRelatedData();
+    Q_INVOKABLE virtual void loadPreviousRelatedData();
 
     // Property accessors.
     Status status() const;
@@ -148,6 +154,10 @@ public:
     QString nodeIdentifier() const;
     IdentifiableContentItemInterface *node() const;
     QVariantMap relevanceCriteria() const;
+    bool hasPreviousNode() const;
+    bool hasNextNode() const;
+    bool hasPreviousRelatedData() const;
+    bool hasNextRelatedData() const;
     QDeclarativeListProperty<FilterInterface> filters();
     QDeclarativeListProperty<SorterInterface> sorters();
     int count() const;
@@ -164,6 +174,10 @@ Q_SIGNALS:
     void nodeIdentifierChanged();
     void nodeChanged();
     void relevanceCriteriaChanged();
+    void hasPreviousNodeChanged();
+    void hasNextNodeChanged();
+    void hasPreviousRelatedDataChanged();
+    void hasRelatedDataNextChanged();
     void countChanged();
 
 public:
@@ -175,6 +189,8 @@ Q_SIGNALS:
 
 protected:
     SocialNetworkInterface(SocialNetworkInterfacePrivate &dd, QObject *parent = 0);
+    bool isInitialized() const;
+    bool event(QEvent *e);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QHash<int, QByteArray> roleNames() const;
@@ -194,19 +210,20 @@ protected:
     // Virtual methods
     virtual QString dataSection(int type, const QVariantMap &data) const;
     virtual ContentItemInterface *contentItemFromData(QObject *parent, const QVariantMap &data) const;
-    virtual void updateInternalData(QList<CacheEntry*> data);                         // model data, requires filter/sort/dataChanged()
-    virtual void populateDataForNode(IdentifiableContentItemInterface *currentNode);  // requires d->populateCache() + updateInternalData()
-    virtual void populateDataForNode(const QString &unseenNodeIdentifier);            // requires d->pushNode(), d->populateCache(),
-                                                                                      //     and then updateInternalData()
+    virtual QList<CacheEntry> sortedData(const QList<CacheEntry> &data);
+    virtual void populateDataForLastNode();
+    virtual void populateRelatedDataforLastNode();
+    virtual bool validateCacheEntryForLastNode(const QVariantMap &cacheEntryData);
     QScopedPointer<SocialNetworkInterfacePrivate> d_ptr;
     friend class IdentifiableContentItemInterfacePrivate;
-
-private:
-    bool isInitialized() const; // TODO: This might be exported as a public method
-    QList<CacheEntry*> internalData() const;       // this is the model data, which is set via updateInternalData().
     friend class ContentItemInterface;
     friend class ContentItemInterfacePrivate;
+
+private:
     Q_DECLARE_PRIVATE(SocialNetworkInterface)
+    Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler(QObject*))
+    Q_PRIVATE_SLOT(d_func(), void sorterDestroyedHandler(QObject*))
+    Q_PRIVATE_SLOT(d_func(), void itemDataChangedHandler())
 };
 
 #endif // SOCIALNETWORKINTERFACE_H

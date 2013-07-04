@@ -22,8 +22,6 @@ lessThan(QT_MAJOR_VERSION, 5) {
 
 equals(QT_MAJOR_VERSION, 5): DEFINES += QT_VERSION_5
 
-include(facebook/facebook.pri)
-
 SOURCES += \
     $$PWD/plugin.cpp \
     $$PWD/contentiteminterface.cpp \
@@ -38,14 +36,14 @@ HEADERS += \
     $$PWD/contentiteminterface_p.h \
     $$PWD/contentitemtypefilterinterface.h \
     $$PWD/filterinterface.h \
-    $$PWD/filterinterface_p.h \
     $$PWD/identifiablecontentiteminterface.h \
     $$PWD/identifiablecontentiteminterface_p.h \
     $$PWD/socialnetworkinterface.h \
     $$PWD/socialnetworkinterface_p.h \
     $$PWD/sorterinterface.h \
-    $$PWD/sorterinterface_p.h \
     $$PWD/util_p.h
+
+include(facebook/facebook.pri)
 
 OTHER_FILES += qmldir social.qdoc social.qdocconf
 

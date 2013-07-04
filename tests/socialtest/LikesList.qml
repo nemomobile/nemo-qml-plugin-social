@@ -29,15 +29,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
+import QtQuick 1.1
+import org.nemomobile.social 1.0
 
-#ifndef FILTERINTERFACE_P_H
-#define FILTERINTERFACE_P_H
+Item {
+    id: container
+    anchors.fill: parent
+    property alias model: view.model
+    signal backClicked
 
-class FilterInterfacePrivate
-{
-public:
-    FilterInterfacePrivate();
-    bool ownedBySocialNetworkInterface;
-};
+    Text {
+        id: topLabel
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: model != null ? "There are " + model.count + " likes" : ""
+    }
 
-#endif // FILTERINTERFACE_P_H
+    Button {
+        id: backButton
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: "Back"
+        onClicked: container.backClicked()
+    }
+
+    ListView {
+        id: view
+        clip: true
+        anchors.top: topLabel.bottom
+        anchors.bottom: backButton.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        delegate: Item {
+            width: view.width
+            height: 50
+
+            Text {
+                anchors.centerIn: parent
+                text: model.contentItem.userName
+            }
+        }
+    }
+}

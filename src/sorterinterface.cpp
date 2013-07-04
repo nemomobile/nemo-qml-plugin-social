@@ -30,19 +30,10 @@
  */
 
 #include "sorterinterface.h"
-#include "sorterinterface_p.h"
-
 #include "contentiteminterface.h"
 
-SorterInterfacePrivate::SorterInterfacePrivate()
-    : ownedBySocialNetworkInterface(false)
-{
-}
-
-// ------------------------------ SorterInterface
-
 SorterInterface::SorterInterface(QObject *parent)
-    : QObject(parent), d_ptr(new SorterInterfacePrivate)
+    : QObject(parent)
 {
 }
 
@@ -51,13 +42,16 @@ SorterInterface::~SorterInterface()
 }
 
 // The default sorting algorithm is to sort by type.
-bool SorterInterface::firstLessThanSecond(ContentItemInterface *first, ContentItemInterface *second) const
+bool SorterInterface::firstLessThanSecond(const QVariantMap &first, const QVariantMap &second) const
 {
-    if (!first && second)
-        return true;
+    if (first.empty() && !second.empty()) {
+         return true;
+    }
 
-    if (!second)
-        return false;
+    if (second.empty()) {
+         return false;
+    }
 
-    return first->type() < second->type();
+    return first.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt()
+           < second.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
 }
