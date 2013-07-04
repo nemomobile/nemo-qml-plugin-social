@@ -47,6 +47,13 @@
 #define FACEBOOK_ONTOLOGY_METADATA_TYPE                    QLatin1String("type")
 #define FACEBOOK_ONTOLOGY_METADATA_ID                      QLatin1String("id")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING                  QLatin1String("paging")
+#define FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS          QLatin1String("cursors")
+#define FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE   QLatin1String("before")
+#define FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER    QLatin1String("after")
+#define FACEBOOK_ONTOLOGY_METADATA_PAGING_SINCE            QLatin1String("since")
+#define FACEBOOK_ONTOLOGY_METADATA_PAGING_UNTIL            QLatin1String("until")
+#define FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET           QLatin1String("offset")
+#define FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS         QLatin1String("previous")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT             QLatin1String("next")
 #define FACEBOOK_ONTOLOGY_METADATA_DATA                    QLatin1String("data")
 // >>> metadata

@@ -98,25 +98,24 @@ public:
 Q_SIGNALS:
     void accessTokenChanged();
     void currentUserIdentifierChanged();
-
-    // SocialNetworkInterface
 public:
-    void componentComplete();
-    Q_INVOKABLE void populate();
+    Q_INVOKABLE void loadNextRelatedData();
+    Q_INVOKABLE void loadPreviousRelatedData();
 protected:
     QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply *postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply *deleteRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &extraData);
     QString dataSection(int type, const QVariantMap &data) const;
-    void updateInternalData(QList<CacheEntry*> data);
-    void populateDataForNode(IdentifiableContentItemInterface *currentNode);
-    void populateDataForNode(const QString &unseenNodeIdentifier);
     ContentItemInterface *contentItemFromData(QObject *parent, const QVariantMap &data) const;
+    void populateDataForLastNode();
+    void populateRelatedDataforLastNode();
+    bool validateCacheEntryForLastNode(const QVariantMap &cacheEntryData);
 
     // private API for all Facebook adapters to use
 private:
     void updateCurrentUserIdentifier();
-    FacebookObjectReferenceInterface *objectReference(QObject *parent, int type, QString identifier, QString name);
+    FacebookObjectReferenceInterface *objectReference(QObject *parent, int type,
+                                                      QString identifier, QString name);
     QVariantMap facebookContentItemData(ContentItemInterface *contentItem);
     void setFacebookContentItemData(ContentItemInterface *contentItem, const QVariantMap &data);
     friend class FacebookObjectReferenceInterface;
@@ -132,8 +131,7 @@ private:
     void retrieveRelatedContent(IdentifiableContentItemInterface *whichNode);
     void continuePopulateDataForUnseenNode(const QVariantMap &nodeData);
     void continuePopulateDataForSeenNode(const QVariantMap &nodeData, const QUrl &requestUrl);
-
-    // private data.
+    // private data
 private:
     Q_DECLARE_PRIVATE(FacebookInterface)
     Q_PRIVATE_SLOT(d_func(), void finishedHandler())

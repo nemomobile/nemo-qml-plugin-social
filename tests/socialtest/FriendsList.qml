@@ -60,6 +60,15 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
+        footer: Item {
+            width: view.width
+            height: childrenRect.height
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: facebook.hasNextRelatedData ? "Load more" : "Cannot load more"
+                onClicked: facebook.loadNextRelatedData()
+            }
+        }
 
         delegate: Item {
             width: view.width
