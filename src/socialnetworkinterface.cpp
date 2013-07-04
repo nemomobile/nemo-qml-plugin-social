@@ -117,11 +117,11 @@ bool ArbitraryRequestHandler::request(SocialNetworkInterface::RequestType reques
 #endif
     QNetworkReply *arbitraryRequestReply = 0;
     switch (requestType) {
-    case SocialNetworkInterface::Post:
+    case SocialNetworkInterface::PostRequest:
         arbitraryRequestReply = networkAccessManager->post(QNetworkRequest(url),
                                            QByteArray::fromBase64(postData.toLatin1()));
         break;
-    case SocialNetworkInterface::Delete:
+    case SocialNetworkInterface::DeleteRequest:
         arbitraryRequestReply = networkAccessManager->deleteResource(QNetworkRequest(url));
         break;
     default:

@@ -62,13 +62,16 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
-        delegate: MouseArea {
-            id: albumDelegate
-            onClicked: container.albumClicked(model.contentItem.identifier)
+        delegate: ButtonBackground {
             width: view.width
-            height: childrenRect.height
+            height: column.height + 20
+            onClicked: container.albumClicked(model.contentItem.identifier)
             Column {
-                width: parent.width
+                id: column
+                anchors.left: parent.left; anchors.leftMargin: 10
+                anchors.right: parent.right; anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+
                 Text {
                     text: "Name: " + model.contentItem.name
                 }

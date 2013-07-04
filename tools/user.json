@@ -83,7 +83,7 @@
         },
         {
             "name": "cover",
-            "type": "FacebookCoverInterface",
+            "type": "FacebookUserCoverInterface",
             "is_pointer": true,
             "doc": "Holds the cover of the user."
         },
@@ -117,7 +117,7 @@
         },
         {
             "name": "picture",
-            "type": "FacebookPictureInterface",
+            "type": "FacebookUserPictureInterface",
             "is_pointer": true,
             "doc": "Holds a reference to the picture associated with the user."
         },

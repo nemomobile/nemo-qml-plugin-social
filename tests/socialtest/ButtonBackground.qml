@@ -29,47 +29,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKCOVERINTERFACE_H
-#define FACEBOOKCOVERINTERFACE_H
+import QtQuick 1.1
 
-#include "contentiteminterface.h"
+Rectangle {
+    id: container
+    signal clicked()
+    width: 200
+    height: 60
+    color: !mouseArea.pressed ? "white" : "#DCDCDC"
 
-#include <QtCore/QString>
-
-/*
- * NOTE: if you construct one of these in C++ directly,
- * you MUST call classBegin() and componentCompleted()
- * directly after construction.
- */
-
-/*
- * NOTE: this is an unidentifiable content item which
- * is read only and only creatable by the top level
- * FacebookInterface.
- */
-
-class FacebookCoverInterfacePrivate;
-class FacebookCoverInterface: public ContentItemInterface
-{
-    Q_OBJECT
-    Q_PROPERTY(QString photoIdentifier READ photoIdentifier NOTIFY photoIdentifierChanged)
-    Q_PROPERTY(QString source READ source NOTIFY sourceChanged)
-    Q_PROPERTY(int offsetY READ offsetY NOTIFY offsetYChanged)
-public:
-    explicit FacebookCoverInterface(QObject *parent = 0);
-
-    // Overrides.
-    int type() const;
-    // Accessors
-    QString photoIdentifier() const;
-    QString source() const;
-    int offsetY() const;
-Q_SIGNALS:
-    void photoIdentifierChanged();
-    void sourceChanged();
-    void offsetYChanged();
-private:
-    Q_DECLARE_PRIVATE(FacebookCoverInterface)
-};
-
-#endif // FACEBOOKCOVERINTERFACE_H
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        onClicked: container.clicked()
+    }
+}

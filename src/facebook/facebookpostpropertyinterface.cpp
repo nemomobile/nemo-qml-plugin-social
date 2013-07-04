@@ -29,40 +29,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "facebookpictureinterface.h"
+#include "facebookpostpropertyinterface.h"
 #include "facebookinterface.h"
 #include "facebookontology_p.h"
 #include "contentiteminterface_p.h"
 // <<< include
 // >>> include
 
-class FacebookPictureInterfacePrivate: public ContentItemInterfacePrivate
+class FacebookPostPropertyInterfacePrivate: public ContentItemInterfacePrivate
 {
 public:
-    explicit FacebookPictureInterfacePrivate(FacebookPictureInterface *q);
+    explicit FacebookPostPropertyInterfacePrivate(FacebookPostPropertyInterface *q);
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
 private:
-    Q_DECLARE_PUBLIC(FacebookPictureInterface)
+    Q_DECLARE_PUBLIC(FacebookPostPropertyInterface)
 };
 
-FacebookPictureInterfacePrivate::FacebookPictureInterfacePrivate(FacebookPictureInterface *q)
+FacebookPostPropertyInterfacePrivate::FacebookPostPropertyInterfacePrivate(FacebookPostPropertyInterface *q)
     : ContentItemInterfacePrivate(q)
 {
 }
 
-void FacebookPictureInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
-                                                                const QVariantMap &newData)
+void FacebookPostPropertyInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
+                                                                     const QVariantMap &newData)
 {
-    Q_Q(FacebookPictureInterface);
-    QVariant oldSource = oldData.value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE);
-    QVariant newSource = newData.value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE);
-    QVariant oldIsSilhouette = oldData.value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE);
-    QVariant newIsSilhouette = newData.value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE);
+    Q_Q(FacebookPostPropertyInterface);
+    QVariant oldName = oldData.value(FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME);
+    QVariant newName = newData.value(FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME);
+    QVariant oldText = oldData.value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT);
+    QVariant newText = newData.value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT);
 
-    if (newSource != oldSource)
-        emit q->sourceChanged();
-    if (newIsSilhouette != oldIsSilhouette)
-        emit q->isSilhouetteChanged();
+    if (newName != oldName)
+        emit q->nameChanged();
+    if (newText != oldText)
+        emit q->textChanged();
 
     // Call super class implementation
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
@@ -71,39 +71,39 @@ void FacebookPictureInterfacePrivate::emitPropertyChangeSignals(const QVariantMa
 //-------------------------------
 
 /*!
-    \qmltype FacebookPicture
-    \instantiates FacebookPictureInterface
-    An entry representing a picture
+    \qmltype FacebookPostProperty
+    \instantiates FacebookPostPropertyInterface
+    An entry representing a property for a post
 */
-FacebookPictureInterface::FacebookPictureInterface(QObject *parent)
-    : ContentItemInterface(*(new FacebookPictureInterfacePrivate(this)), parent)
+FacebookPostPropertyInterface::FacebookPostPropertyInterface(QObject *parent)
+    : ContentItemInterface(*(new FacebookPostPropertyInterfacePrivate(this)), parent)
 {
 }
 
 /*! \reimp */
-int FacebookPictureInterface::type() const
+int FacebookPostPropertyInterface::type() const
 {
-    return FacebookInterface::Picture;
+    return FacebookInterface::PostProperty;
 }
 
 
 /*!
-    \qmlproperty QUrl FacebookPicture::source
-    Holds the url to the image source of the picture.
+    \qmlproperty QString FacebookPostProperty::name
+    Holds the name of the property
 */
-QUrl FacebookPictureInterface::source() const
+QString FacebookPostPropertyInterface::name() const
 {
-    Q_D(const FacebookPictureInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PICTURE_SOURCE).toString());
+    Q_D(const FacebookPostPropertyInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME).toString();
 }
 
 /*!
-    \qmlproperty bool FacebookPicture::isSilhouette
-    Whether the picture is a default, anonymous silhouette image.
+    \qmlproperty QString FacebookPostProperty::text
+    Holds the text contained in the property
 */
-bool FacebookPictureInterface::isSilhouette() const
+QString FacebookPostPropertyInterface::text() const
 {
-    Q_D(const FacebookPictureInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PICTURE_ISSILHOUETTE).toString() == QLatin1String("true");
+    Q_D(const FacebookPostPropertyInterface);
+    return d->data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT).toString();
 }
 

@@ -1,5 +1,5 @@
 {
-    "name": "image",
+    "name": "photo_image",
     "doc": "An entry representing a image size for a photo",
     "identifiable": false,
     "properties": [

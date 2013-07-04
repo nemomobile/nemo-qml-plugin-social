@@ -29,55 +29,44 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-import QtQuick 1.1
-import org.nemomobile.social 1.0
+#ifndef FACEBOOKUSERPICTUREINTERFACE_H
+#define FACEBOOKUSERPICTUREINTERFACE_H
 
-Item {
-    id: container
-    property alias model: view.model
-    signal backClicked
-    anchors.fill: parent
+#include "contentiteminterface.h"
 
-    Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " notifications" : ""
-    }
+#include <QtCore/QUrl>
 
-    Button {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
-    }
+/*
+ * NOTE: if you construct one of these in C++ directly,
+ * you MUST call classBegin() and componentCompleted()
+ * directly after construction.
+ */
 
-    ListView {
-        id: view
-        clip: true
-        anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        delegate: Item {
-            width: view.width
-            height: column.height + 20
-            Column {
-                id: column
-                anchors.left: parent.left; anchors.leftMargin: 10
-                anchors.right: parent.right; anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
+/*
+ * NOTE: this is an unidentifiable content item which
+ * is read only and only creatable by the top level
+ * FacebookInterface.
+ */
 
-                Text {
-                    text: "From: " + model.contentItem.from.objectName
-                }
-                Text {
-                    anchors.left: parent.left; anchors.right: parent.right
-                    wrapMode: Text.WordWrap
-                    text: "Title: " + model.contentItem.title
-                }
-            }
-        }
-    }
-}
+class FacebookUserPictureInterfacePrivate;
+class FacebookUserPictureInterface: public ContentItemInterface
+{
+    Q_OBJECT
+    Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
+    Q_PROPERTY(bool isSilhouette READ isSilhouette NOTIFY isSilhouetteChanged)
+public:
+    explicit FacebookUserPictureInterface(QObject *parent = 0);
+
+    // Overrides.
+    int type() const;
+    // Accessors
+    QUrl source() const;
+    bool isSilhouette() const;
+Q_SIGNALS:
+    void sourceChanged();
+    void isSilhouetteChanged();
+private:
+    Q_DECLARE_PRIVATE(FacebookUserPictureInterface)
+};
+
+#endif // FACEBOOKUSERPICTUREINTERFACE_H

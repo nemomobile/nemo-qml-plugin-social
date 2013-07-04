@@ -38,17 +38,7 @@
 #include <QtCore/QString>
 
 class QNetworkReply;
-
-class FacebookAlbumInterface;
-class FacebookCommentInterface;
-class FacebookLikeInterface;
 class FacebookObjectReferenceInterface;
-class FacebookPhotoInterface;
-class FacebookPictureInterface;
-class FacebookTagInterface;
-class FacebookNameTagInterface;
-class FacebookUserInterface;
-class IdentifiableContentItemInterface;
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -73,20 +63,28 @@ public:
         NotInitialized = 0,
         Unknown = 1,
         ObjectReference,
-        Like,
-        Tag,
-        NameTag,
-        Image,
-        Picture,
-        Location,
-        Comment,
-        Cover,
-        User,
         Album,
-        Photo,
-        Event,
+        Comment,
         Notification,
-        Application
+        Photo,
+        Post,
+        User,
+
+        Application,
+        Event,
+        Home,
+        Location,
+
+        Like,
+        NameTag,
+        PhotoImage,
+        PhotoTag,
+        PostAction,
+        PostProperty,
+        UserCover,
+        UserPicture
+
+
     };
 
 public:
@@ -121,12 +119,13 @@ private:
     FacebookObjectReferenceInterface *objectReference(QObject *parent, int type, QString identifier, QString name);
     QVariantMap facebookContentItemData(ContentItemInterface *contentItem);
     void setFacebookContentItemData(ContentItemInterface *contentItem, const QVariantMap &data);
+    friend class FacebookObjectReferenceInterface;
     friend class FacebookAlbumInterfacePrivate;
     friend class FacebookCommentInterfacePrivate;
-    friend class FacebookObjectReferenceInterface;
-    friend class FacebookPhotoInterfacePrivate;
-    friend class FacebookUserInterfacePrivate;
     friend class FacebookNotificationInterfacePrivate;
+    friend class FacebookPhotoInterfacePrivate;
+    friend class FacebookPostInterfacePrivate;
+    friend class FacebookUserInterfacePrivate;
 
     // impl. detail
 private:

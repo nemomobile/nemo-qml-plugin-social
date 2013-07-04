@@ -33,7 +33,7 @@ import QtQuick 1.1
 import org.nemomobile.social 1.0
 
 Item {
-    id: container
+    id: root
     property alias model: view.model
     signal backClicked
     anchors.fill: parent
@@ -42,7 +42,7 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " notifications" : ""
+        text: model != null ? "There are " + model.count + " comments on this post" : ""
     }
 
     Button {
@@ -50,7 +50,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Back"
-        onClicked: container.backClicked()
+        onClicked: root.backClicked()
     }
 
     ListView {
@@ -61,21 +61,19 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         delegate: Item {
-            width: view.width
-            height: column.height + 20
+            id: commentDelegate
+            width: parent.width
+            height: childrenRect.height
             Column {
-                id: column
-                anchors.left: parent.left; anchors.leftMargin: 10
-                anchors.right: parent.right; anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-
+                width: parent.width
+                height: nameLabel.height + countLabel.height
                 Text {
-                    text: "From: " + model.contentItem.from.objectName
+                    id: nameLabel
+                    text: "From: " + contentItem.from.objectName
                 }
                 Text {
-                    anchors.left: parent.left; anchors.right: parent.right
-                    wrapMode: Text.WordWrap
-                    text: "Title: " + model.contentItem.title
+                    id: countLabel
+                    text: "Message: " + contentItem.message
                 }
             }
         }
