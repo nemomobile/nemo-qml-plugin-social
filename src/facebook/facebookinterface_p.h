@@ -86,7 +86,7 @@ protected:
                                 const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply * deleteRequest(const QString &objectIdentifier, const QString &extraPath,
                                   const QVariantMap &extraData);
-    virtual void handleFinished(Node &node, QNetworkReply *reply);
+    void handleFinished(Node &node, QNetworkReply *reply);
 
 private:
     QUrl requestUrl(const QString &objectId, const QString &extraPath,

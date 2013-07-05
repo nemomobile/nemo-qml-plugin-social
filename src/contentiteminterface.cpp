@@ -99,23 +99,48 @@ void ContentItemInterfacePrivate::initializationComplete()
     // All derived-types must call Super::initializationComplete() in their override.
 }
 
-QVariantMap ContentItemInterfacePrivate::parseReplyData(const QByteArray &replyData, bool *ok)
+QVariant ContentItemInterfacePrivate::parseReplyDataVariant(const QByteArray &replyData, bool *ok)
 {
     QVariant parsed;
 
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
     QJson::Parser jsonParser;
     parsed = jsonParser.parse(replyData, ok);
+    if (!*ok) {
+        qWarning() << Q_FUNC_INFO << "Error parsing JSON file:" << jsonParser.errorString()
+                   << "at" << jsonParser.errorLine();
+    }
 #else
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(replyData);
+    QJsonParseError jsonError;
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(replyData, &jsonError);
     *ok = !jsonDocument.isEmpty();
+    if (!*ok) {
+        qWarning() << Q_FUNC_INFO << "Error parsing JSON file:" << jsonError.errorString()
+                   << "at" << jsonError.offset;
+    }
     parsed = jsonDocument.toVariant();
 #endif
 
-    if (*ok && parsed.type() == QVariant::Map)
-        return parsed.toMap();
-    *ok = false;
-    return QVariantMap();
+    if (!*ok) {
+        parsed.clear();
+    }
+
+    return parsed;
+}
+
+QVariantMap ContentItemInterfacePrivate::parseReplyData(const QByteArray &replyData, bool *ok)
+{
+    QVariant data = parseReplyDataVariant(replyData, ok);
+    if (!(*ok)) {
+        return QVariantMap();
+    }
+
+    if (data.type() != QVariant::Map) {
+        *ok = false;
+        return QVariantMap();
+    }
+
+    return data.toMap();
 }
 
 void ContentItemInterfacePrivate::socialNetworkInitializedChangedHandler()

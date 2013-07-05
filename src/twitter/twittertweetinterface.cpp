@@ -48,15 +48,77 @@ TwitterTweetInterfacePrivate::TwitterTweetInterfacePrivate(TwitterTweetInterface
 void TwitterTweetInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
-    // TODO Implement finishedHandler here
+    Q_Q(TwitterTweetInterface);
+    if (!reply()) {
+        // if an error occurred, it might have been deleted by the error handler.
+        qWarning() << Q_FUNC_INFO << "network request finished but no reply";
+        return;
+    }
+
+    QByteArray replyData = reply()->readAll();
+    deleteReply();
+    bool ok = false;
+    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
+    if (!ok)
+        responseData.insert("response", replyData);
+
+    switch (action) {
+        case TwitterInterfacePrivate::TweetAction: {
+            status = SocialNetworkInterface::Idle;
+            emit q->statusChanged();
+        }
+        break;
+        case TwitterInterfacePrivate::RetweetAction: {
+            // Update the retweet count
+            bool retweeted = responseData.value(TWITTER_ONTOLOGY_TWEET_RETWEETED).toBool();
+            int retweetCount = responseData.value(TWITTER_ONTOLOGY_TWEET_RETWEETCOUNT).toInt();
+            QVariantMap currentData = data();
+            currentData.insert(TWITTER_ONTOLOGY_TWEET_RETWEETED, QVariant::fromValue(retweeted));
+            currentData.insert(TWITTER_ONTOLOGY_TWEET_RETWEETCOUNT, retweetCount);
+            setData(currentData);
+            emit q->retweetedChanged();
+            emit q->retweetCountChanged();
+
+            status = SocialNetworkInterface::Idle;
+            emit q->statusChanged();
+            emit q->responseReceived(responseData);
+        }
+        break;
+        case TwitterInterfacePrivate::UnfavoriteAction:
+        case TwitterInterfacePrivate::FavoriteAction: {
+            // Update the favorited count
+            bool favorited = responseData.value(TWITTER_ONTOLOGY_TWEET_FAVORITED).toBool();
+            int favoriteCount = responseData.value(TWITTER_ONTOLOGY_TWEET_FAVORITECOUNT).toInt();
+            QVariantMap currentData = data();
+            currentData.insert(TWITTER_ONTOLOGY_TWEET_FAVORITED, QVariant::fromValue(favorited));
+            currentData.insert(TWITTER_ONTOLOGY_TWEET_FAVORITECOUNT, favoriteCount);
+            setData(currentData);
+            emit q->favoritedChanged();
+            emit q->favoriteCountChanged();
+
+            status = SocialNetworkInterface::Idle;
+            emit q->statusChanged();
+            emit q->responseReceived(responseData);
+        }
+        break;
+        default: {
+            error = SocialNetworkInterface::OtherError;
+            errorMessage = QLatin1String("Request finished but no action currently in progress");
+            status = SocialNetworkInterface::Error;
+            emit q->statusChanged();
+            emit q->errorChanged();
+            emit q->errorMessageChanged();
+            emit q->responseReceived(responseData);
+        }
+        break;
+    }
+
 // >>> finishedHandler
 }
 void TwitterTweetInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                              const QVariantMap &newData)
 {
     Q_Q(TwitterTweetInterface);
-    QVariant oldCreatedAt = oldData.value(TWITTER_ONTOLOGY_TWEET_CREATEDAT);
-    QVariant newCreatedAt = newData.value(TWITTER_ONTOLOGY_TWEET_CREATEDAT);
     QVariant oldFavoriteCount = oldData.value(TWITTER_ONTOLOGY_TWEET_FAVORITECOUNT);
     QVariant newFavoriteCount = newData.value(TWITTER_ONTOLOGY_TWEET_FAVORITECOUNT);
     QVariant oldFavorited = oldData.value(TWITTER_ONTOLOGY_TWEET_FAVORITED);
@@ -88,8 +150,6 @@ void TwitterTweetInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
     QVariant oldWithheldScope = oldData.value(TWITTER_ONTOLOGY_TWEET_WITHHELDSCOPE);
     QVariant newWithheldScope = newData.value(TWITTER_ONTOLOGY_TWEET_WITHHELDSCOPE);
 
-    if (newCreatedAt != oldCreatedAt)
-        emit q->createdAtChanged();
     if (newFavoriteCount != oldFavoriteCount)
         emit q->favoriteCountChanged();
     if (newFavorited != oldFavorited)
@@ -128,10 +188,29 @@ void TwitterTweetInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
 
     if (oldUserMap != newUserMap) {
         qobject_cast<TwitterInterface*>(q->socialNetwork())->setTwitterContentItemData(user, newUserMap);
-
-        qDebug() << user->identifier();
-        qDebug() << user->screenName();
     }
+
+    // Update created_at
+    QString createdAtString = newData.value(TWITTER_ONTOLOGY_TWEET_CREATEDAT).toString();
+    // We cast the created at string
+    // According to Twitter documentation
+    // (https://dev.twitter.com/docs/platform-objects/tweets)
+    // the created_at time is returned as an UTC time
+    // with the format "ddd MMM dd HH:mm:ss +0000 yyyy",
+    // in english language
+
+    QLocale locale (QLocale::English, QLocale::UnitedStates);
+    QDateTime newCreatedAt = locale.toDateTime(createdAtString,
+                                                    "ddd MMM dd HH:mm:ss +0000 yyyy");
+    newCreatedAt.setTimeSpec(Qt::UTC);
+    newCreatedAt = newCreatedAt.toLocalTime();
+    if (createdAt != newCreatedAt) {
+        createdAt =  newCreatedAt;
+        emit q->createdAtChanged();
+    }
+
+    // Update the current user retweet identifier if needed
+    // TODO^
 // >>> emitPropertyChangeSignals
 
     // Call super class implementation
@@ -195,15 +274,116 @@ bool TwitterTweetInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+/*!
+    \qmlmethod bool TwitterTweet::uploadRetweet()
+    */
+
+bool TwitterTweetInterface::uploadRetweet()
+{
+// <<< uploadRetweet
+    Q_D(TwitterTweetInterface);
+    QString path = QString(TWITTER_ONTOLOGY_CONNECTION_STATUS_RETWEET).arg(identifier());
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  QString(), path);
+
+    if (!requestMade) {
+        return false;
+    }
+
+    d->action = TwitterInterfacePrivate::RetweetAction;
+    d->connectFinishedAndErrors();
+    return true;
+// >>> uploadRetweet
+}
+/*!
+    \qmlmethod bool TwitterTweet::favorite()
+    */
+
+bool TwitterTweetInterface::favorite()
+{
+// <<< favorite
+    Q_D(TwitterTweetInterface);
+    QVariantMap postData;
+    postData.insert(TWITTER_ONTOLOGY_CONNECTION_ID_KEY, identifier());
+    postData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_ENTITIES_KEY, QLatin1String("false"));
+    QString path = QString(TWITTER_ONTOLOGY_CONNECTION_FAVORITES_CREATE);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  QString(), path, QStringList(), postData);
+
+    if (!requestMade) {
+        return false;
+    }
+
+    d->action = TwitterInterfacePrivate::FavoriteAction;
+    d->connectFinishedAndErrors();
+    return true;
+// >>> favorite
+}
+/*!
+    \qmlmethod bool TwitterTweet::unfavorite()
+    */
+
+bool TwitterTweetInterface::unfavorite()
+{
+// <<< unfavorite
+    Q_D(TwitterTweetInterface);
+    QVariantMap postData;
+    postData.insert(TWITTER_ONTOLOGY_CONNECTION_ID_KEY, identifier());
+    postData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_ENTITIES_KEY, QLatin1String("false"));
+    QString path = QString(TWITTER_ONTOLOGY_CONNECTION_FAVORITES_DESTROY);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  QString(), path, QStringList(), postData);
+
+    if (!requestMade) {
+        return false;
+    }
+
+    d->action = TwitterInterfacePrivate::UnfavoriteAction;
+    d->connectFinishedAndErrors();
+    return true;
+// >>> unfavorite
+}
+/*!
+    \qmlmethod bool TwitterTweet::uploadReply(const QString &message, const QStringList &pathToMedias)
+    */
+
+bool TwitterTweetInterface::uploadReply(const QString &message, const QStringList &pathToMedias)
+{
+// <<< uploadReply
+    Q_D(TwitterTweetInterface);
+    QString path;
+    if (pathToMedias.isEmpty()) {
+        path = TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE;
+    } else {
+        qWarning() << Q_FUNC_INFO << "Uploading media is not supported yet";
+        return false;
+    }
+
+    QVariantMap postData;
+    postData.insert(TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE_STATUS_KEY, message);
+    postData.insert(TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE_IN_REPLY_TO_STATUS_ID_KEY,
+                    identifier());
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  QString(), path, QStringList(), postData);
+
+    if (!requestMade) {
+        return false;
+    }
+
+    d->action = TwitterInterfacePrivate::TweetAction;
+    d->connectFinishedAndErrors();
+    return true;
+// >>> uploadReply
+}
 
 /*!
-    \qmlproperty QString TwitterTweet::createdAt
+    \qmlproperty QDateTime TwitterTweet::createdAt
     
 */
-QString TwitterTweetInterface::createdAt() const
+QDateTime TwitterTweetInterface::createdAt() const
 {
     Q_D(const TwitterTweetInterface);
-    return d->data().value(TWITTER_ONTOLOGY_TWEET_CREATEDAT).toString();
+    return d->createdAt;
 }
 
 /*!

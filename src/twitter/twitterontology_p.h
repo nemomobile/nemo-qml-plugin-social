@@ -147,15 +147,24 @@
 
 /* Connections of various types */
 
+#define TWITTER_ONTOLOGY_CONNECTION_ID_KEY                          QLatin1String("id")
 #define TWITTER_ONTOLOGY_CONNECTION_CURSOR_KEY                      QLatin1String("cursor")
 #define TWITTER_ONTOLOGY_CONNECTION_USER_ID_KEY                     QLatin1String("user_id")
 #define TWITTER_ONTOLOGY_CONNECTION_SCREEN_NAME_KEY                 QLatin1String("screen_name")
 #define TWITTER_ONTOLOGY_CONNECTION_INCLUDE_ENTITIES_KEY            QLatin1String("include_entities")
 #define TWITTER_ONTOLOGY_CONNECTION_SKIP_STATUS_KEY                 QLatin1String("skip_status")
 #define TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY       QLatin1String("include_user_entities")
+#define TWITTER_ONTOLOGY_CONNECTION_SINCE_ID_KEY                    QLatin1String("since_id")
+#define TWITTER_ONTOLOGY_CONNECTION_MAX_ID_KEY                      QLatin1String("max_id")
+#define TWITTER_ONTOLOGY_CONNECTION_TRIM_USER_KEY                   QLatin1String("trim_user")
+#define TWITTER_ONTOLOGY_CONNECTION_EXCLUDE_REPLIES_KEY             QLatin1String("exclude_replies")
+#define TWITTER_ONTOLOGY_CONNECTION_CONTRIBUTOR_DETAILS_KEY         QLatin1String("contributor_details")
+#define TWITTER_ONTOLOGY_CONNECTION_COUNT_KEY                       QLatin1String("count")
 
 
 #define TWITTER_ONTOLOGY_CONNECTION_USERS_KEY                       QLatin1String("users")
+
+
 
 //#define TWITTER_ONTOLOGY_CONNECTION_TWEET_RETWEETS                  QLatin1String("statuses/retweets/%1.json")
 //#define TWITTER_ONTOLOGY_CONNECTION_TWEET_RETWEETERS                QLatin1String("statuses/retweeters/ids.json")
@@ -174,12 +183,22 @@
 
 
 #define TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW                   QLatin1String("statuses/show/%1.json")
-#define TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW_TRIM_USER_KEY     QLatin1String("trim_user")
 #define TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW_INCLUDE_MY_RETWEET_KEY QLatin1String("include_my_retweet")
+
+#define TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE                   QLatin1String("statuses/update.json")
+#define TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE_STATUS_KEY        QLatin1String("status")
+#define TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE_IN_REPLY_TO_STATUS_ID_KEY QLatin1String("in_reply_to_status_id")
+// More to come here (lat long etc)
+#define TWITTER_ONTOLOGY_CONNECTION_STATUS_RETWEET                  QLatin1String("statuses/retweet/%1.json")
+
+#define TWITTER_ONTOLOGY_CONNECTION_FAVORITES_CREATE                QLatin1String("favorites/create.json")
+#define TWITTER_ONTOLOGY_CONNECTION_FAVORITES_DESTROY               QLatin1String("favorites/destroy.json")
 
 
 #define TWITTER_ONTOLOGY_CONNECTION_FRIENDS_LIST                    QLatin1String("friends/list.json")
 #define TWITTER_ONTOLOGY_CONNECTION_FOLLOWERS_LIST                  QLatin1String("followers/list.json")
+#define TWITTER_ONTOLOGY_CONNECTION_STATUSES_USER_TIMELINE          QLatin1String("statuses/user_timeline.json")
+#define TWITTER_ONTOLOGY_CONNECTION_STATUSES_HOME_TIMELINE          QLatin1String("statuses/home_timeline.json")
 
 
 

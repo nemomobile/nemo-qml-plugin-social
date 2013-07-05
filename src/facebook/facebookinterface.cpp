@@ -460,7 +460,6 @@ void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
     bool ok = false;
     QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok) {
-        responseData.insert("response", replyData);
         setError(node, SocialNetworkInterface::RequestError,
                  QLatin1String("Error populating node: response is invalid. "\
                                "Perhaps the requested object id was incorrect?  Response: ")

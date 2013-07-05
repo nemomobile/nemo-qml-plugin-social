@@ -43,6 +43,7 @@ public:
     void finishedHandler();
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     TwitterInterfacePrivate::TwitterAction action;
+    QDateTime createdAt;
     TwitterUserInterface *user;
 private:
     Q_DECLARE_PUBLIC(TwitterTweetInterface)

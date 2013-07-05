@@ -45,12 +45,6 @@
 #include <QCryptographicHash>
 #include <QtCore/QDebug>
 
-//#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-//#include <qjson/parser.h>
-//#else
-//#include <QJsonDocument>
-//#endif
-
 static const char *OAUTH_SIGNATURE_METHOD = "HMAC-SHA1";
 static const char *OAUTH_VERSION = "1.0";
 
@@ -169,26 +163,3 @@ QByteArray TwitterDataUtil::authorizationHeader(const QByteArray &oauthConsumerK
     return authHeader;
 }
 
-
-//QVariant TwitterDataUtil::parseReplyData(const QByteArray &replyData, bool *ok)
-//{
-//    QVariant parsed;
-
-//#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-//    QJson::Parser jsonParser;
-//    parsed = jsonParser.parse(replyData, ok);
-//#else
-//    QJsonDocument jsonDocument = QJsonDocument::fromJson(replyData);
-//    *ok = !doc.isEmpty();
-//    parsed = doc.toVariant();
-//#endif
-
-//    if (*ok && parsed.type() == QVariant::Map) {
-//        return parsed.toMap();
-//    } else if (*ok && parsed.type() == QVariant::List) {
-//        return parsed.toList();
-//    }
-
-//    *ok = false;
-//    return QVariantMap();
-//}

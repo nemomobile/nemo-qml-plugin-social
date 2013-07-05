@@ -34,6 +34,7 @@
 #include "twitterontology_p.h"
 // <<< include
 #include "twitterinterface_p.h"
+#include <QtCore/QDebug>
 // >>> include
 
 TwitterUserInterfacePrivate::TwitterUserInterfacePrivate(TwitterUserInterface *q)
@@ -45,7 +46,37 @@ TwitterUserInterfacePrivate::TwitterUserInterfacePrivate(TwitterUserInterface *q
 void TwitterUserInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
-    // TODO Implement finishedHandler here
+    Q_Q(TwitterUserInterface);
+    if (!reply()) {
+        // if an error occurred, it might have been deleted by the error handler.
+        qWarning() << Q_FUNC_INFO << "network request finished but no reply";
+        return;
+    }
+
+    QByteArray replyData = reply()->readAll();
+    deleteReply();
+    bool ok = false;
+    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
+    if (!ok)
+        responseData.insert("response", replyData);
+
+    switch (action) {
+        case TwitterInterfacePrivate::TweetAction: {
+            status = SocialNetworkInterface::Idle;
+            emit q->statusChanged();
+        }
+        break;
+        default: {
+            error = SocialNetworkInterface::OtherError;
+            errorMessage = QLatin1String("Request finished but no action currently in progress");
+            status = SocialNetworkInterface::Error;
+            emit q->statusChanged();
+            emit q->errorChanged();
+            emit q->errorMessageChanged();
+            emit q->responseReceived(responseData);
+        }
+        break;
+    }
 // >>> finishedHandler
 }
 void TwitterUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
@@ -259,6 +290,48 @@ bool TwitterUserInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+/*!
+    \qmlmethod bool TwitterUser::uploadTweet(const QString &message, const QStringList &pathToMedias)
+    */
+
+bool TwitterUserInterface::uploadTweet(const QString &message, const QStringList &pathToMedias)
+{
+// <<< uploadTweet
+    Q_D(TwitterUserInterface);
+    TwitterInterface *twitterInterface = qobject_cast<TwitterInterface *>(socialNetwork());
+    if (!twitterInterface) {
+        qWarning() << Q_FUNC_INFO << "Cannot upload tweet without compatible social network";
+        return false;
+    }
+
+    if (identifier() != twitterInterface->currentUserIdentifier()) {
+        qWarning() << Q_FUNC_INFO << "Cannot upload tweet if the identifier of this user is "\
+                      "different from the current user identifier defined in Twitter.";
+        return false;
+    }
+
+    QString path;
+    if (pathToMedias.isEmpty()) {
+        path = TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE;
+    } else {
+        qWarning() << Q_FUNC_INFO << "Uploading media is not supported yet";
+        return false;
+    }
+
+    QVariantMap postData;
+    postData.insert(TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE_STATUS_KEY, message);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post,
+                                  QString(), path, QStringList(), postData);
+
+    if (!requestMade) {
+        return false;
+    }
+
+    d->action = TwitterInterfacePrivate::TweetAction;
+    d->connectFinishedAndErrors();
+    return true;
+// >>> uploadTweet
+}
 
 /*!
     \qmlproperty bool TwitterUser::contributorsEnabled
@@ -435,13 +508,19 @@ QString TwitterUserInterface::name() const
 }
 
 /*!
-    \qmlproperty QString TwitterUser::profileBackgroundColor
+    \qmlproperty QColor TwitterUser::profileBackgroundColor
     
 */
-QString TwitterUserInterface::profileBackgroundColor() const
+QColor TwitterUserInterface::profileBackgroundColor() const
 {
     Q_D(const TwitterUserInterface);
-    return d->data().value(TWITTER_ONTOLOGY_USER_PROFILEBACKGROUNDCOLOR).toString();
+    QString color = d->data().value(TWITTER_ONTOLOGY_USER_PROFILEBACKGROUNDCOLOR).toString();
+    if (color.startsWith("#")) {
+        return QColor(color);
+    } else {
+        color.prepend("#");
+        return QColor(color);
+    }
 }
 
 /*!
@@ -451,7 +530,7 @@ QString TwitterUserInterface::profileBackgroundColor() const
 QUrl TwitterUserInterface::profileBackgroundImageUrl() const
 {
     Q_D(const TwitterUserInterface);
-    return QUrl(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEBACKGROUNDIMAGEURL).toString());
+    return QUrl::fromEncoded(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEBACKGROUNDIMAGEURL).toString().toLocal8Bit());
 }
 
 /*!
@@ -461,7 +540,7 @@ QUrl TwitterUserInterface::profileBackgroundImageUrl() const
 QUrl TwitterUserInterface::profileBackgroundImageUrlHttps() const
 {
     Q_D(const TwitterUserInterface);
-    return QUrl(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEBACKGROUNDIMAGEURLHTTPS).toString());
+    return QUrl::fromEncoded(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEBACKGROUNDIMAGEURLHTTPS).toString().toLocal8Bit());
 }
 
 /*!
@@ -481,7 +560,7 @@ bool TwitterUserInterface::profileBackgroundTile() const
 QUrl TwitterUserInterface::profileBannerUrl() const
 {
     Q_D(const TwitterUserInterface);
-    return QUrl(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEBANNERURL).toString());
+    return QUrl::fromEncoded(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEBANNERURL).toString().toLocal8Bit());
 }
 
 /*!
@@ -491,7 +570,7 @@ QUrl TwitterUserInterface::profileBannerUrl() const
 QUrl TwitterUserInterface::profileImageUrl() const
 {
     Q_D(const TwitterUserInterface);
-    return QUrl(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEIMAGEURL).toString());
+    return QUrl::fromEncoded(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEIMAGEURL).toString().toLocal8Bit());
 }
 
 /*!
@@ -501,47 +580,71 @@ QUrl TwitterUserInterface::profileImageUrl() const
 QUrl TwitterUserInterface::profileImageUrlHttps() const
 {
     Q_D(const TwitterUserInterface);
-    return QUrl(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEIMAGEURLHTTPS).toString());
+    return QUrl::fromEncoded(d->data().value(TWITTER_ONTOLOGY_USER_PROFILEIMAGEURLHTTPS).toString().toLocal8Bit());
 }
 
 /*!
-    \qmlproperty QString TwitterUser::profileLinkColor
+    \qmlproperty QColor TwitterUser::profileLinkColor
     
 */
-QString TwitterUserInterface::profileLinkColor() const
+QColor TwitterUserInterface::profileLinkColor() const
 {
     Q_D(const TwitterUserInterface);
-    return d->data().value(TWITTER_ONTOLOGY_USER_PROFILELINKCOLOR).toString();
+    QString color = d->data().value(TWITTER_ONTOLOGY_USER_PROFILELINKCOLOR).toString();
+    if (color.startsWith("#")) {
+        return QColor(color);
+    } else {
+        color.prepend("#");
+        return QColor(color);
+    }
 }
 
 /*!
-    \qmlproperty QString TwitterUser::profileSidebarBorderColor
+    \qmlproperty QColor TwitterUser::profileSidebarBorderColor
     
 */
-QString TwitterUserInterface::profileSidebarBorderColor() const
+QColor TwitterUserInterface::profileSidebarBorderColor() const
 {
     Q_D(const TwitterUserInterface);
-    return d->data().value(TWITTER_ONTOLOGY_USER_PROFILESIDEBARBORDERCOLOR).toString();
+    QString color = d->data().value(TWITTER_ONTOLOGY_USER_PROFILESIDEBARBORDERCOLOR).toString();
+    if (color.startsWith("#")) {
+        return QColor(color);
+    } else {
+        color.prepend("#");
+        return QColor(color);
+    }
 }
 
 /*!
-    \qmlproperty QString TwitterUser::profileSidebarFillColor
+    \qmlproperty QColor TwitterUser::profileSidebarFillColor
     
 */
-QString TwitterUserInterface::profileSidebarFillColor() const
+QColor TwitterUserInterface::profileSidebarFillColor() const
 {
     Q_D(const TwitterUserInterface);
-    return d->data().value(TWITTER_ONTOLOGY_USER_PROFILESIDEBARFILLCOLOR).toString();
+    QString color = d->data().value(TWITTER_ONTOLOGY_USER_PROFILESIDEBARFILLCOLOR).toString();
+    if (color.startsWith("#")) {
+        return QColor(color);
+    } else {
+        color.prepend("#");
+        return QColor(color);
+    }
 }
 
 /*!
-    \qmlproperty QString TwitterUser::profileTextColor
+    \qmlproperty QColor TwitterUser::profileTextColor
     
 */
-QString TwitterUserInterface::profileTextColor() const
+QColor TwitterUserInterface::profileTextColor() const
 {
     Q_D(const TwitterUserInterface);
-    return d->data().value(TWITTER_ONTOLOGY_USER_PROFILETEXTCOLOR).toString();
+    QString color = d->data().value(TWITTER_ONTOLOGY_USER_PROFILETEXTCOLOR).toString();
+    if (color.startsWith("#")) {
+        return QColor(color);
+    } else {
+        color.prepend("#");
+        return QColor(color);
+    }
 }
 
 /*!
@@ -617,7 +720,7 @@ QString TwitterUserInterface::timeZone() const
 QUrl TwitterUserInterface::url() const
 {
     Q_D(const TwitterUserInterface);
-    return QUrl(d->data().value(TWITTER_ONTOLOGY_USER_URL).toString());
+    return QUrl::fromEncoded(d->data().value(TWITTER_ONTOLOGY_USER_URL).toString().toLocal8Bit());
 }
 
 /*!

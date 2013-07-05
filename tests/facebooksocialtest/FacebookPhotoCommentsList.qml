@@ -99,12 +99,12 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
-                    id: nameLabel
                     text: "From: " + contentItem.from.objectName
                 }
                 Text {
-                    id: countLabel
+                    anchors.left: parent.left; anchors.right: parent.right
                     text: "Message: " + contentItem.message
+                    wrapMode: Text.WordWrap
                 }
             }
         }

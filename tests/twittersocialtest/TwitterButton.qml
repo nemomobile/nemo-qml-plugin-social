@@ -33,6 +33,7 @@ import QtQuick 1.1
 
 Rectangle {
     id: container
+    property alias enabled: mouseArea.enabled
     property alias text: text.text
     signal clicked()
     width: 200

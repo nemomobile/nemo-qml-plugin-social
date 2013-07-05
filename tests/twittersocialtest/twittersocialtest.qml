@@ -32,9 +32,6 @@
 import QtQuick 1.1
 import org.nemomobile.social 1.0
 
-/*
-*/
-
 Item {
     id: root
     width: 300
@@ -58,6 +55,15 @@ Item {
         case 2:
             followersList.populate(nodeId)
             break
+        case 3:
+            feedList.populate(nodeId)
+            break
+        case 4:
+            homeList.populate(nodeId)
+            break
+        case 5:
+            userColorPage.populate(nodeId)
+            break
         }
         whichActive = which
     }
@@ -68,9 +74,12 @@ Item {
         consumerSecret: root.consumerSecret
         oauthToken: root.token
         oauthTokenSecret: root.tokenSecret
+        currentUserIdentifier: root.identifier
 
-        property QtObject friendsFilter:    ContentItemTypeFilter { type: Twitter.Friends }
+        property QtObject friendsFilter:      ContentItemTypeFilter { type: Twitter.Friends }
         property QtObject followersFilter:    ContentItemTypeFilter { type: Twitter.Followers }
+        property QtObject feedFilter:         ContentItemTypeFilter { type: Twitter.Tweet }
+        property QtObject homeFilter:         ContentItemTypeFilter { type: Twitter.Home }
     }
 
     TwitterUser {
@@ -85,6 +94,8 @@ Item {
                 console.debug("Tweets:        " + user.statusesCount)
                 console.debug("Followers :    " + user.followersCount)
                 console.debug("Following:     " + user.friendsCount)
+                whichActive = 0
+            } else if (status == Twitter.Idle && whichActive == -4) {
                 whichActive = 0
             }
         }
@@ -128,6 +139,22 @@ Item {
                 which: 2
             }
             ListElement {
+                text: "Show feed"
+                which: 3
+            }
+            ListElement {
+                text: "Show home"
+                which: 4
+            }
+            ListElement {
+                text: "Upload a random tweet"
+                which: -4
+            }
+            ListElement {
+                text: "Show colors of the user"
+                which: 5
+            }
+            ListElement {
                 text: "Quit"
                 which: -1
             }
@@ -148,6 +175,14 @@ Item {
                     } else if (model.which == -3) {
                         whichActive = model.which
                         tweet.identifier = "349499121868095490"
+                    } else if (model.which == -4) {
+                        if (user.identifier != root.identifier) {
+                            console.debug("Current user not loaded, please load it using Get current user in Terminal")
+                            return
+                        }
+                        user.uploadTweet("Here is a random number: " + Math.random())
+                        whichActive = model.which
+
                     } else {
                         makeActive(model.which, root.identifier)
                     }
@@ -166,6 +201,27 @@ Item {
         id: followersList
         visible: whichActive == 2
         filters: [twitter.followersFilter]
+        onBackClicked: back(0)
+    }
+
+    TwitterTweetList {
+        id: feedList
+        visible: whichActive == 3
+        filters: [twitter.feedFilter]
+        onBackClicked: back(0)
+    }
+
+    TwitterTweetList {
+        id: homeList
+        visible: whichActive == 4
+        filters: [twitter.homeFilter]
+        onBackClicked: back(0)
+    }
+
+    TwitterUserColorPage {
+        id: userColorPage
+        visible: whichActive == 5
+        filters: []
         onBackClicked: back(0)
     }
 }

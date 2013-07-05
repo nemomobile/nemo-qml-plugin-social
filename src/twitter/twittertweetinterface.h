@@ -34,6 +34,7 @@
 
 #include "identifiablecontentiteminterface.h"
 
+#include <QtCore/QDateTime>
 #include <QtCore/QString>
 #include "twitteruserinterface.h"
 
@@ -47,7 +48,7 @@ class TwitterTweetInterfacePrivate;
 class TwitterTweetInterface: public IdentifiableContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString createdAt READ createdAt NOTIFY createdAtChanged)
+    Q_PROPERTY(QDateTime createdAt READ createdAt NOTIFY createdAtChanged)
     Q_PROPERTY(int favoriteCount READ favoriteCount NOTIFY favoriteCountChanged)
     Q_PROPERTY(bool favorited READ favorited NOTIFY favoritedChanged)
     Q_PROPERTY(QString filterLevel READ filterLevel NOTIFY filterLevelChanged)
@@ -73,9 +74,13 @@ public:
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
     // Invokable API.
+    Q_INVOKABLE bool uploadRetweet();
+    Q_INVOKABLE bool favorite();
+    Q_INVOKABLE bool unfavorite();
+    Q_INVOKABLE bool uploadReply(const QString &message, const QStringList &pathToMedias = QStringList());
 
     // Accessors
-    QString createdAt() const;
+    QDateTime createdAt() const;
     int favoriteCount() const;
     bool favorited() const;
     QString filterLevel() const;

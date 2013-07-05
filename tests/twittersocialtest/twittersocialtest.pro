@@ -23,4 +23,3 @@ qml.files = $${OTHER_FILES}
 qml.path = $${PREFIX}/share
 
 INSTALLS += target qml
-

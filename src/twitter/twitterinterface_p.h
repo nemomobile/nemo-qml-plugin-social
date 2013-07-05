@@ -71,7 +71,7 @@ public:
                                    const QVariantMap &postData = QVariantMap());
 
     int detectTypeFromData(const QVariantMap &data) const;
-    void handlePopulateRelatedData(Node &node, const QVariantMap &relatedData,
+    void handlePopulateRelatedData(Node &node, const QVariant &relatedData,
                                    const QUrl &requestUrl);
 
     // Requests
@@ -83,12 +83,12 @@ public:
     // the following is for identifiable content item "actions"
     enum TwitterAction {
         NoAction = 0,
-        RemoveAction,
-        ReloadAction,
         FollowAction,
         UnfollowAction,
         TweetAction,
-        RetweetAction
+        RetweetAction,
+        FavoriteAction,
+        UnfavoriteAction
     };
 protected:
     // Reimplemented
@@ -103,12 +103,12 @@ protected:
                                 const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply * deleteRequest(const QString &objectIdentifier, const QString &extraPath,
                                   const QVariantMap &extraData);
-    virtual void handleFinished(Node &node, QNetworkReply *reply);
+    int guessType(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
+    void handleFinished(Node &node, QNetworkReply *reply);
 
 private:
     bool performRelatedDataRequest(Node &node, const QString &identifier,
-                                   const QList<FilterInterface *> &filters,
-                                   const QString &cursor = QString());
+                                   const QList<FilterInterface *> &filters);
     Q_DECLARE_PUBLIC(TwitterInterface)
 };
 

@@ -57,9 +57,13 @@ class TwitterInterface : public SocialNetworkInterface
     Q_OBJECT
 
     Q_PROPERTY(QString oauthToken READ oauthToken WRITE setOAuthToken NOTIFY oauthTokenChanged)
-    Q_PROPERTY(QString oauthTokenSecret READ oauthTokenSecret WRITE setOAuthTokenSecret NOTIFY oauthTokenSecretChanged)
+    Q_PROPERTY(QString oauthTokenSecret READ oauthTokenSecret WRITE setOAuthTokenSecret
+               NOTIFY oauthTokenSecretChanged)
     Q_PROPERTY(QString consumerKey READ consumerKey WRITE setConsumerKey NOTIFY consumerKeyChanged)
-    Q_PROPERTY(QString consumerSecret READ consumerSecret WRITE setConsumerSecret NOTIFY consumerSecretChanged)
+    Q_PROPERTY(QString consumerSecret READ consumerSecret WRITE setConsumerSecret
+               NOTIFY consumerSecretChanged)
+    Q_PROPERTY(QString currentUserIdentifier READ currentUserIdentifier
+               WRITE setCurrentUserIdentifier NOTIFY currentUserIdentifierChanged)
 
     Q_ENUMS(ContentItemType)
 
@@ -70,8 +74,11 @@ public:
         User,
         Tweet,
         Place,
-        Friends = 128,
-        Followers = 129
+
+        Home = 128,
+
+        Friends = 256,
+        Followers = 257
     };
 
 public:
@@ -79,19 +86,22 @@ public:
 
     // properties
     QString oauthToken() const;
-    void setOAuthToken(const QString &token);
+    void setOAuthToken(const QString &oauthToken);
     QString oauthTokenSecret() const;
-    void setOAuthTokenSecret(const QString &tokenSecret);
+    void setOAuthTokenSecret(const QString &oauthTokenSecret);
     QString consumerKey() const;
     void setConsumerKey(const QString &consumerKey);
     QString consumerSecret() const;
-    void setConsumerSecret(const QString &secret);
+    void setConsumerSecret(const QString &consumerSecret);
+    QString currentUserIdentifier() const;
+    void setCurrentUserIdentifier(const QString &currentUserIdentifier);
 
 Q_SIGNALS:
     void oauthTokenChanged();
     void oauthTokenSecretChanged();
     void consumerKeyChanged();
     void consumerSecretChanged();
+    void currentUserIdentifierChanged();
 private:
     QVariantMap twitterContentItemData(ContentItemInterface *contentItem);
     void setTwitterContentItemData(ContentItemInterface *contentItem, const QVariantMap &data);

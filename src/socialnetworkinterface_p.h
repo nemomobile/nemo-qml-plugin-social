@@ -232,6 +232,10 @@ protected:
                                           const QVariantMap &extraData);
     friend class IdentifiableContentItemInterfacePrivate;
 
+    // Function to guess the type, implement if needed
+    virtual int guessType(const QString &identifier, int type,
+                          const QSet<FilterInterface *> &filters);
+
     // Handlers, implement if needed
     virtual void handleFinished(Node &node, QNetworkReply *reply);
     virtual void handleError(Node &node, QNetworkReply *reply,
@@ -247,6 +251,7 @@ protected:
     void deleteReply(QNetworkReply *reply);
     void updateModelNode(Node &node);
     void updateModelRelatedData(Node &node, const QList<CacheEntry> &relatedData);
+    void updateModelHavePreviousAndNext(Node &node, bool havePrevious, bool haveNext);
     CacheEntry createCacheEntry(const QVariantMap &data, const QString &nodeIdentifier = QString());
 
     // Aliases map
@@ -272,6 +277,8 @@ private:
 
 
     // Implementation details
+    inline bool matches(const QString &identifier, int type, const QSet<FilterInterface *> &filters,
+                        SocialNetworkModelInterface *model);
     inline bool matches(const Node &node, SocialNetworkModelInterface *model);
     inline static SocialNetworkInterface::Status correspondingStatus(NodePrivate::Status status);
     Node getOrCreateNode(const QString &identifier, int type, const QSet<FilterInterface *> &filters);

@@ -35,6 +35,7 @@
 #include "identifiablecontentiteminterface.h"
 
 #include <QtCore/QString>
+#include <QtGui/QColor>
 #include <QtCore/QUrl>
 
 /*
@@ -62,17 +63,17 @@ class TwitterUserInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(int listedCount READ listedCount NOTIFY listedCountChanged)
     Q_PROPERTY(QString location READ location NOTIFY locationChanged)
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
-    Q_PROPERTY(QString profileBackgroundColor READ profileBackgroundColor NOTIFY profileBackgroundColorChanged)
+    Q_PROPERTY(QColor profileBackgroundColor READ profileBackgroundColor NOTIFY profileBackgroundColorChanged)
     Q_PROPERTY(QUrl profileBackgroundImageUrl READ profileBackgroundImageUrl NOTIFY profileBackgroundImageUrlChanged)
     Q_PROPERTY(QUrl profileBackgroundImageUrlHttps READ profileBackgroundImageUrlHttps NOTIFY profileBackgroundImageUrlHttpsChanged)
     Q_PROPERTY(bool profileBackgroundTile READ profileBackgroundTile NOTIFY profileBackgroundTileChanged)
     Q_PROPERTY(QUrl profileBannerUrl READ profileBannerUrl NOTIFY profileBannerUrlChanged)
     Q_PROPERTY(QUrl profileImageUrl READ profileImageUrl NOTIFY profileImageUrlChanged)
     Q_PROPERTY(QUrl profileImageUrlHttps READ profileImageUrlHttps NOTIFY profileImageUrlHttpsChanged)
-    Q_PROPERTY(QString profileLinkColor READ profileLinkColor NOTIFY profileLinkColorChanged)
-    Q_PROPERTY(QString profileSidebarBorderColor READ profileSidebarBorderColor NOTIFY profileSidebarBorderColorChanged)
-    Q_PROPERTY(QString profileSidebarFillColor READ profileSidebarFillColor NOTIFY profileSidebarFillColorChanged)
-    Q_PROPERTY(QString profileTextColor READ profileTextColor NOTIFY profileTextColorChanged)
+    Q_PROPERTY(QColor profileLinkColor READ profileLinkColor NOTIFY profileLinkColorChanged)
+    Q_PROPERTY(QColor profileSidebarBorderColor READ profileSidebarBorderColor NOTIFY profileSidebarBorderColorChanged)
+    Q_PROPERTY(QColor profileSidebarFillColor READ profileSidebarFillColor NOTIFY profileSidebarFillColorChanged)
+    Q_PROPERTY(QColor profileTextColor READ profileTextColor NOTIFY profileTextColorChanged)
     Q_PROPERTY(bool profileUseBackgroundImage READ profileUseBackgroundImage NOTIFY profileUseBackgroundImageChanged)
     Q_PROPERTY(bool isProtected READ isProtected NOTIFY isProtectedChanged)
     Q_PROPERTY(QString screenName READ screenName NOTIFY screenNameChanged)
@@ -93,6 +94,7 @@ public:
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
     // Invokable API.
+    Q_INVOKABLE bool uploadTweet(const QString &message, const QStringList &pathToMedias = QStringList());
 
     // Accessors
     bool contributorsEnabled() const;
@@ -110,17 +112,17 @@ public:
     int listedCount() const;
     QString location() const;
     QString name() const;
-    QString profileBackgroundColor() const;
+    QColor profileBackgroundColor() const;
     QUrl profileBackgroundImageUrl() const;
     QUrl profileBackgroundImageUrlHttps() const;
     bool profileBackgroundTile() const;
     QUrl profileBannerUrl() const;
     QUrl profileImageUrl() const;
     QUrl profileImageUrlHttps() const;
-    QString profileLinkColor() const;
-    QString profileSidebarBorderColor() const;
-    QString profileSidebarFillColor() const;
-    QString profileTextColor() const;
+    QColor profileLinkColor() const;
+    QColor profileSidebarBorderColor() const;
+    QColor profileSidebarFillColor() const;
+    QColor profileTextColor() const;
     bool profileUseBackgroundImage() const;
     bool isProtected() const;
     QString screenName() const;

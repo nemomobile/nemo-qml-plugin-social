@@ -26,13 +26,16 @@
         },
         {
             "name": "created_at",
-            "type": "QString",
-            "doc": ""
+            "type": "QDateTime",
+            "doc": "",
+            "custom": true
         },
         {
             "name": "current_user_retweet",
             "type": "QVariant",
-            "doc": "Not supported yet",
+            "doc": "",
+            "custom": true,
+            "alias": "current_user_retweet_identifier",
             "is_ontology": false,
             "is_interface_property": false
         },
@@ -149,5 +152,40 @@
         }
         
     ],
-    "methods": []
+    "methods": [
+        {
+            "name": "uploadRetweet",
+            "parameters": [],
+            "doc": ""
+        },
+        {
+            "name": "favorite",
+            "parameters": [],
+            "doc": ""
+        },
+        {
+            "name": "unfavorite",
+            "parameters": [],
+            "doc": ""
+        },
+        {
+            "name": "uploadReply",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "message",
+                    "is_const": true,
+                    "is_reference": true
+                },
+                {
+                    "type": "QStringList",
+                    "name": "pathToMedias",
+                    "default": "QStringList()",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": ""
+        }
+    ]
 }

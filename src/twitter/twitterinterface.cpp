@@ -40,7 +40,7 @@
 #include "contentitemtypefilterinterface.h"
 
 #include "twitteruserinterface.h"
-//#include "twittertweetinterface.h"
+#include "twittertweetinterface.h"
 //#include "twitterplaceinterface.h"
 
 #include "util_p.h"
@@ -59,6 +59,8 @@
 static const char *TRUE_STRING = "true";
 static const char *FALSE_STRING = "false";
 static const char *HEADER_AUTHORIZATION_KEY = "Authorization";
+static const char *NEXT_TWEET_PAGE_KEY = "next";
+static const char *PREVIOUS_TWEET_PAGE_KEY = "previous";
 
 inline QString boolToString(bool boolean)
 {
@@ -90,17 +92,6 @@ int TwitterInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
             return taggedType;
         }
     }
-
-//    qWarning() << Q_FUNC_INFO << "No type information available in object metadata - attempting to heuristically detect type";
-//    if (data.value(TWITTER_ONTOLOGY_PROPERTY_TWEET_TEXT).isValid() && data.value(TWITTER_ONTOLOGY_PROPERTY_TWEET_RETWEETED).isValid())
-//        return TwitterInterface::Tweet;
-//    else if (data.value(TWITTER_ONTOLOGY_PROPERTY_PLACE_PLACETYPE).isValid() && data.value(TWITTER_ONTOLOGY_PROPERTY_COUNTRY).isValid())
-//        return TwitterInterface::Place;
-//    else if (data.value(TWITTER_ONTOLOGY_PROPERTY_USER_SCREENNAME).isValid() || data.value(TWITTER_ONTOLOGY_PROPERTY_USER_FOLLOWREQUESTSENT).isValid())
-//        return TwitterInterface::User;
-
-//    qWarning() << Q_FUNC_INFO << "Unable to heuristically detect type!";
-
 
     return TwitterInterface::Unknown;
 }
@@ -157,7 +148,7 @@ QNetworkRequest TwitterInterfacePrivate::networkRequest(const QString &extraPath
 }
 
 void TwitterInterfacePrivate::handlePopulateRelatedData(Node &node,
-                                                        const QVariantMap &relatedData,
+                                                        const QVariant &relatedData,
                                                         const QUrl &requestUrl)
 {
     // We receive the related data and transform it into ContentItems.
@@ -174,11 +165,18 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node &node,
         type = TwitterInterface::User;
     }
 
+    if (requestPath == TWITTER_ONTOLOGY_CONNECTION_STATUSES_USER_TIMELINE
+        || requestPath == TWITTER_ONTOLOGY_CONNECTION_STATUSES_HOME_TIMELINE) {
+        type = TwitterInterface::Tweet;
+    }
 
+    bool havePreviousRelatedData = false;
+    bool haveNextRelatedData = false;
     switch (type) {
         case TwitterInterface::User:
         {
-            QVariantList userList = relatedData.value(TWITTER_ONTOLOGY_CONNECTION_USERS_KEY).toList();
+            QVariantMap relatedDataMap = relatedData.toMap();
+            QVariantList userList = relatedDataMap.value(TWITTER_ONTOLOGY_CONNECTION_USERS_KEY).toList();
             foreach (const QVariant &variant, userList) {
                 QVariantMap variantMap = variant.toMap();
                 QString identifier = variantMap.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
@@ -186,37 +184,78 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node &node,
                 variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, identifier);
                 relatedContent.append(createCacheEntry(variantMap, identifier));
             }
+
+            // Do the cursoring
+            QVariantMap nodeExtra;
+            nodeExtra.insert(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR,
+                             relatedDataMap.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR,
+                                               TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString());
+            nodeExtra.insert(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR,
+                             relatedDataMap.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR,
+                                               TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString());
+
+            node.setExtraInfo(nodeExtra);
+
+            havePreviousRelatedData = nodeExtra.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR).toString()
+                                      != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR;
+            haveNextRelatedData = nodeExtra.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR).toString()
+                                  != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR;
         }
         break;
-        case TwitterInterface::Tweet: break;
+        case TwitterInterface::Tweet:
+        {
+            QVariantList relatedDataList = relatedData.toList();
+            foreach (const QVariant &variant, relatedDataList) {
+                QVariantMap variantMap = variant.toMap();
+                QString identifier = variantMap.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
+                variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, TwitterInterface::Tweet);
+                variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, identifier);
+                relatedContent.append(createCacheEntry(variantMap, identifier));
+            }
+        }
+        break;
         default: {
             qWarning() << Q_FUNC_INFO << "Unsupported data retrieved";
             qWarning() << Q_FUNC_INFO << "Request url:" << requestUrl;
-            qWarning() << Q_FUNC_INFO << "List of keys: " << relatedData.keys();
+            qWarning() << Q_FUNC_INFO << "Data: " << relatedData;
         }
         break;
     }
 
-    // Do the cursoring
-    QVariantMap nodeExtra;
-    nodeExtra.insert(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR,
-                     relatedData.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR,
-                                       TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString());
-    nodeExtra.insert(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR,
-                     relatedData.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR,
-                                       TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString());
-
-    // Do the cursoring
-    node.setExtraInfo(nodeExtra);
-
-    bool havePreviousRelatedData = nodeExtra.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR).toString()
-                                   != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR;
-    bool haveNextRelatedData = nodeExtra.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR).toString()
-                               != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR;
-
-    node.setHavePreviousAndNext(havePreviousRelatedData, haveNextRelatedData);
     updateModelRelatedData(node, relatedContent);
 
+    // We should get the cursors for tweets with all the data we have loaded
+    if (type == TwitterInterface::Tweet) {
+        QList<CacheEntry> relatedData = node.relatedData();
+        if (relatedData.isEmpty()) {
+            havePreviousRelatedData = false;
+            haveNextRelatedData = false;
+        } else {
+            // Create the token pairs for tweets
+            // For newer tweets, (that are "previous") we should ask for since_id = first tweet id
+            // And it might need several calls, but we TODO this
+            // For older tweets, we should ask for max_id = last tweet id - 1
+            QString firstTweetId = relatedData.first().data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
+            QString lastTweetId = relatedData.last().data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
+            qulonglong lastTweetIdInt = lastTweetId.toULongLong() - 1;
+
+            QVariantMap previous;
+            previous.insert(TWITTER_ONTOLOGY_CONNECTION_SINCE_ID_KEY, firstTweetId);
+
+            QVariantMap next;
+            next.insert(TWITTER_ONTOLOGY_CONNECTION_MAX_ID_KEY, QString::number(lastTweetIdInt));
+
+            QVariantMap nodeExtra;
+            nodeExtra.insert(NEXT_TWEET_PAGE_KEY, next);
+            nodeExtra.insert(PREVIOUS_TWEET_PAGE_KEY, previous);
+            node.setExtraInfo(nodeExtra);
+
+            havePreviousRelatedData = true;
+            haveNextRelatedData = true;
+        }
+    }
+
+    updateModelHavePreviousAndNext(node, havePreviousRelatedData, haveNextRelatedData);
     setStatus(node, NodePrivate::Idle);
 }
 
@@ -233,7 +272,7 @@ RequestInfo  TwitterInterfacePrivate::requestTweetInfo(const QString &identifier
 {
     RequestInfo info;
     info.extraPath = QString(TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW).arg(identifier);
-    info.extraData.insert(TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW_TRIM_USER_KEY,
+    info.extraData.insert(TWITTER_ONTOLOGY_CONNECTION_TRIM_USER_KEY,
                           boolToString(trimUser));
     info.extraData.insert(TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW_INCLUDE_MY_RETWEET_KEY,
                           boolToString(includeMyRetweet));
@@ -270,22 +309,7 @@ void TwitterInterfacePrivate::populateDataForNode(Node &node)
 /*! \reimp */
 void TwitterInterfacePrivate::populateRelatedDataforNode(Node &node)
 {
-    QString cursor;
-    switch (node.status()) {
-        case NodePrivate::LoadingRelatedDataAppending: {
-            cursor = node.extraInfo().value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR).toString();
-        }
-        break;
-        case NodePrivate::LoadingRelatedDataPrepending: {
-            cursor = node.extraInfo().value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR).toString();
-        }
-        break;
-        default: break;
-    }
-
-
-
-    if (!performRelatedDataRequest(node, node.identifier(), node.filters().toList(), cursor)) {
+    if (!performRelatedDataRequest(node, node.identifier(), node.filters().toList())) {
         setError(node, SocialNetworkInterface::DataUpdateError,
                  QLatin1String("Cannot perform related data request"));
     }
@@ -314,34 +338,30 @@ ContentItemInterface *TwitterInterfacePrivate::contentItemFromData(const QVarian
     // Construct the appropriate TwitterWhateverInterface for the given data.
     TwitterInterface::ContentItemType detectedType
             = static_cast<TwitterInterface::ContentItemType>(detectTypeFromData(data));
+
+    ContentItemInterface *interface = 0;
+
     switch (detectedType) {
-        case TwitterInterface::User: {
-            TwitterUserInterface *returnedInterface = new TwitterUserInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<TwitterInterface*>(q));
-            q->setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
-        }
-        break;
+        case TwitterInterface::User: interface = new TwitterUserInterface(parent); break;
+        case TwitterInterface::Tweet: interface = new TwitterTweetInterface(parent); break;
 
         // TODO: other types incl. me user, tweets, places, directmessages.
         case TwitterInterface::Unknown: {
             qWarning() << Q_FUNC_INFO << "Unable to detect the type of the content item";
-            IdentifiableContentItemInterface *returnedInterface
-                    = new IdentifiableContentItemInterface(parent);
-            returnedInterface->classBegin();
-            returnedInterface->setSocialNetwork(const_cast<TwitterInterface*>(q));
-            q->setContentItemData(returnedInterface, data);
-            returnedInterface->componentComplete();
-            return returnedInterface;
+            interface = new IdentifiableContentItemInterface(parent);
         }
         break;
-
         default: qWarning() << Q_FUNC_INFO << "unsupported type:" << detectedType; break;
     }
 
-    return 0;
+    if (interface) {
+        interface->classBegin();
+        interface->setSocialNetwork(const_cast<TwitterInterface*>(q));
+        q->setContentItemData(interface, data);
+        interface->componentComplete();
+    }
+
+    return interface;
 }
 
 /*! \reimp */
@@ -367,39 +387,29 @@ QNetworkReply * TwitterInterfacePrivate::postRequest(const QString &objectIdenti
                                                      const QVariantMap &data,
                                                      const QVariantMap &extraData)
 {
-//    Q_D(TwitterInterface);
-//    if (!d->initialized) {
-//        qWarning() << Q_FUNC_INFO << "cannot complete post request: not initialized";
-//        return 0;
-//    }
+    Q_Q(TwitterInterface);
+    Q_UNUSED(objectIdentifier)
+    if (!q->isInitialized()) {
+        qWarning() << Q_FUNC_INFO << "cannot complete post request: not initialized";
+        return 0;
+    }
 
-//    // create post data
-//    QString multipartBoundary = QLatin1String("-------Sska2129ifcalksmqq3");
-//    QByteArray postData;
-//    foreach (const QString &key, data.keys()) {
-//        postData.append("--"+multipartBoundary+"\r\n");
-//        postData.append("Content-Disposition: form-data; name=\"");
-//        postData.append(key);
-//        postData.append("\"\r\n\r\n");
-//        postData.append(data.value(key).toString());
-//        postData.append("\r\n");
-//    }
-//    postData.append("--"+multipartBoundary+"\r\n");
+    // create post data
+    QByteArray postData;
+    if (!data.isEmpty()) {
+        foreach (const QString &key, data.keys()) {
+            postData.append(key.toLocal8Bit());
+            postData.append("=");
+            postData.append(QUrl::toPercentEncoding(data.value(key).toString()));
+            postData.append("&");
+        }
+        postData.chop(1);
+    }
 
-//    // create request
-//    QNetworkRequest request(d->requestUrl(objectIdentifier, extraPath, QStringList(), extraData));
-//    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-//    request.setRawHeader("Accept-Language", "en-us,en;q=0.5");
-//    request.setRawHeader("Accept-Encoding", "gzip,deflate");
-//    request.setRawHeader("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-//    request.setRawHeader("Keep-Alive", "300");
-//    request.setRawHeader("Connection", "keep-alive");
-//    request.setRawHeader("Content-Type",QString("multipart/form-data; boundary="+multipartBoundary).toAscii());
-//    request.setHeader(QNetworkRequest::ContentLengthHeader, postData.size());
+    QNetworkRequest request = networkRequest(extraPath, extraData, "POST", data);
+    // Set type for request otherwise there is this warning
 
-//    // perform POST request
-//    return d->networkAccessManager->post(request, postData);
-    return 0;
+    return networkAccessManager->post(request, postData);
 }
 
 /*! \reimp */
@@ -407,28 +417,63 @@ QNetworkReply * TwitterInterfacePrivate::deleteRequest(const QString &objectIden
                                                        const QString &extraPath,
                                                        const QVariantMap &extraData)
 {
-//    Q_D(TwitterInterface);
-//    if (!d->initialized) {
-//        qWarning() << Q_FUNC_INFO << "cannot complete delete request: not initialized";
-//        return 0;
-//    }
+    return SocialNetworkInterfacePrivate::deleteRequest(objectIdentifier, extraPath, extraData);
+}
 
-//    return d->networkAccessManager->deleteResource(QNetworkRequest(d->requestUrl(objectIdentifier, extraPath, QStringList(), extraData)));
-    return 0;
+int TwitterInterfacePrivate::guessType(const QString &identifier, int type,
+                                       const QSet<FilterInterface *> &filters)
+{
+    Q_UNUSED(identifier)
+    Q_UNUSED(type)
+    if (filters.isEmpty()) {
+        return -1;
+    }
+
+    // If we have filters, we are able to identify the type of node
+    // We first cast filters to known filters
+    QList<ContentItemTypeFilterInterface *> castedFilters;
+
+    foreach (FilterInterface *filter, filters) {
+        ContentItemTypeFilterInterface *contentItemTypeFilter
+                = qobject_cast<ContentItemTypeFilterInterface*>(filter);
+        if (!contentItemTypeFilter) {
+            qWarning() << "The Twitter adapter only supports ContentItemType filters";
+        } else {
+            castedFilters.append(contentItemTypeFilter);
+        }
+    }
+
+    // Get the type from the filter
+    if (castedFilters.count() != 1) {
+        return -1;
+    }
+
+    int guessedType = -1;
+
+    int filterType = castedFilters.first()->type();
+    switch (filterType) {
+        case TwitterInterface::Tweet:
+        case TwitterInterface::Home:
+        case TwitterInterface::Friends:
+        case TwitterInterface::Followers: {
+            guessedType = TwitterInterface::User;
+        }
+        break;
+        default: break;
+    }
+
+    return guessedType;
 }
 
 /*! \internal */
 void TwitterInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
 {
-    Q_Q(TwitterInterface);
-
     QByteArray replyData = reply->readAll();
     QUrl requestUrl = reply->request().url();
     deleteReply(reply);
     bool ok = false;
-    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
+    QVariant responseData = ContentItemInterfacePrivate::parseReplyDataVariant(replyData, &ok);
     if (!ok) {
-        responseData.insert("response", replyData);
         setError(node, SocialNetworkInterface::RequestError,
                  QLatin1String("Error populating node: response is invalid. "\
                                "Perhaps the requested object id was incorrect?  Response: ")
@@ -436,33 +481,18 @@ void TwitterInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
         return;
     }
 
-    if (responseData.contains(QLatin1String("error"))) {
-        QString errorResponse = QLatin1String("\n    error:");
-        QVariantMap errMap = responseData.value(QLatin1String("error")).toMap();
-        QStringList keys = errMap.keys();
-        foreach (const QString &key, keys) {
-            errorResponse += QLatin1String("\n        ")
-                             + key + QLatin1String("=") + errMap.value(key).toString();
-        }
-        qWarning() << Q_FUNC_INFO << "error response:" << errorResponse
-                   << "while getting:" << requestUrl.toString();
-
-        setError(node, SocialNetworkInterface::RequestError,
-                 QLatin1String("Error populating node: response is error.  Response: ")
-                 + QString::fromLatin1(replyData.constData()));
-        return;
-    };
 
     switch (node.status()) {
         case NodePrivate::LoadingNodeData:{
+            QVariantMap responseDataMap = responseData.toMap();
             // Create a cache entry associated to the retrieved data
             QString identifier;
-            if (responseData.contains(TWITTER_ONTOLOGY_METADATA_ID)) {
-                identifier = responseData.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
+            if (responseDataMap.contains(TWITTER_ONTOLOGY_METADATA_ID)) {
+                identifier = responseDataMap.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
             }
-            responseData.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, node.type());
+            responseDataMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, node.type());
 
-            CacheEntry cacheEntry = createCacheEntry(responseData, identifier);
+            CacheEntry cacheEntry = createCacheEntry(responseDataMap, identifier);
             node.setCacheEntry(cacheEntry);
             updateModelNode(node);
 
@@ -483,11 +513,8 @@ void TwitterInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
 }
 
 bool TwitterInterfacePrivate::performRelatedDataRequest(Node &node, const QString &identifier,
-                                                        const QList<FilterInterface *> &filters,
-                                                        const QString &cursor)
+                                                        const QList<FilterInterface *> &filters)
 {
-    Q_Q(TwitterInterface);
-
     // We first cast filters to known filters
     QList<FilterInterface *> castedFilters;
 
@@ -521,26 +548,69 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node &node, const QStrin
     // Build the query
     QString extraPath;
     QVariantMap extraData;
-    if (!cursor.isEmpty()) {
-        extraData.insert(TWITTER_ONTOLOGY_METADATA_CURSOR, cursor);
+
+    QVariantMap nodeExtraInfo = node.extraInfo();
+    // If we have cursors, we add them
+    if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR)
+        && node.status() == NodePrivate::LoadingRelatedDataAppending) {
+        extraData.insert(TWITTER_ONTOLOGY_METADATA_CURSOR,
+                         nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR));
+    }
+
+    if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR)
+        && node.status() == NodePrivate::LoadingRelatedDataPrepending) {
+        extraData.insert(TWITTER_ONTOLOGY_METADATA_CURSOR,
+                         nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR));
+    }
+
+    if (nodeExtraInfo.contains(NEXT_TWEET_PAGE_KEY)
+        && node.status() == NodePrivate::LoadingRelatedDataAppending) {
+        QVariantMap next = nodeExtraInfo.value(NEXT_TWEET_PAGE_KEY).toMap();
+        foreach (QString key, next.keys()) {
+            extraData.insert(key, next.value(key));
+        }
+    }
+
+    if (nodeExtraInfo.contains(PREVIOUS_TWEET_PAGE_KEY)
+        && node.status() == NodePrivate::LoadingRelatedDataPrepending) {
+        QVariantMap previous = nodeExtraInfo.value(PREVIOUS_TWEET_PAGE_KEY).toMap();
+        foreach (QString key, previous.keys()) {
+            extraData.insert(key, previous.value(key));
+        }
     }
 
     switch (filter->type()) {
     case TwitterInterface::Friends:
         extraPath = TWITTER_ONTOLOGY_CONNECTION_FRIENDS_LIST;
         extraData.insert(TWITTER_ONTOLOGY_CONNECTION_USER_ID_KEY, identifier);
-        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_USER_ID_KEY, identifier);
-        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_SKIP_STATUS_KEY, TRUE_STRING);
-        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY, TRUE_STRING);
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_SKIP_STATUS_KEY, boolToString(true));
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY,
+                         boolToString(true));
         break;
     case TwitterInterface::Followers:
         extraPath = TWITTER_ONTOLOGY_CONNECTION_FOLLOWERS_LIST;
         extraData.insert(TWITTER_ONTOLOGY_CONNECTION_USER_ID_KEY, identifier);
-        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_USER_ID_KEY, identifier);
-        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_SKIP_STATUS_KEY, TRUE_STRING);
-        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY, TRUE_STRING);
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_SKIP_STATUS_KEY, boolToString(true));
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY,
+                         boolToString(true));
         break;
-
+    case TwitterInterface::Tweet:
+        extraPath = TWITTER_ONTOLOGY_CONNECTION_STATUSES_USER_TIMELINE;
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_USER_ID_KEY, identifier);
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY,
+                         boolToString(true));
+        break;
+    case TwitterInterface::Home:
+        extraPath = TWITTER_ONTOLOGY_CONNECTION_STATUSES_HOME_TIMELINE;
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY,
+                         boolToString(true));
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_COUNT_KEY, 200);
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_TRIM_USER_KEY, boolToString(false));
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_EXCLUDE_REPLIES_KEY, boolToString(false));
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_CONTRIBUTOR_DETAILS_KEY, boolToString(true));
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_USER_ENTITIES_KEY,
+                         boolToString(true));
+        break;
     default:
         qWarning() << Q_FUNC_INFO << "Type" << filter->type() << "is invalid";
         return false;
@@ -548,10 +618,7 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node &node, const QStrin
     }
 
     setReply(node, getRequest(QString(), extraPath, QStringList(), extraData));
-
     return true;
-
-
 }
 
 //----------------------------------------------------------
@@ -644,11 +711,11 @@ QString TwitterInterface::oauthToken() const
     return d->oauthToken;
 }
 
-void TwitterInterface::setOAuthToken(const QString &token)
+void TwitterInterface::setOAuthToken(const QString &oauthToken)
 {
     Q_D(TwitterInterface);
-    if (d->oauthToken != token) {
-        d->oauthToken = token;
+    if (d->oauthToken != oauthToken) {
+        d->oauthToken = oauthToken;
         emit oauthTokenChanged();
     }
 }
@@ -664,11 +731,11 @@ QString TwitterInterface::oauthTokenSecret() const
     return d->oauthTokenSecret;
 }
 
-void TwitterInterface::setOAuthTokenSecret(const QString &secret)
+void TwitterInterface::setOAuthTokenSecret(const QString &oauthTokenSecret)
 {
     Q_D(TwitterInterface);
-    if (d->oauthTokenSecret != secret) {
-        d->oauthTokenSecret = secret;
+    if (d->oauthTokenSecret != oauthTokenSecret) {
+        d->oauthTokenSecret = oauthTokenSecret;
         emit oauthTokenSecretChanged();
     }
 }
@@ -704,12 +771,27 @@ QString TwitterInterface::consumerSecret() const
     return d->consumerSecret;
 }
 
-void TwitterInterface::setConsumerSecret(const QString &secret)
+void TwitterInterface::setConsumerSecret(const QString &consumerSecret)
 {
     Q_D(TwitterInterface);
-    if (d->consumerSecret != secret) {
-        d->consumerSecret = secret;
+    if (d->consumerSecret != consumerSecret) {
+        d->consumerSecret = consumerSecret;
         emit consumerSecretChanged();
+    }
+}
+
+QString TwitterInterface::currentUserIdentifier() const
+{
+    Q_D(const TwitterInterface);
+    return d->currentUserIdentifier;
+}
+
+void TwitterInterface::setCurrentUserIdentifier(const QString &currentUserIdentifier)
+{
+    Q_D(TwitterInterface);
+    if (d->currentUserIdentifier != currentUserIdentifier) {
+        d->currentUserIdentifier = currentUserIdentifier;
+        emit currentUserIdentifierChanged();
     }
 }
 
