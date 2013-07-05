@@ -219,7 +219,7 @@
       last node.
 
     - atLastNode() is used to inform if the SocialNetworkInterface is currently
-      displaying the last node. And if it is the case, updateNodePositionStatus() or
+      displaying the last node. And if it is the case, updateNode() or
       updateRelatedData() can be used to automatically update all the attributes
       that influences the display.
 
@@ -800,30 +800,9 @@ void SocialNetworkInterfacePrivate::insertContent(const QList<CacheEntry> &newDa
     }
 }
 
-void SocialNetworkInterfacePrivate::updateNodePositionStatus()
+void SocialNetworkInterfacePrivate::updateNode()
 {
     Q_Q(SocialNetworkInterface);
-    // Update next and previous
-    bool newHasPreviousNode = true;
-    bool newHasNextNode = true;
-    if (nodeStackIndex == -1) {
-        newHasPreviousNode = false;
-    }
-
-    if (nodeStackIndex == nodeStack.count() - 1) {
-        newHasNextNode = false;
-    }
-
-    if (hasPreviousNode != newHasPreviousNode) {
-        hasPreviousNode = newHasPreviousNode;
-        emit q->hasPreviousNodeChanged();
-    }
-
-    if (hasNextNode != newHasNextNode) {
-        hasNextNode = newHasNextNode;
-        emit q->hasNextNodeChanged();
-    }
-
     // If we are at the first place holder position
     if (nodeStackIndex == -1) {
 
@@ -858,6 +837,31 @@ void SocialNetworkInterfacePrivate::updateNodePositionStatus()
         // Create a node if not created
         node = currentNode().cacheEntry().identifiableItem();
         emit q->nodeChanged();
+    }
+}
+
+void SocialNetworkInterfacePrivate::updateNodePositionStatus()
+{
+    Q_Q(SocialNetworkInterface);
+    // Update next and previous
+    bool newHasPreviousNode = true;
+    bool newHasNextNode = true;
+    if (nodeStackIndex == -1) {
+        newHasPreviousNode = false;
+    }
+
+    if (nodeStackIndex == nodeStack.count() - 1) {
+        newHasNextNode = false;
+    }
+
+    if (hasPreviousNode != newHasPreviousNode) {
+        hasPreviousNode = newHasPreviousNode;
+        emit q->hasPreviousNodeChanged();
+    }
+
+    if (hasNextNode != newHasNextNode) {
+        hasNextNode = newHasNextNode;
+        emit q->hasNextNodeChanged();
     }
 }
 
@@ -1225,6 +1229,7 @@ void SocialNetworkInterface::nextNode()
         return;
     }
 
+    d->updateNode();
     d->updateNodePositionStatus();
     d->updateRelatedData();
 }
@@ -1249,6 +1254,7 @@ void SocialNetworkInterface::previousNode()
     }
 
     d->nodeStackIndex --;
+    d->updateNode();
     d->updateNodePositionStatus();
     d->updateRelatedData();
 }

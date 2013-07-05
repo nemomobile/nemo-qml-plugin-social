@@ -214,6 +214,7 @@ public:
     void insertContent(const QList<CacheEntry> &newData,
                        RelatedDataPagingFlags relatedDataPagingFlags,
                        UpdateMode updateMode = Replace);
+    void updateNode();
     void updateNodePositionStatus();
     void updateRelatedData();
 
