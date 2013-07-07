@@ -58,7 +58,7 @@ protected:
     ContentItemInterface * const q_ptr;
 private:
     // Slots
-    void socialNetworkStatusChangedHandler();
+    void socialNetworkInitializedChangedHandler();
     Q_DECLARE_PUBLIC(ContentItemInterface)
     QVariantMap m_data;
 };

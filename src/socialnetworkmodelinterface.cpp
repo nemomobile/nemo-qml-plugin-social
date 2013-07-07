@@ -185,7 +185,7 @@ void SocialNetworkModelInterfacePrivate::clean()
     emit q->countChanged();
     q->endRemoveRows();
 
-    setHasNextAndPrevious(false, false);
+    setHavePreviousAndNext(false, false);
 }
 
 void SocialNetworkModelInterfacePrivate::setData(const QList<CacheEntry> &data)
@@ -260,7 +260,7 @@ void SocialNetworkModelInterfacePrivate::setError(SocialNetworkInterface::ErrorT
     setStatus(SocialNetworkInterface::Error);
 }
 
-void SocialNetworkModelInterfacePrivate::setHasNextAndPrevious(bool newHasPrevious, bool newHasNext)
+void SocialNetworkModelInterfacePrivate::setHavePreviousAndNext(bool newHasPrevious, bool newHasNext)
 {
     Q_Q(SocialNetworkModelInterface);
     if (hasPrevious != newHasPrevious) {
@@ -325,26 +325,29 @@ QVariant SocialNetworkModelInterface::data(const QModelIndex &index, int role) c
     CacheEntry cacheEntry = d->modelData.at(index.row());
 
     switch (role) {
-    case ContentItemTypeRole:
-        return QVariant::fromValue(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt());
-    case ContentItemDataRole:
-        return QVariant::fromValue(cacheEntry.data());
-    case ContentItemIdentifierRole:
-        return QVariant::fromValue(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString());
-    case ContentItemRole:
-    {
-        if (cacheEntry.item()) {
-            return QVariant::fromValue(cacheEntry.item());
+        case ContentItemTypeRole: {
+            return QVariant::fromValue(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt());
         }
+        case ContentItemDataRole: {
+            return QVariant::fromValue(cacheEntry.data());
+        }
+        case ContentItemIdentifierRole: {
+            return QVariant::fromValue(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString());
+        }
+        case ContentItemRole: {
+            if (cacheEntry.item()) {
+                return QVariant::fromValue(cacheEntry.item());
+            }
 
-        return QVariant::fromValue(d->socialNetwork->d_func()->createItem(cacheEntry));
-    }
-        break;
-    case SectionRole:
-        return d->socialNetwork->d_func()->dataSection(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt(),
-                                                       cacheEntry.data());
-    default:
-        return QVariant();
+            return QVariant::fromValue(d->socialNetwork->d_func()->createItem(cacheEntry));
+        }
+        case SectionRole: {
+            return d->socialNetwork->d_func()->dataSection(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt(),
+                                                           cacheEntry.data());
+        }
+        default: {
+            return QVariant();
+        }
     }
 }
 
@@ -456,6 +459,17 @@ void SocialNetworkModelInterface::populate()
     }
 
     d->socialNetwork->d_func()->addModel(this, d->nodeIdentifier, d->filters);
+}
+
+void SocialNetworkModelInterface::repopulate()
+{
+    Q_D(SocialNetworkModelInterface);
+    if (!d->socialNetwork) {
+        qWarning() << Q_FUNC_INFO << "Cannot call repopulate when not SocialNetwork is set";
+        return;
+    }
+
+    d->socialNetwork->d_func()->addModel(this, d->nodeIdentifier, d->filters, true);
 }
 
 void SocialNetworkModelInterface::loadNext()

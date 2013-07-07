@@ -60,7 +60,7 @@ import org.nemomobile.social 1.0
 Item {
     id: root
     width: 300
-    height: 500
+    height: 600
     property string accessToken // provided by main.cpp
     property int whichActive: 0
 
@@ -113,7 +113,6 @@ Item {
                 page2.populate(nodeId)
                 page2.backClicked.connect(root.backHome)
             }
-
             break
         }
         whichActive = which
@@ -164,6 +163,14 @@ Item {
                 which: 10
             }
             ListElement {
+                text: "Show URL to user's picture"
+                which: -2
+            }
+            ListElement {
+                text: "Test item loading"
+                which: -3
+            }
+            ListElement {
                 text: "Quit"
                 which: -1
             }
@@ -178,6 +185,21 @@ Item {
                 onClicked: {
                     if (model.which == -1) {
                         Qt.quit()
+                    } else if (model.which == -2) {
+                        if(portraitModel.status == Facebook.Initializing) {
+                            portraitModel.populate()
+                            root.whichActive = -1
+                        } else {
+                            portraitModel.displayPortraitUrl()
+                        }
+                    }  else if(model.which == -3) {
+                        if (user.identifier == "me") {
+                            user.displayUser()
+                            return
+                        }
+
+                        root.whichActive = -3
+                        user.identifier = "me"
                     } else {
                         makeActive(model.which, facebook.currentUserIdentifier)
                     }
@@ -249,6 +271,40 @@ Item {
         onStatusChanged: {
             if (status == SocialNetwork.Invalid) {
                 console.debug("The status of the filter destruction test model is now Invalid")
+            }
+        }
+    }
+
+    SocialNetworkModel {
+        id: portraitModel
+        function displayPortraitUrl() {
+            console.debug("User picture: " + portraitModel.node.picture.url)
+        }
+
+        socialNetwork: facebook
+        nodeIdentifier: facebook.currentUserIdentifier
+        filters: [ ContentItemTypeFilter { type: Facebook.UserPicture } ]
+        onStatusChanged: {
+            if (status == Facebook.Idle) {
+                displayPortraitUrl()
+                root.whichActive = 0
+            }
+        }
+    }
+
+    FacebookUser {
+        id: user
+        socialNetwork: facebook
+        function displayUser() {
+            if (user.name != "") {
+                console.debug("Current user name: " + user.name)
+            }
+        }
+
+        onStatusChanged: {
+            if (status == Facebook.Idle) {
+                displayUser()
+                root.whichActive = 0
             }
         }
     }

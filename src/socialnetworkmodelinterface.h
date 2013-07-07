@@ -111,6 +111,7 @@ public:
 
 public Q_SLOTS:
     void populate();
+    void repopulate();
     void loadNext();
     void loadPrevious();
     void clean();

@@ -108,7 +108,7 @@ protected:
 
 private:
     Q_DECLARE_PRIVATE(ContentItemInterface)
-    Q_PRIVATE_SLOT(d_func(), void socialNetworkStatusChangedHandler())
+    Q_PRIVATE_SLOT(d_func(), void socialNetworkInitializedChangedHandler())
     void setDataPrivate(const QVariantMap &data);
     QVariantMap dataPrivate() const;
     friend class SocialNetworkInterface;

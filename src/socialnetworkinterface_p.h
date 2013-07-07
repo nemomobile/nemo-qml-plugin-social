@@ -104,13 +104,15 @@ private:
 
 struct NodePrivate: public QSharedData
 {
-    enum NodeStatus {
-        NotLoading,
+    enum Status {
+        Initializing,
+        Idle,
         LoadingNodeData,
         LoadingRelatedDataReplacing,
         LoadingRelatedDataPrepending,
         LoadingRelatedDataAppending,
-        Loaded
+        Error,
+        Invalid
     };
     explicit NodePrivate();
     virtual ~NodePrivate();
@@ -124,16 +126,16 @@ struct NodePrivate: public QSharedData
     // A list of cache entries, that represents the data displayed in the model
     // for this node
     QList<CacheEntry> relatedData;
-    bool hasPreviousRelatedData;
-    bool hasNextRelatedData;
+    bool hasPrevious;
+    bool hasNext;
     // A set of extra informations, used to store, for example, cursors or
     // indexes for next and previous
     QVariantMap extraInfo;
-    NodeStatus status;
+    Status status;
 
-    // Network request and models used to update this node
-    QNetworkReply *reply;
-    QList<SocialNetworkModelInterface *> models;
+    // Errors for the models
+    SocialNetworkInterface::ErrorType error;
+    QString errorMessage;
 };
 
 class Node
@@ -153,18 +155,16 @@ public:
     QList<CacheEntry> relatedData() const;
     void setRelatedData(const QList<CacheEntry> &relatedData);
     void setFilters(const QSet<FilterInterface *> &filters);
-    bool hasPreviousRelatedData() const;
-    bool hasNextRelatedData() const;
-    void setHavePreviousAndNextRelatedData(bool hasPreviousRelatedData, bool hasNextRelatedData);
+    bool hasPrevious() const;
+    bool hasNext() const;
+    void setHavePreviousAndNext(bool hasPrevious, bool hasNext);
     QVariantMap extraInfo() const;
     void setExtraInfo(const QVariantMap &extraInfo);
-    NodePrivate::NodeStatus status() const;
-    void setStatus(NodePrivate::NodeStatus status);
-    QNetworkReply * reply() const;
-    void setReply(QNetworkReply *reply);
-    QList<SocialNetworkModelInterface *> models() const;
-    QList<SocialNetworkModelInterface *> & models();
-    void setModels(const QList<SocialNetworkModelInterface *> &models);
+    NodePrivate::Status status() const;
+    void setStatus(NodePrivate::Status status);
+    SocialNetworkInterface::ErrorType error() const;
+    QString errorMessage() const;
+    void setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage);
 
 protected:
     QExplicitlySharedDataPointer<NodePrivate> d_ptr;
@@ -229,31 +229,29 @@ protected:
     friend class IdentifiableContentItemInterfacePrivate;
 
     // Handlers, implement if needed
-    virtual void handleFinish(Node &node, QNetworkReply *reply);
+    virtual void handleFinished(Node &node, QNetworkReply *reply);
     virtual void handleError(Node &node, QNetworkReply *reply,
                              QNetworkReply::NetworkError networkError);
     virtual void handleSslError(Node &node, QNetworkReply *reply,
                                 const QList<QSslError> &sslErrors);
 
     // Helper functions
-    void setReply(Node &node, QNetworkReply *reply);
-    void setStatus(const Node &node, SocialNetworkInterface::Status status);
+    void setReply(const Node &node, QNetworkReply *reply);
+    void setStatus(Node &node, NodePrivate::Status status);
     void setError(Node &node, SocialNetworkInterface::ErrorType error,
                   const QString &errorMessage);
-    void deleteReply(Node &node);
-    void updateNodeModelNode(Node &node);
-    void updateNodeModelRelatedData(Node &node, const QList<CacheEntry> &relatedData);
+    void deleteReply(QNetworkReply *reply);
+    void updateModelNode(Node &node);
+    void updateModelRelatedData(Node &node, const QList<CacheEntry> &relatedData);
     CacheEntry createCacheEntry(const QVariantMap &data, const QString &nodeIdentifier = QString());
 private:
     // Used by NSMI
     void addModel(SocialNetworkModelInterface *model, const QString &identifier,
-                  const QList<FilterInterface *> &filters);
-    void moveMode(SocialNetworkModelInterface *model, const QString &identifier,
-                  const QList<FilterInterface *> &filters);
+                  const QList<FilterInterface *> &filters, bool reload = false);
     void removeModel(SocialNetworkModelInterface *model);
     void loadNext(SocialNetworkModelInterface *model);
     void loadPrevious(SocialNetworkModelInterface *model);
-    ContentItemInterface * createItem(CacheEntry &cacheEntry);
+    ContentItemInterface * createItem(const CacheEntry &cacheEntry);
     friend class SocialNetworkModelInterface;
 
     // Slots
@@ -266,7 +264,10 @@ private:
 
 
     // Implementation details
-    Node createNode(const QString &identifier, const QSet<FilterInterface *> &filters);
+    inline static bool matches(const Node &node, SocialNetworkModelInterface *model);
+    inline static SocialNetworkInterface::Status correspondingStatus(NodePrivate::Status status);
+    Node getOrCreateNode(const QString &identifier, const QSet<FilterInterface *> &filters);
+    Node getNode(const QString &identifier, const QSet<FilterInterface *> &filters);
     void checkCacheEntryRefcount(const CacheEntry &entry);
     void deleteNode(const Node &node);
 
@@ -278,7 +279,7 @@ private:
     bool initialized;
     QHash<QString, CacheEntry> cache;
     QList<Node> nodes;
-    QMap<SocialNetworkModelInterface *, Node> modelToNodeMap;
+    QList<SocialNetworkModelInterface *> models;
     QMap<QNetworkReply *, Node> replyToNodeMap;
 
     // Arbitrary request handler

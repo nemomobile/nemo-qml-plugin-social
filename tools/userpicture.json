@@ -4,7 +4,7 @@
     "identifiable": false,
     "properties": [
         {
-            "name": "source",
+            "name": "url",
             "type": "QUrl",
             "doc": "Holds the url to the image source of the picture."
         },

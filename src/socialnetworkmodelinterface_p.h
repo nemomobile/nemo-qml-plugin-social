@@ -78,7 +78,7 @@ private:
     void appendData(const QList<CacheEntry> &data);
     void setStatus(SocialNetworkInterface::Status newStatus);
     void setError(SocialNetworkInterface::ErrorType newError, const QString &newErrorMessage);
-    void setHasNextAndPrevious(bool newHasPrevious, bool newHasNext);
+    void setHavePreviousAndNext(bool newHasPrevious, bool newHasNext);
 
     // Slots
     void sorterDestroyedHandler(QObject *object);

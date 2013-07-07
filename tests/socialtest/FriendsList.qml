@@ -78,12 +78,22 @@ Item {
         model: model
         footer: Item {
             width: view.width
-            height: childrenRect.height
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: model.hasNext ? "Load more" : "Cannot load more"
-                onClicked: model.loadNext()
+            height: column.height
+            Column {
+                id: column
+                anchors.left: parent.left; anchors.right: parent.right
+                Button {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Reload"
+                    onClicked: model.repopulate()
+                }
+                Button {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: model.hasNext ? "Load more" : "Cannot load more"
+                    onClicked: model.loadNext()
+                }
             }
+
         }
 
         delegate: Item {

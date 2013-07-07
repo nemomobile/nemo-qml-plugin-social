@@ -69,6 +69,7 @@ class SocialNetworkInterface : public QObject, public QDeclarativeParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
+    Q_PROPERTY(bool initialized READ isInitialized NOTIFY initializedChanged)
 
     Q_ENUMS(Status)
     Q_ENUMS(ErrorType)
@@ -112,6 +113,7 @@ public:
 public:
     explicit SocialNetworkInterface(QObject *parent = 0);
     virtual ~SocialNetworkInterface();
+    bool isInitialized() const;
 
     // QDeclarativeParserStatus
     virtual void classBegin();
@@ -123,10 +125,10 @@ public:
                                       const QString &postData = QString());
 Q_SIGNALS:
     void arbitraryRequestResponseReceived(bool isError, const QVariantMap &data);
+    void initializedChanged();
 
 protected:
     SocialNetworkInterface(SocialNetworkInterfacePrivate &dd, QObject *parent = 0);
-    bool isInitialized() const;
 
     QVariantMap contentItemData(ContentItemInterface *contentItem) const;
     void setContentItemData(ContentItemInterface *contentItem, const QVariantMap &data) const;
