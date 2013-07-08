@@ -65,6 +65,8 @@
 // TODO XXX We need to implement a "metadata" filter, that is used to detect type
 // of elements that we don't know. That metadata filter will simply enable &metadata=1
 // so that the type detection won't fail.
+// Or we can load the data, and if we don't know the type, we could load the metadata=1
+// field and then get the info on the entity
 
 QVariant FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(const QString &key, const QVariantMap &data)
 {
@@ -235,7 +237,12 @@ void FacebookInterfacePrivate::populateRelatedDataForLastNode(const QVariantMap 
     appendingRelatedData = false;
 
     insertContent(relatedContent, relatedDataPagingFlags, updateMode);
+    internalStatus = Idle;
     setStatus(SocialNetworkInterface::Idle);
+
+    if (atLastNode()) {
+        updateRelatedData();
+    }
 }
 
 /*! \internal */
@@ -416,6 +423,7 @@ void FacebookInterfacePrivate::finishedHandler()
                                "Perhaps the requested object id was incorrect?  Response: ")
                  + QString::fromLatin1(replyData.constData()));
         setStatus(SocialNetworkInterface::Error);
+        internalStatus = Idle;
         return;
     }
 
@@ -434,8 +442,7 @@ void FacebookInterfacePrivate::finishedHandler()
                  QLatin1String("Error populating node: response is error.  Response: ")
                  + QString::fromLatin1(replyData.constData()));
         setStatus(SocialNetworkInterface::Error);
-        emit q->errorChanged();
-        emit q->errorMessageChanged();
+        internalStatus = Idle;
         return;
     }
 
@@ -451,13 +458,16 @@ void FacebookInterfacePrivate::finishedHandler()
             CacheEntry cacheEntry = createCacheEntry(responseData, identifier);
             setLastNodeCacheEntry(cacheEntry);
             if (atLastNode()) {
-                updateRelatedData();
+                updateNode();
             }
             q->populateRelatedDataforLastNode();
         }
         break;
     case PopulatingNodeRelatedData:
         populateRelatedDataForLastNode(responseData, requestUrl);
+        if (atLastNode()) {
+            updateRelatedData();
+        }
         break;
 
     default:
@@ -468,7 +478,6 @@ void FacebookInterfacePrivate::finishedHandler()
 /*! \internal */
 void FacebookInterfacePrivate::errorHandler(QNetworkReply::NetworkError networkError)
 {
-    qDebug() << "Error";
     Q_Q(FacebookInterface);
     if (networkError == QNetworkReply::UnknownContentError) {
         // ignore this.  It's not actually an error, Facebook just formats some responses strangely.
@@ -681,10 +690,17 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
                                                          const QList<FilterInterface *> &filters,
                                                          const RequestFieldsMap &extra)
 {
+
     Q_Q(FacebookInterface);
     if (filters.isEmpty()) {
-        return false;
+        // An empty filter should not create an error
+        // Actually, nothing should be loaded in the node and
+        // the request should be terminated
+        internalStatus = Idle;
+        setStatus(SocialNetworkInterface::Idle);
+        return true;
     }
+
     // Notifications is a tough one. It cannot be queried via fields expansion
     // so if notifications is passed in the list of filters, it is ignored if
     // there are other filters, and queried only if it is the only one.
@@ -746,6 +762,7 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
             setCurrentReply(q->getRequest(identifier, FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS,
                                           QStringList(), extraData), identifier);
             connectFinishedAndErrors();
+            internalStatus = PopulatingNodeRelatedData;
             return true;
         } else {
             qWarning() << Q_FUNC_INFO << "Notifications should not be requested with other filters";
@@ -817,6 +834,7 @@ bool FacebookInterfacePrivate::performRelatedDataRequest(const QString &identifi
 
     setCurrentReply(q->getRequest(identifier, QString(), fields, QVariantMap()), identifier);
     connectFinishedAndErrors();
+    internalStatus = PopulatingNodeRelatedData;
     return true;
 }
 
@@ -1079,8 +1097,11 @@ void FacebookInterface::loadNextRelatedData()
     }
 
     d->appendingRelatedData = true;
-    d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
-                                 requestFieldsMap);
+    if (!d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
+                                      requestFieldsMap)) {
+        d->setError(SocialNetworkInterface::DataUpdateError,
+                    QLatin1String("Cannot perform related data request"));
+    }
 }
 
 void FacebookInterface::loadPreviousRelatedData()
@@ -1120,13 +1141,12 @@ void FacebookInterface::loadPreviousRelatedData()
         }
     }
 
-    d->appendingRelatedData = true;
-    d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
-                                 requestFieldsMap);
-
-
-
-
+    d->prependingRelatedData = true;
+    if (!d->performRelatedDataRequest(d->lastNode().identifier(), d->lastNode().filters().toList(),
+                                      requestFieldsMap)) {
+        d->setError(SocialNetworkInterface::DataUpdateError,
+                    QLatin1String("Cannot perform related data request"));
+    }
 }
 
 /*! \reimp */
@@ -1248,8 +1268,7 @@ void FacebookInterface::populateRelatedDataforLastNode()
                            QMultiMap<int, QPair<QString, QString> >())) {
         d->setError(SocialNetworkInterface::DataUpdateError,
                     QLatin1String("Cannot perform related data request"));
-    } else {
-        d->internalStatus = FacebookInterfacePrivate::PopulatingNodeRelatedData;
+        d->internalStatus = FacebookInterfacePrivate::Idle;
     }
 }
 

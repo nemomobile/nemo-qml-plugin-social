@@ -46,6 +46,3 @@ HEADERS += \
 include(facebook/facebook.pri)
 
 OTHER_FILES += qmldir social.qdoc social.qdocconf
-
-MOC_DIR = $$PWD/../.moc
-OBJECTS_DIR = $$PWD/../.obj
