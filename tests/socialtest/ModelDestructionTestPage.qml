@@ -36,6 +36,12 @@ Item {
     id: container
     anchors.fill: parent
     signal backClicked
+
+    Connections {
+        target: root
+        onWhichActiveChanged: container.visible = (root.whichActive == 6)
+    }
+
     function populate(nodeId) {
         model.nodeIdentifier = nodeId
         model.populate()
@@ -45,12 +51,7 @@ Item {
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.User
-                limit: 50
-            }
-        ]
+        filters: [ friendsFilter ]
     }
 
     Text {
@@ -65,7 +66,10 @@ Item {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Back"
-        onClicked: container.backClicked()
+        onClicked: {
+            container.backClicked()
+            container.destroy()
+        }
     }
 
     ListView {
@@ -78,22 +82,12 @@ Item {
         model: model
         footer: Item {
             width: view.width
-            height: column.height
-            Column {
-                id: column
-                anchors.left: parent.left; anchors.right: parent.right
-                Button {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Reload"
-                    onClicked: model.repopulate()
-                }
-                Button {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: model.hasNext ? "Load more" : "Cannot load more"
-                    onClicked: model.loadNext()
-                }
+            height: childrenRect.height
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: model.hasNext ? "Load more" : "Cannot load more"
+                onClicked: model.loadNext()
             }
-
         }
 
         delegate: Item {

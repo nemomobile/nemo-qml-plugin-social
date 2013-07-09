@@ -263,7 +263,7 @@
 // >>> photo_image
 
 // <<< user_picture
-#define FACEBOOK_ONTOLOGY_USER_PICTURE_SOURCE              QLatin1String("source")
+#define FACEBOOK_ONTOLOGY_USER_PICTURE_URL                 QLatin1String("url")
 #define FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE        QLatin1String("is_silhouette")
 // >>> user_picture
 

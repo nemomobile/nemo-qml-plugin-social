@@ -34,16 +34,31 @@ import org.nemomobile.social 1.0
 
 Item {
     id: container
-    property alias model: view.model
+    anchors.fill: parent
     signal backClicked
     signal photoClicked(string photoId)
-    anchors.fill: parent
+
+    function populate(nodeId) {
+        model.nodeIdentifier = nodeId
+        model.populate()
+        view.positionViewAtBeginning()
+    }
+
+    SocialNetworkModel {
+        id: model
+        socialNetwork: facebook
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Photo
+            }
+        ]
+    }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " photos in the album" : ""
+        text: "You have " + model.count + " photos in this album"
     }
 
     Button {
@@ -63,6 +78,7 @@ Item {
         anchors.right: parent.right
         cellWidth: width / 4
         cellHeight: cellWidth
+        model: model
         delegate: MouseArea {
             id: photoDelegate
             onClicked: container.photoClicked(model.contentItem.identifier)
@@ -72,7 +88,7 @@ Item {
             Image {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
-                source: model.contentItem != null ? model.contentItem.picture : ""
+                source: model.contentItem.picture
             }
         }
     }

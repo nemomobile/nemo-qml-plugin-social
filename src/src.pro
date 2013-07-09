@@ -29,7 +29,8 @@ SOURCES += \
     $$PWD/contentitemtypefilterinterface.cpp \
     $$PWD/identifiablecontentiteminterface.cpp \
     $$PWD/socialnetworkinterface.cpp \
-    $$PWD/sorterinterface.cpp
+    $$PWD/sorterinterface.cpp \
+    $$PWD/socialnetworkmodelinterface.cpp
 
 HEADERS += \
     $$PWD/contentiteminterface.h \
@@ -41,7 +42,9 @@ HEADERS += \
     $$PWD/socialnetworkinterface.h \
     $$PWD/socialnetworkinterface_p.h \
     $$PWD/sorterinterface.h \
-    $$PWD/util_p.h
+    $$PWD/util_p.h \
+    $$PWD/socialnetworkmodelinterface.h \
+    $$PWD/socialnetworkmodelinterface_p.h
 
 include(facebook/facebook.pri)
 

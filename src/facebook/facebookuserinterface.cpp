@@ -290,8 +290,8 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
     }
 
     // Handle picture
-    QVariantMap oldPictureMap = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap();
-    QVariantMap newPictureMap = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap();
+    QVariantMap oldPictureMap = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap().value(FACEBOOK_ONTOLOGY_METADATA_DATA).toMap();
+    QVariantMap newPictureMap = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap().value(FACEBOOK_ONTOLOGY_METADATA_DATA).toMap();
 
     if (newPictureMap != oldPictureMap) {
         qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(picture, newPictureMap);

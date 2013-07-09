@@ -118,12 +118,11 @@ QVariantMap ContentItemInterfacePrivate::parseReplyData(const QByteArray &replyD
     return QVariantMap();
 }
 
-void ContentItemInterfacePrivate::socialNetworkStatusChangedHandler()
+void ContentItemInterfacePrivate::socialNetworkInitializedChangedHandler()
 {
     Q_Q(ContentItemInterface);
     if (socialNetworkInterface && socialNetworkInterface->isInitialized()) {
-        QObject::disconnect(socialNetworkInterface, SIGNAL(statusChanged()),
-                            q, SLOT(socialNetworkStatusChangedHandler()));
+        q->disconnect(socialNetworkInterface);
         isInitialized = true;
         initializationComplete();
     }
@@ -202,8 +201,8 @@ void ContentItemInterface::setSocialNetwork(SocialNetworkInterface *socialNetwor
         if (d->socialNetworkInterface)
             disconnect(d->socialNetworkInterface);
         if (socialNetwork && !socialNetwork->isInitialized()) {
-            connect(socialNetwork, SIGNAL(statusChanged()),
-                    this, SLOT(socialNetworkStatusChangedHandler()));
+            connect(socialNetwork, SIGNAL(initializedChanged()),
+                    this, SLOT(socialNetworkInitializedChangedHandler()));
         }
         d->socialNetworkInterface = socialNetwork;
         emit socialNetworkChanged();

@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = snitest
+TARGET = multimodeltest
 
 equals(QT_MAJOR_VERSION, 4): {
     QT += declarative network

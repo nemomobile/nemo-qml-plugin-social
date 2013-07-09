@@ -34,15 +34,29 @@ import org.nemomobile.social 1.0
 
 Item {
     id: container
-    property alias model: view.model
-    signal backClicked
     anchors.fill: parent
+    signal backClicked
+    function populate(nodeId) {
+        model.nodeIdentifier = nodeId
+        model.populate()
+        view.positionViewAtBeginning()
+    }
+
+    SocialNetworkModel {
+        id: model
+        socialNetwork: facebook
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Notification
+            }
+        ]
+    }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "You have " + model.count + " notifications" : ""
+        text: "You have " + model.count + " notifications"
     }
 
     Button {
@@ -60,6 +74,7 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
+        model: model
         delegate: Item {
             width: view.width
             height: column.height + 20
