@@ -973,24 +973,15 @@ CacheEntry SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &da
     }
 }
 
-void SocialNetworkInterfacePrivate::addModel(SocialNetworkModelInterface *model,
+void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
                                              const QString &identifier,
                                              const QList<FilterInterface *> &filters, bool reload)
 {
-    Q_Q(SocialNetworkInterface);
-
     // Refuse when not initialized
     if (!initialized) {
         qWarning() << Q_FUNC_INFO << "SocialNetworkInterface not initialized, the model "\
                       "will not be populated";
         return;
-    }
-
-    // Add the model if it do not exists
-    if (!models.contains(model)) {
-        models.append(model);
-        QObject::connect(model, SIGNAL(destroyed(QObject*)),
-                         q, SLOT(modelDestroyedHandler(QObject*)));
     }
 
     // If the model do not carry a valid node, we do not add the node
@@ -1003,6 +994,13 @@ void SocialNetworkInterfacePrivate::addModel(SocialNetworkModelInterface *model,
 
     // Create or get the node from cache
     Node node = getOrCreateNode(identifier, filterSet);
+
+    // Purge the nodes if needed
+    // This is needed if (eg) a model was associated to a Node,
+    // and then the user performs a request with different id / type / filters
+    // with the same model. The old Node that was created is then
+    // no longer valid
+    checkDoomedNodes();
 
     // If the node is already loaded, and we didn't ask for a reload,
     // we should not do anything else
@@ -1078,6 +1076,18 @@ void SocialNetworkInterfacePrivate::addModel(SocialNetworkModelInterface *model,
     }
 }
 
+void SocialNetworkInterfacePrivate::addModel(SocialNetworkModelInterface *model)
+{
+    Q_Q(SocialNetworkInterface);
+
+    // Add the model if it do not exists
+    if (!models.contains(model)) {
+        models.append(model);
+        QObject::connect(model, SIGNAL(destroyed(QObject*)),
+                         q, SLOT(modelDestroyedHandler(QObject*)));
+    }
+}
+
 void SocialNetworkInterfacePrivate::removeModel(SocialNetworkModelInterface *model)
 {
     if (!models.contains(model)) {
@@ -1092,33 +1102,7 @@ void SocialNetworkInterfacePrivate::removeModel(SocialNetworkModelInterface *mod
     }
 
     models.removeAll(model);
-
-    QList<Node> currentNodes = nodes;
-    QList<Node> doomedNodes;
-    QList<Node> savedNodes;
-    while (!currentNodes.isEmpty()) {
-        bool doomed = true;
-        Node node = currentNodes.takeFirst();
-        foreach (SocialNetworkModelInterface *otherModel, models) {
-            if (matches(node, otherModel)) {
-                doomed = false;
-                break;
-            }
-        }
-
-        if (doomed) {
-            doomedNodes.append(node);
-        } else {
-            savedNodes.append(node);
-        }
-    }
-
-    nodes = savedNodes;
-
-    // Destroy the doomed nodes
-    foreach (const Node &node, doomedNodes) {
-        deleteNode(node);
-    }
+    checkDoomedNodes();
 }
 
 void SocialNetworkInterfacePrivate::loadNext(SocialNetworkModelInterface *model)
@@ -1365,6 +1349,36 @@ Node SocialNetworkInterfacePrivate::getNode(const QString &identifier,
         return Node();
     } else {
         return nodes[index];
+    }
+}
+
+void SocialNetworkInterfacePrivate::checkDoomedNodes()
+{
+    QList<Node> currentNodes = nodes;
+    QList<Node> doomedNodes;
+    QList<Node> savedNodes;
+    while (!currentNodes.isEmpty()) {
+        bool doomed = true;
+        Node node = currentNodes.takeFirst();
+        foreach (SocialNetworkModelInterface *otherModel, models) {
+            if (matches(node, otherModel)) {
+                doomed = false;
+                break;
+            }
+        }
+
+        if (doomed) {
+            doomedNodes.append(node);
+        } else {
+            savedNodes.append(node);
+        }
+    }
+
+    nodes = savedNodes;
+
+    // Destroy the doomed nodes
+    foreach (const Node &node, doomedNodes) {
+        deleteNode(node);
     }
 }
 
