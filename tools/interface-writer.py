@@ -64,6 +64,20 @@ def getType(property, listPrivate = False):
         
     return getParameterType(property)
 
+def getQmlType(property):
+    type = property.type
+    if "QString" in type:
+        type = "string"
+    if "QUrl" in type:
+        type = "url"
+    if "::" in type:
+        type = "enumeration"
+    if "Interface" in type:
+        type = type.replace("Interface", "")
+    if property.isList:
+        type = "list<" + type + ">"
+    return type
+
 def generate(structure_file):
     struct = structure.extract(structure_file)
 
@@ -579,10 +593,11 @@ const QVariantMap &newData);\n"
     
     for property in struct.interfaceProperties:
         type = getType(property)
+        qmlType = getQmlType(property)
         splittedPropertyName = formattingtools.split(property.name)
         propertyName = formattingtools.camelCase(splittedPropertyName)
         source += "/*!\n"
-        source += "    \qmlproperty " + type + " " + qmlClassName + "::" + propertyName + "\n"
+        source += "    \qmlproperty " + qmlType + " " + qmlClassName + "::" + propertyName + "\n"
         source += indent(property.doc, 1) + "\n"
         source += "*/\n"
         source += type + " " + className + "::" + propertyName + "()"

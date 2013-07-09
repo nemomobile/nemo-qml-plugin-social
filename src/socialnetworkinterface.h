@@ -93,6 +93,7 @@ public:
         DataUpdateError = 5,
         OtherError = 6,
         LastError = 255
+        // TODO: make use of these error to (for example inform that type could not be identified)
     };
     enum Roles {
         ContentItemRole = Qt::UserRole + 1,

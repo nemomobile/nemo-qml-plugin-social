@@ -1,0 +1,9 @@
+\inqmlmodule org.nemomobile.social 1
+\brief A FacebookPostProperty represents an property of a FacebookPost
+
+FacebookPostProperty is a specialized ContentItem that is used to represent
+a non-standard property of a FacebookPost, that is often related to the media 
+that is attached to the post.
+
+\sa{ContentItem}
+\sa{FacebookPost}

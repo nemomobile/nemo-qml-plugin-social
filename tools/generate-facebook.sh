@@ -42,7 +42,13 @@ for file in `ls -1 *.json`; do
     headerfile=facebook${file/.json/}interface.h
     sourcefile=facebook${file/.json/}interface.cpp
     privatefile=facebook${file/.json/}interface_p.h
-    
+    docfile=${file/.json/}.doc
+
+    # Create doc
+    if [ -f $docfile ]
+    then
+        ./doctojson.py $docfile $file
+    fi
     
     # Move source and header files
     mv ../src/facebook/$headerfile .

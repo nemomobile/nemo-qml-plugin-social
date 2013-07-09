@@ -73,7 +73,15 @@ void FacebookUserPictureInterfacePrivate::emitPropertyChangeSignals(const QVaria
 /*!
     \qmltype FacebookUserPicture
     \instantiates FacebookUserPictureInterface
-    An entry representing a picture
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookUserPicture represents the picture for a FacebookUser
+    
+    FacebookUserPicture is a specialized ContentItem that is used to represent
+    the picture for a FacebookUser.
+    
+    \sa{ContentItem}
+    \sa{FacebookUser}
+    
 */
 FacebookUserPictureInterface::FacebookUserPictureInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookUserPictureInterfacePrivate(this)), parent)
@@ -88,7 +96,7 @@ int FacebookUserPictureInterface::type() const
 
 
 /*!
-    \qmlproperty QUrl FacebookUserPicture::url
+    \qmlproperty url FacebookUserPicture::url
     Holds the url to the image source of the picture.
 */
 QUrl FacebookUserPictureInterface::url() const

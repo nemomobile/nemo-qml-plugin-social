@@ -1,0 +1,8 @@
+\inqmlmodule org.nemomobile.social 1
+\brief A FacebookUserPicture represents the picture for a FacebookUser
+
+FacebookUserPicture is a specialized ContentItem that is used to represent
+the picture for a FacebookUser.
+
+\sa{ContentItem}
+\sa{FacebookUser}

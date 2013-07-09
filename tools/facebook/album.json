@@ -1,153 +1,153 @@
 {
-    "name": "album",
-    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookAlbum represents an Album object from the Facebook OpenGraph API\n\nEvery album has a unique identifier, and thus an album may be\nset as the \\c node (or central content item) in the Facebook\nadapter.  The content items related to an album include various\nphotos or videos, likes and comments.\n\nAn example of usage of a FacebookAlbum as the node in a Facebook\nmodel is as follows:\n\n\\qml\nimport QtQuick 1.1\nimport org.nemomobile.social 1.0\n\nItem {\n    id: root\n    width: 400\n    height: 800\n\n    Flickable {\n        anchors.top: parent.verticalCenter\n        anchors.bottom: parent.bottom\n        anchors.left: parent.left\n        anchors.right: parent.right\n\n        ListView {\n            model: fb\n            anchors.fill: parent\n            delegate: Label { text: \"id: \" + contentItemIdentifier } // Photo ids\n        }\n    }\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\"    // you must supply a valid access token\n        nodeIdentifier: \"10150146071791729\" // some valid Facebook album id.\n        filters: [ ContentItemTypeFilter { type: Facebook.Photo } ]\n    }\n\n    Component.onCompleted: {\n        fb.populate()\n    }\n}\n\\endqml\n\nA FacebookAlbum may also be used \"directly\" by clients, in order to\nupload photos or comments, or like the album.  An example of direct\nusage of the FacebookAlbum type is as follows:\n\n\\qml\nimport QtQuick 1.1\nimport org.nemomobile.social 1.0\n\nItem {\n    id: root\n    width: 400\n    height: 800\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\"    // you must supply a valid access token\n    }\n\n    FacebookAlbum {\n        id: fba\n        socialNetwork: fb\n        identifier: \"10150146071791729\"     // some valid Facebook Album fbid\n\n        onStatusChanged: {\n            if (status == SocialNetwork.Idle) {\n                // could comment on the album\n                fba.uploadComment(\"I really like this album!\")\n                // could like the album\n                fba.like()\n                // could unlike the album\n                fba.unlike()\n                // could upload another photo to the album\n                fba.uploadPhoto(fileName, \"A photo I took recently\")\n            }\n        }\n    }\n}\n\\endqml",
-    "identifiable": true,
-    "extra_public": "enum AlbumType {\n    Album,\n    Normal,\n    Wall,\n    Profile,\n    Mobile\n};\nQ_ENUMS(AlbumType)",
-    "properties": [
-        {
-            "name": "from",
-            "type": "FacebookObjectReferenceInterface",
-            "doc": "Holds a reference to the user or profile which created the album.",
-            "is_pointer": true
-        },
-        {
-            "name": "name",
-            "type": "QString",
-            "doc": "Holds the name of the album."
-        },
-        {
-            "name": "description",
-            "type": "QString",
-            "doc": "Holds the description of the album."
-        },
-        {
-            "name": "link",
-            "type": "QUrl",
-            "doc": "Holds a link to the album."
-        },
-        {
-            "name": "cover_photo",
-            "type": "QUrl",
-            "doc": "Holds a link to the cover photo of an album."
-        },
-        {
-            "name": "privacy",
-            "type": "QString",
-            "doc": "Holds the privacy setting of the album."
-        },
-        {
-            "name": "count",
-            "type": "int",
-            "doc": "Holds the count of the number of photos in the album."
-        },
-        {
-            "name": "type",
-            "type": "FacebookAlbumInterface::AlbumType",
-            "custom": true,
-            "doc": "Holds the type of the album.  Valid values are:\n\\list\n\\li FacebookAlbum.Album\n\\li FacebookAlbum.Normal\n\\li FacebookAlbum.Wall\n\\li FacebookAlbum.Profile\n\\li FacebookAlbum.Mobile\n\\endlist."
-        },
-        {
-            "name": "created_time",
-            "type": "QString",
-            "doc": "Holds the creation time of the album in an ISO8601-formatted string."
-        },
-        {
-            "name": "updated_time",
-            "type": "QString",
-            "doc": "Holds the last-update time of the album in an ISO8601-formatted string."
-        },
-        {
-            "name": "can_upload",
-            "type": "bool",
-            "doc": "Whether the current user can upload photos to the album."
-        },
-        {
-            "name": "liked",
-            "type": "bool",
-            "custom": true,
-            "is_ontology": false,
-            "doc": "Whether the album has been liked by the current user."
-        },
-        {
-            "name": "likes_count",
-            "type": "int",
-            "custom": true,
-            "is_ontology": false,
-            "doc": "The number of likes on this album."
-        },
-        {
-            "name": "comments_count",
-            "type": "int",
-            "custom": true,
-            "is_ontology": false,
-            "doc": "The number of likes on this album."
-        }
-    ],
     "methods": [
         {
+            "doc": "Initiates a \"like\" operation on the album.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "like",
-            "parameters": [],
-            "doc": "Initiates a \"like\" operation on the album.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            "parameters": []
         },
         {
+            "doc": "Initiates a \"delete like\" operation on the album.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "unlike",
-            "parameters": [],
-            "doc": "Initiates a \"delete like\" operation on the album.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            "parameters": []
         },
         {
+            "doc": "Initiates a \"post comment\" operation on the album.  The comment\nwill contain the specified \\a message.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded comment.",
             "name": "uploadComment",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "message",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "message"
                 }
-            ],
-            "doc": "Initiates a \"post comment\" operation on the album.  The comment\nwill contain the specified \\a message.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded comment."
+            ]
         },
         {
+            "doc": "Initiates a \"delete comment\" operation on the comment specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "removeComment",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "commentIdentifier",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "commentIdentifier"
                 }
-            ],
-            "doc": "Initiates a \"delete comment\" operation on the comment specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            ]
         },
         {
+            "doc": "Initiates a \"post photo\" operation on the album.  The photo will\nbe loaded from the local filesystem and uploaded to Facebook with\nits caption set to the given \\a message.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded photo.\n",
             "name": "uploadPhoto",
             "parameters": [
                 {
-                    "type": "QUrl",
-                    "name": "source",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QUrl",
+                    "name": "source"
                 },
                 {
-                    "type": "QString",
-                    "name": "message",
                     "default": "QString()",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "message"
                 }
-            ],
-            "doc": "Initiates a \"post photo\" operation on the album.  The photo will\nbe loaded from the local filesystem and uploaded to Facebook with\nits caption set to the given \\a message.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded photo.\n"
+            ]
         },
         {
+            "doc": "Initiates a \"delete photo\" operation on the photo specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "removePhoto",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "photoIdentifier",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "photoIdentifier"
                 }
-            ],
-            "doc": "Initiates a \"delete photo\" operation on the photo specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the album will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            ]
         }
-    ]
+    ],
+    "identifiable": true,
+    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookAlbum represents an album from the Facebook OpenGraph API\n\nFacebookAlbum is a specialized IdentifiableContentItem that is used\nto hold data that represents an album in the Facebook OpenGraph API.\n\n\\sa{IdentifiableContentItem}\n",
+    "properties": [
+        {
+            "doc": "Holds a reference to the user or profile which created the album.",
+            "is_pointer": true,
+            "name": "from",
+            "type": "FacebookObjectReferenceInterface"
+        },
+        {
+            "doc": "Holds the name of the album.",
+            "type": "QString",
+            "name": "name"
+        },
+        {
+            "doc": "Holds the description of the album.",
+            "type": "QString",
+            "name": "description"
+        },
+        {
+            "doc": "Holds a link to the album.",
+            "type": "QUrl",
+            "name": "link"
+        },
+        {
+            "doc": "Holds a link to the cover photo of an album.",
+            "type": "QUrl",
+            "name": "cover_photo"
+        },
+        {
+            "doc": "Holds the privacy setting of the album.",
+            "type": "QString",
+            "name": "privacy"
+        },
+        {
+            "doc": "Holds the count of the number of photos in the album.",
+            "type": "int",
+            "name": "count"
+        },
+        {
+            "doc": "Holds the type of the album. The albumType can be one of:\n\\list\n\\li FacebookAlbum.Album\n\\li FacebookAlbum.Normal\n\\li FacebookAlbum.Wall\n\\li FacebookAlbum.Profile\n\\li FacebookAlbum.Mobile\n\\endlist.",
+            "type": "FacebookAlbumInterface::AlbumType",
+            "name": "type",
+            "custom": true
+        },
+        {
+            "doc": "Holds the creation time of the album in an ISO8601-formatted string.",
+            "type": "QString",
+            "name": "created_time"
+        },
+        {
+            "doc": "Holds the last-update time of the album in an ISO8601-formatted string.",
+            "type": "QString",
+            "name": "updated_time"
+        },
+        {
+            "doc": "Whether the current user can upload photos to the album.",
+            "type": "bool",
+            "name": "can_upload"
+        },
+        {
+            "doc": "Whether the album has been liked by the current user.",
+            "is_ontology": false,
+            "type": "bool",
+            "name": "liked",
+            "custom": true
+        },
+        {
+            "doc": "The number of likes on this album.",
+            "is_ontology": false,
+            "type": "int",
+            "name": "likes_count",
+            "custom": true
+        },
+        {
+            "doc": "The number of likes on this album.",
+            "is_ontology": false,
+            "type": "int",
+            "name": "comments_count",
+            "custom": true
+        }
+    ],
+    "extra_public": "enum AlbumType {\n    Album,\n    Normal,\n    Wall,\n    Profile,\n    Mobile\n};\nQ_ENUMS(AlbumType)",
+    "name": "album"
 }

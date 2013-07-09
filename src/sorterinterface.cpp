@@ -32,6 +32,22 @@
 #include "sorterinterface.h"
 #include "contentiteminterface.h"
 
+/*!
+    \qmltype Sorter
+    \instantiates SorterInterface
+    \inqmlmodule org.nemomobile.social 1
+    \brief A sorter used to sort data in a SocialNetworkModel
+
+    The \c Sorter type should never be used directly by clients. Instead
+    clients should use more specialized implementations of the \c Sorter
+    interface.
+
+    \c Filter is used by SocialNetworkModel to sort the related
+    data. Several sorters can be set to a given SocialNetworkModel
+    in order to perform more refined sorting using a stable sort
+    algorithm.
+ */
+
 SorterInterface::SorterInterface(QObject *parent)
     : QObject(parent)
 {

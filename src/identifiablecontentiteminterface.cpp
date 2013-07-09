@@ -359,48 +359,79 @@ void IdentifiableContentItemInterfacePrivate::sslErrorsHandler(const QList<QSslE
     \qmltype IdentifiableContentItem
     \instantiates IdentifiableContentItemInterface
     \inqmlmodule org.nemomobile.social 1
-    \brief An IdentifiableContentItem represents an identifiable data object in a social network graph
+    \brief An IdentifiableContentItem represents an identifiable data object in a social network
 
     A data object which is identifiable is represented by an
-    IdentifiableContentItem.  Instances of this sort of ContentItem
-    can be used as the \c node (or central content item) in a
-    SocialNetwork model.
+    IdentifiableContentItem. Instances of this sort of ContentItem
+    can be used as the \c node in a SocialNetworkModel.
 
     An IdentifiableContentItem may also have more operations
     performed on it than a non-identifiable content item.
     As these operations result in network communication, the
-    IdentifiableContentItem type has \c status and \c error
-    properties.
+    IdentifiableContentItem type has \l status, \l error and
+    \l errorMessage properties.
 
-    The operations supported by default are \c reload() and
-    \c remove().  More operations may be supported by derived
+    The operations supported by default are \l reload() and
+    \l remove().  More operations may be supported by derived
     types provided by specific implementations of the SocialNetwork
     interface.
 
-    The data related to an IdentifiableContentItem are exposed
-    as ContentItem instances in the model data.  For example:
+    An IdentifiableContentItem is usually constructed via a request done using a
+    SocialNetworkModel. It can also be constructed directly using a SocialNetwork
+    that is provided to \l socialNetwork, and setting the \l identifier.
+
+    The following example shows IdentifiableContentItem retrieved using
+    a SocialNetworkModel. Note that the \c data property is used to retrieve
+    data associated to the IdentifiableContentItem.
 
     \qml
     import QtQuick 1.1
     import org.nemomobile.social 1.0
 
     Item {
-        SocialNetwork {
-            id: socialNetwork
+        MySocialNetwork {
+            id: mySocialNetwork
+        }
+
+        SocialNetworkModel {
+            id: socialNetworkModel
+            socialNetwork: mySocialNetwork
             nodeIdentifier: "1234567"
         }
 
         ListView {
-            model: socialNetwork
+            model: socialNetworkModel
+            // This delegate uses the IdentifiableContentItem
             delegate: Text { text: contentItem.data["description"] }
         }
+
+        Component.onCompleted: socialNetworkModel.populate()
     }
     \endqml
 
-    Note that the preceding example will in reality fail,
-    since the default SocialNetwork implementation does nothing.
-    Please see the Facebook implementation documentation for
-    real-world examples.
+    The following example shows IdentifiableContentItem retrieved directly.
+
+    \qml
+    import QtQuick 1.1
+    import org.nemomobile.social 1.0
+
+    Item {
+        MySocialNetwork {
+            id: mySocialNetwork
+            nodeIdentifier: "1234567"
+        }
+
+        IdentifiableContentItem {
+            id: item
+            socialNetwork: mySocialNetwork
+            identifier: "12345" // Some identifier
+        }
+
+        Text {
+            text: item != null ? item.data["description"] : ""
+        }
+    }
+    \endqml
 */
 
 IdentifiableContentItemInterface::IdentifiableContentItemInterface(QObject *parent)
@@ -449,8 +480,34 @@ void IdentifiableContentItemInterface::setIdentifier(const QString &id)
 }
 
 /*!
-    \qmlproperty SocialNetwork::Status IdentifiableContentItem::status
-    Holds the current status of the IdentifiableContentItem.
+    \qmlproperty enumeration IdentifiableContentItem::status
+
+    Hold the status of the IdentifiableContentItem.
+
+    The status can be one of:
+    \list
+    \li SocialNetwork.Initializing
+    \li SocialNetwork.Idle - the default
+    \li SocialNetwork.Busy
+    \li SocialNetwork.Error
+    \li SocialNetwork.Invalid
+    \endlist
+
+    When the status is \c Initializing, the component is initializing.
+
+    When in \c Idle, the IdentifiableContentItem loaded information from the
+    SocialNetwork, or is waiting to perform a loading operation.
+
+    When in \c Busy, the IdentifiableContentItem is waiting for information from
+    the social network
+
+    When in \c Error, the information that has been loaded is wrong, often because the
+    loading process failed. Reloading information with reload() might fix the loaded
+    information. \l error and \l errorMessage might also carry information about
+    the error.
+
+    When in \c Invalid, the IdentifiableContentItem is in an invalid state, and should not
+    be used anymore.
 */
 SocialNetworkInterface::Status IdentifiableContentItemInterface::status() const
 {
@@ -459,12 +516,24 @@ SocialNetworkInterface::Status IdentifiableContentItemInterface::status() const
 }
 
 /*!
-    \qmlproperty SocialNetwork::ErrorType IdentifiableContentItem::error
-    Holds the most recent error which occurred during initialization or
-    during network requests associated with this IdentifiableContentItem.
+    \qmlproperty enumeration IdentifiableContentItem::error
 
+    Hold the type of the most recent error in IdentifiableContentItem.
     Note that the \c error will not be reset if subsequent operations
     succeed.
+
+    The error can be one of:
+    \list
+    \li SocialNetwork.NoError - the default
+    \li SocialNetwork.AccountError - \b deprecated, error related to the account.
+    \li SocialNetwork.SignOnError - \b deprecated, error related to the signon process.
+    \li SocialNetwork.BusyError  - \b deprecated, error because the IdentifiableContentItem
+    is already busy.
+    \li SocialNetwork.RequestError - error related to a failure during a request to the social API.
+    \li SocialNetwork.DataUpdateError - error related during data update.
+    \li SocialNetwork.OtherError - other error (not used).
+    \li SocialNetwork.LastError - not used.
+    \endlist
 */
 SocialNetworkInterface::ErrorType IdentifiableContentItemInterface::error() const
 {
@@ -474,12 +543,10 @@ SocialNetworkInterface::ErrorType IdentifiableContentItemInterface::error() cons
 
 /*!
     \qmlproperty QString IdentifiableContentItem::errorMessage
-    Holds the message associated with the most recent error which occurred
-    during initialization or during network requests associated with this
-    IdentifiableContentItem.
 
-    Note that the \c errorMessage will not be reset if subsequent operations
-    succeed.
+    Holds the message associated with the most recent error in
+    IdentifiableContentItem. Note that the \c errorMessage will
+    not be reset if subsequent operations succeed.
 */
 QString IdentifiableContentItemInterface::errorMessage() const
 {
@@ -489,6 +556,7 @@ QString IdentifiableContentItemInterface::errorMessage() const
 
 /*!
     \qmlmethod bool IdentifiableContentItem::remove()
+
     Removes the object from the social network.
 
     The default implementation sends a HTTP DELETE request for the
@@ -507,6 +575,7 @@ bool IdentifiableContentItemInterface::remove()
 
 /*!
     \qmlmethod bool IdentifiableContentItem::reload()
+
     Reloads the object data from the social network.  Only the fields
     specified in the \a whichFields list will be requested from the
     remote service.

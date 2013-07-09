@@ -1,0 +1,7 @@
+\inqmlmodule org.nemomobile.social 1
+\brief A FacebookLike represents a like from the Facebook OpenGraph API
+
+FacebookLike is a specialized ContentItem that is used
+to hold data that represents a like in the Facebook OpenGraph API.
+
+\sa{ContentItem} 

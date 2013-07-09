@@ -1,70 +1,69 @@
 {
-    "name": "comment",
-    "doc": "\\brief A FacebookComment represents a Comment object from the Facebook OpenGraph API\n\nEvery FacebookComment has a unique identifier, and thus a comment may be\nset as the \\c node (or central content item) in the Facebook\nadapter.  The content items related to a comment include various\nlikes.\n\nAn example of usage of a FacebookComment as the node in a Facebook\nmodel is as follows:\n\n\\qml\nimport QtQuick 1.1\nimport org.nemomobile.social 1.0\n\nItem {\n    id: root\n    width: 400\n    height: 800\n\n    Flickable {\n        anchors.top: parent.top\n        anchors.bottom: parent.bottom\n        anchors.left: parent.left\n        anchors.right: parent.right\n\n        ListView {\n            model: fb\n            anchors.fill: parent\n            delegate: Text { text: \"liker: \" + contentItemData[\"name\"] } // Users who liked the comment\n        }\n    }\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\"    // you must supply a valid access token\n        nodeIdentifier: \"10150146071791729_15215233\" // some valid Facebook comment id.\n        filters: [ ContentItemTypeFilter { type: Facebook.Like } ]\n    }\n\n    Component.onCompleted: {\n        fb.populate()\n    }\n}\n\\endqml\n\nA FacebookComment may also be used \"directly\" by clients, in order to\nlike the comment.  An example of direct usage of the FacebookComment\ntype is as follows:\n\n\\qml\nimport QtQuick 1.1\nimport org.nemomobile.social 1.0\n\nItem {\n    id: root\n    width: 400\n    height: 800\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\"    // you must supply a valid access token\n    }\n\n    FacebookComment {\n        id: fbc\n        socialNetwork: fb\n        identifier: \"10150146071791729_15215233\"     // some valid Facebook Comment fbid\n\n        onStatusChanged: {\n            if (status == SocialNetwork.Idle) {\n                // could like the comment\n                fbc.like()\n                // could unlike the comment\n                fbc.unlike()\n            }\n        }\n    }\n\n    Text {\n        anchors.fill: parent\n        text: fbc.message\n    }\n}\n\\endqml ",
     "identifiable": true,
+    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookComment represents a comment from the Facebook OpenGraph API\n\nFacebookComment is a specialized IdentifiableContentItem that is used\nto hold data that represents a comment in the Facebook OpenGraph API.\n\n\\sa{IdentifiableContentItem}\n",
     "properties": [
         {
-            "name": "from",
-            "type": "FacebookObjectReferenceInterface",
             "doc": "Holds a reference to the user or profile which uploaded this comment.",
-            "is_pointer": true
+            "is_pointer": true,
+            "name": "from",
+            "type": "FacebookObjectReferenceInterface"
         },
         {
-            "name": "message",
+            "doc": "Holds the message text of the comment.",
             "type": "QString",
-            "doc": "Holds the message text of the comment."
+            "name": "message"
         },
         {
-            "name": "created_time",
+            "doc": "Holds the creation time of the comment in an ISO8601-formatted string.",
             "type": "QString",
-            "doc": "Holds the creation time of the comment in an ISO8601-formatted string."
+            "name": "created_time"
         },
         {
-            "name": "like_count",
+            "doc": "Holds the number of times this comment has been liked.",
             "type": "int",
-            "doc": "Holds the number of times this comment has been liked."
+            "name": "like_count"
         },
         {
-            "name": "user_likes",
-            "type": "bool",
             "doc": "Whether the current user has liked the comment.",
+            "type": "bool",
+            "name": "user_likes",
             "is_interface_property": false
         },
         {
-            "name": "parent",
-            "type": "FacebookCommentInterface",
             "doc": "Hold the parent comment.",
-            "is_pointer": true
+            "is_pointer": true,
+            "name": "parent",
+            "type": "FacebookCommentInterface"
         },
         {
-            "name": "can_comment",
+            "doc": "Whether the current user can reply to this comment.",
             "type": "bool",
-            "doc": "Whether the current user can reply to this comment."
+            "name": "can_comment"
         },
         {
-            "name": "comment_count",
+            "doc": "Holds the number of replies that this comment have.",
             "type": "int",
-            "doc": "Holds the number of replies that this comment have."
+            "name": "comment_count"
         },
         {
-            "name": "liked",
-            "type": "bool",
-            "custom": true,
+            "doc": "Whether the comment has been liked by the current user.",
             "is_ontology": false,
-            "doc": "Whether the comment has been liked by the current user."
+            "type": "bool",
+            "name": "liked",
+            "custom": true
         }
     ],
     "methods": [
         {
+            "doc": "Initiates a \"like\" operation on the comment.\n\nIf the network request was started successfully, the function\nwill return true and the status of the comment will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "like",
-            "parameters": [],
-            "doc": "Initiates a \"like\" operation on the comment.\n\nIf the network request was started successfully, the function\nwill return true and the status of the comment will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            "parameters": []
         },
         {
+            "doc": "Initiates a \"delete like\" operation on the comment.\n\nIf the network request was started successfully, the function\nwill return true and the status of the comment will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "unlike",
-            "parameters": [],
-            "doc": "Initiates a \"delete like\" operation on the comment.\n\nIf the network request was started successfully, the function\nwill return true and the status of the comment will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            "parameters": []
         }
-    ]
+    ],
+    "name": "comment"
 }
- 

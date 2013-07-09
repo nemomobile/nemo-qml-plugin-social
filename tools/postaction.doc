@@ -1,0 +1,10 @@
+\inqmlmodule org.nemomobile.social 1
+\brief A FacebookPostAction represents an action that can be done on a
+FacebookPost
+
+FacebookPostAction is a specialized ContentItem that is used to represent
+a generic or customized action that can be done on a FacebookPost, like
+"like", "comment", or "play this game".
+
+\sa{ContentItem}
+\sa{FacebookPost}

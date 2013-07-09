@@ -496,92 +496,13 @@ int FacebookPhotoInterfacePrivate::images_count(QDeclarativeListProperty<Faceboo
     \qmltype FacebookPhoto
     \instantiates FacebookPhotoInterface
     \inqmlmodule org.nemomobile.social 1
-    \brief A FacebookPhoto represents a Photo object from the Facebook OpenGraph API
+    \brief A FacebookPhoto represents a photo from the Facebook OpenGraph API
     
-    Every FacebookPhoto has a unique identifier, and thus a photo may be
-    set as the \c node (or central content item) in the Facebook
-    adapter.  The content items related to a photo include various
-    likes and comments.
+    FacebookPhoto is a specialized IdentifiableContentItem that is used
+    to hold data that represents a photo in the Facebook OpenGraph API.
     
-    An example of usage of a FacebookPhoto as the node in a Facebook
-    model is as follows:
+    \sa{IdentifiableContentItem}
     
-    \qml
-    import QtQuick 1.1
-    import org.nemomobile.social 1.0
-    
-    Item {
-        id: root
-        width: 400
-        height: 800
-    
-        Flickable {
-            anchors.top: parent.verticalCenter
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-    
-            ListView {
-                model: fb
-                anchors.fill: parent
-                delegate: Label { text: "id: " + contentItemIdentifier } // Comment ids
-            }
-        }
-    
-        Facebook {
-            id: fb
-            accessToken: "your access token"    // you must supply a valid access token
-            nodeIdentifier: "10150146071966729" // some valid Facebook photo id.
-            filters: [ ContentItemTypeFilter { type: Facebook.Comment } ]
-        }
-    
-        Component.onCompleted: {
-            fb.populate()
-        }
-    }
-    \endqml
-    
-    A FacebookPhoto may also be used "directly" by clients, in order to
-    upload comments, or like the photo.  An example of direct
-    usage of the FacebookPhoto type is as follows:
-    
-    \qml
-    import QtQuick 1.1
-    import org.nemomobile.social 1.0
-    
-    Item {
-        id: root
-        width: 400
-        height: 800
-    
-        Facebook {
-            id: fb
-            accessToken: "your access token"    // you must supply a valid access token
-        }
-    
-        FacebookPhoto {
-            id: fbph
-            socialNetwork: fb
-            identifier: "10150146071966729"     // some valid Facebook Photo fbid
-    
-            onStatusChanged: {
-                if (status == SocialNetwork.Idle) {
-                    // could comment on the photo
-                    fbph.uploadComment("I really like this photo!")
-                    // could like the photo
-                    fbph.like()
-                    // could unlike the photo
-                    fbph.unlike()
-                }
-            }
-        }
-    
-        Image {
-            anchors.fill: parent
-            source: fbph.source
-        }
-    }
-    \endqml
 */
 FacebookPhotoInterface::FacebookPhotoInterface(QObject *parent)
     : IdentifiableContentItemInterface(*(new FacebookPhotoInterfacePrivate(this)), parent)
@@ -884,7 +805,7 @@ bool FacebookPhotoInterface::removeComment(const QString &commentIdentifier)
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookPhoto::from
+    \qmlproperty FacebookObjectReference FacebookPhoto::from
     Holds a reference to the user or profile which uploaded this photo.
 */
 FacebookObjectReferenceInterface * FacebookPhotoInterface::from() const
@@ -894,7 +815,7 @@ FacebookObjectReferenceInterface * FacebookPhotoInterface::from() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookPhotoTagInterface> FacebookPhoto::tags
+    \qmlproperty list<FacebookPhotoTag> FacebookPhoto::tags
     Holds the tags which have been uploaded for this photo
 */
 QDeclarativeListProperty<FacebookPhotoTagInterface> FacebookPhotoInterface::tags()
@@ -908,7 +829,7 @@ QDeclarativeListProperty<FacebookPhotoTagInterface> FacebookPhotoInterface::tags
 }
 
 /*!
-    \qmlproperty QString FacebookPhoto::name
+    \qmlproperty string FacebookPhoto::name
     Holds the name (caption) of the photo
 */
 QString FacebookPhotoInterface::name() const
@@ -918,7 +839,7 @@ QString FacebookPhotoInterface::name() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookNameTagInterface> FacebookPhoto::nameTags
+    \qmlproperty list<FacebookNameTag> FacebookPhoto::nameTags
     Holds the names of various tagged entities
 */
 QDeclarativeListProperty<FacebookNameTagInterface> FacebookPhotoInterface::nameTags()
@@ -932,7 +853,7 @@ QDeclarativeListProperty<FacebookNameTagInterface> FacebookPhotoInterface::nameT
 }
 
 /*!
-    \qmlproperty QUrl FacebookPhoto::icon
+    \qmlproperty url FacebookPhoto::icon
     Holds a url to the icon for the photo
 */
 QUrl FacebookPhotoInterface::icon() const
@@ -942,7 +863,7 @@ QUrl FacebookPhotoInterface::icon() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookPhoto::picture
+    \qmlproperty url FacebookPhoto::picture
     Holds a url to the picture for the photo
 */
 QUrl FacebookPhotoInterface::picture() const
@@ -952,7 +873,7 @@ QUrl FacebookPhotoInterface::picture() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookPhoto::source
+    \qmlproperty url FacebookPhoto::source
     Holds a url to the source for the photo, full size
 */
 QUrl FacebookPhotoInterface::source() const
@@ -994,7 +915,7 @@ int FacebookPhotoInterface::width() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookPhotoImageInterface> FacebookPhoto::images
+    \qmlproperty list<FacebookPhotoImage> FacebookPhoto::images
     Holds links to and metadata about scaled versions of the photo
 */
 QDeclarativeListProperty<FacebookPhotoImageInterface> FacebookPhotoInterface::images()
@@ -1008,7 +929,7 @@ QDeclarativeListProperty<FacebookPhotoImageInterface> FacebookPhotoInterface::im
 }
 
 /*!
-    \qmlproperty QUrl FacebookPhoto::link
+    \qmlproperty url FacebookPhoto::link
     Holds a url to the photo which may be used as an external link.
     Note that this link url contains the album identifier embedded
     within it.
@@ -1032,7 +953,7 @@ QVariantMap FacebookPhotoInterface::place() const
 }
 
 /*!
-    \qmlproperty QString FacebookPhoto::createdTime
+    \qmlproperty string FacebookPhoto::createdTime
     Holds the creation time of the photo in an ISO8601-formatted string.
 */
 QString FacebookPhotoInterface::createdTime() const
@@ -1042,7 +963,7 @@ QString FacebookPhotoInterface::createdTime() const
 }
 
 /*!
-    \qmlproperty QString FacebookPhoto::updatedTime
+    \qmlproperty string FacebookPhoto::updatedTime
     Holds the last-update time of the photo in an ISO8601-formatted string.
 */
 QString FacebookPhotoInterface::updatedTime() const

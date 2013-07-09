@@ -283,89 +283,13 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     \qmltype FacebookAlbum
     \instantiates FacebookAlbumInterface
     \inqmlmodule org.nemomobile.social 1
-    \brief A FacebookAlbum represents an Album object from the Facebook OpenGraph API
+    \brief A FacebookAlbum represents an album from the Facebook OpenGraph API
     
-    Every album has a unique identifier, and thus an album may be
-    set as the \c node (or central content item) in the Facebook
-    adapter.  The content items related to an album include various
-    photos or videos, likes and comments.
+    FacebookAlbum is a specialized IdentifiableContentItem that is used
+    to hold data that represents an album in the Facebook OpenGraph API.
     
-    An example of usage of a FacebookAlbum as the node in a Facebook
-    model is as follows:
+    \sa{IdentifiableContentItem}
     
-    \qml
-    import QtQuick 1.1
-    import org.nemomobile.social 1.0
-    
-    Item {
-        id: root
-        width: 400
-        height: 800
-    
-        Flickable {
-            anchors.top: parent.verticalCenter
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-    
-            ListView {
-                model: fb
-                anchors.fill: parent
-                delegate: Label { text: "id: " + contentItemIdentifier } // Photo ids
-            }
-        }
-    
-        Facebook {
-            id: fb
-            accessToken: "your access token"    // you must supply a valid access token
-            nodeIdentifier: "10150146071791729" // some valid Facebook album id.
-            filters: [ ContentItemTypeFilter { type: Facebook.Photo } ]
-        }
-    
-        Component.onCompleted: {
-            fb.populate()
-        }
-    }
-    \endqml
-    
-    A FacebookAlbum may also be used "directly" by clients, in order to
-    upload photos or comments, or like the album.  An example of direct
-    usage of the FacebookAlbum type is as follows:
-    
-    \qml
-    import QtQuick 1.1
-    import org.nemomobile.social 1.0
-    
-    Item {
-        id: root
-        width: 400
-        height: 800
-    
-        Facebook {
-            id: fb
-            accessToken: "your access token"    // you must supply a valid access token
-        }
-    
-        FacebookAlbum {
-            id: fba
-            socialNetwork: fb
-            identifier: "10150146071791729"     // some valid Facebook Album fbid
-    
-            onStatusChanged: {
-                if (status == SocialNetwork.Idle) {
-                    // could comment on the album
-                    fba.uploadComment("I really like this album!")
-                    // could like the album
-                    fba.like()
-                    // could unlike the album
-                    fba.unlike()
-                    // could upload another photo to the album
-                    fba.uploadPhoto(fileName, "A photo I took recently")
-                }
-            }
-        }
-    }
-    \endqml
 */
 FacebookAlbumInterface::FacebookAlbumInterface(QObject *parent)
     : IdentifiableContentItemInterface(*(new FacebookAlbumInterfacePrivate(this)), parent)
@@ -572,7 +496,7 @@ bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookAlbum::from
+    \qmlproperty FacebookObjectReference FacebookAlbum::from
     Holds a reference to the user or profile which created the album.
 */
 FacebookObjectReferenceInterface * FacebookAlbumInterface::from() const
@@ -582,7 +506,7 @@ FacebookObjectReferenceInterface * FacebookAlbumInterface::from() const
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::name
+    \qmlproperty string FacebookAlbum::name
     Holds the name of the album.
 */
 QString FacebookAlbumInterface::name() const
@@ -592,7 +516,7 @@ QString FacebookAlbumInterface::name() const
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::description
+    \qmlproperty string FacebookAlbum::description
     Holds the description of the album.
 */
 QString FacebookAlbumInterface::description() const
@@ -602,7 +526,7 @@ QString FacebookAlbumInterface::description() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookAlbum::link
+    \qmlproperty url FacebookAlbum::link
     Holds a link to the album.
 */
 QUrl FacebookAlbumInterface::link() const
@@ -612,7 +536,7 @@ QUrl FacebookAlbumInterface::link() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookAlbum::coverPhoto
+    \qmlproperty url FacebookAlbum::coverPhoto
     Holds a link to the cover photo of an album.
 */
 QUrl FacebookAlbumInterface::coverPhoto() const
@@ -622,7 +546,7 @@ QUrl FacebookAlbumInterface::coverPhoto() const
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::privacy
+    \qmlproperty string FacebookAlbum::privacy
     Holds the privacy setting of the album.
 */
 QString FacebookAlbumInterface::privacy() const
@@ -648,8 +572,8 @@ int FacebookAlbumInterface::count() const
 }
 
 /*!
-    \qmlproperty FacebookAlbumInterface::AlbumType FacebookAlbum::albumType
-    Holds the type of the album.  Valid values are:
+    \qmlproperty enumeration FacebookAlbum::albumType
+    Holds the type of the album. The albumType can be one of:
     \list
     \li FacebookAlbum.Album
     \li FacebookAlbum.Normal
@@ -665,7 +589,7 @@ FacebookAlbumInterface::AlbumType FacebookAlbumInterface::albumType() const
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::createdTime
+    \qmlproperty string FacebookAlbum::createdTime
     Holds the creation time of the album in an ISO8601-formatted string.
 */
 QString FacebookAlbumInterface::createdTime() const
@@ -675,7 +599,7 @@ QString FacebookAlbumInterface::createdTime() const
 }
 
 /*!
-    \qmlproperty QString FacebookAlbum::updatedTime
+    \qmlproperty string FacebookAlbum::updatedTime
     Holds the last-update time of the album in an ISO8601-formatted string.
 */
 QString FacebookAlbumInterface::updatedTime() const

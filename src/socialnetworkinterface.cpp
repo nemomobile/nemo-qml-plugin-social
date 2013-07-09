@@ -51,33 +51,58 @@
 #include <QtDebug>
 
 #include <algorithm>
+/*
+    Naming conventions
 
+    We often call node two different things. node is the name of
+    a property in SocialNetworkModelInterface. It is an
+    IdentifiableContentInterface that represents an entity for
+    a social network. We also have CacheNode, that is a class used
+    internally to contain data used to perform requests. CacheNode
+    contains data that are displayed in SocialNetworkModelInterface,
+    including the IdentifiableContentInterface that is displayed
+    using the "node" property.
+*/
 /*
     SocialNetworkInterface
 
-    The SocialNetworkInterface is a conveinent way to represent data
-    from a social network and query that social network for data.
+    The SocialNetworkInterface is a central component that is used to
+    perform network operations to query a social network, parsing
+    the returned data, and storing them. It is also used to manage
+    a set of models, that are used to present these retrieved data.
 
-    SocialNetworkInterface, often called SNI, is a QML model (inheriting
+    SocialNetworkInterface, often called SNI, is therefore a QObject,
+    that does not expose many public API. Its private API, accessible
+    via SocialNetworkInterfacePrivate (SNIp), provides several methods that
+    should be reimplemented in order to perform these network operations.
+*/
+
+/*
+    SocialNetworkModelInterface
+
+    The SocialNetworkModelInterface is tightly coupled to
+    SocialNetworkInterface and is used to present the data that has been
+    downloaded / cached.
+
+    SocialdNetworkModelInterface, often called SNMI, is a QML model (inheriting
     from QAbstractListModel), that can be used to display data in
-    ListView or GridView. It is built to mirror most mobile applications
-    behaviour.
+    ListView or GridView.
 
-    The SNI have a list of nodes, each node representing a page, and also
-    something to display. A node contains the identifier of an entity, as
-    well as some filters that indicates what are the data related to that
-    entity to query. It then provides access to that node ine QML context,
-    via SocialNetworkInterface::node(), and access to the related content
-    via the data set in the model.
+    CacheNode and SNMI are very close, as SNMI are used externally to represent
+    the different CacheNodes, and also used to pass information to be stored
+    to a CacheNode, like the identifier, type or list of filters.
 
-    When setting the identifier and filters to use for creating a new node,
-    the user have to call SocialNetworkInterface::populate() to create a new
-    node in the SNI. That node will be append to the other nodes, and SNI will
-    load the data of that node in background. It will inform about the state of
-    the loading using SocialNetworkInterface::status().
-
-    In order to navigate between nodes, SocialNetworkInterface::previousNode()
-    and SocialNetworkInterface::nextNode() should be used.
+    In order to query the social network, a SNMI have several properties
+    to first get the "node" property and then the related content. First, a
+    SNMI should be linked to a SNI by setting
+    SocialNetworkModelInterface::socialNetwork().
+    The SocialNetworkModelInterface::identifier() and
+    SocialNetworkModelInterface::type() properties should be set in the
+    SNMI to identify a node. A list of filters should also be passed via
+    the SocialNetworkModelInterface::filters() field if related data
+    have to be queried. The query is done by calling
+    SocialNetworkModelInterface::populate() or
+    SocialNetworkModelInterface::repopulate().
 */
 
 /*
@@ -97,8 +122,8 @@
     The ContentItem pointer is lazily constructed, and will be
     constructed only when it is needed. The refCount is used to know
     when a CacheEntry should be removed from the cache. It is increased
-    when a node uses the entity, and decreased when a node is destroyed.
-    If the refCount is 0, then it should be removed.
+    when a CacheNode uses the entity, and decreased when a CacheNode is
+    destroyed. If the refCount is 0, then it should be removed.
 
     CacheEntries are explicitely shared, so a modification to a CacheEntry
     will modify all the copies. Basically, it behaves like a pointer.
@@ -110,33 +135,46 @@
 */
 
 /*
-    Node
+    CacheNode
 
-    A Node represents one "page". A node is defined by an identifier, and
-    a list of filters. It often defines a page in the application display.
+    A CacheNode stores data that SNMI have. In order to do that, a CacheNode
+    must have an identifier, a type, and a list of filters. It can be
+    attached to several SNMI that displays it's content.
 
-    A Node consists of an identifier, and a set of filters that defines the
-    node. It also have a CacheEntry, that contains the cached version of the
-    node if it exists, or nothing if it is yet to be retrieved. It also
-    contains a list of CacheEntry, that is the data in the model that is
-    contained in a defined Node (page). This data is often called
-    "related data"
+    A CacheNode consists of an identifier, a type and a set of filters is used
+    to define some specific entity and related content in a social network. It
+    also have a CacheEntry, that contains the cached version of the social network
+    entity if it has been retrieved, or nothing if it is yet to be retrieved. This
+    cached entity is then exposed via the "node" property of SNMI. The CacheNode
+    also contains a list of CacheEntry, that are the related data.
 
-    A Node also have a nodeExtra attribute, that should be used internally
-    to carry informations about the node, that could be reused in different
+    A CacheNode also carries the status of it's loading status, via
+    CachheNode::status(). This status do not only differentiates between a CacheNode
+    being loaded, or a CacheNode that have loaded information, but also the
+    different phases of loading, that are the loading of the central entity, or the
+    related data, and how the related data should be added to the model (replace,
+    append or prepend to existing data).
+
+    For storing information about paging, a CacheNode also have information about
+    the availablility of next and previous pages via CacheNode::hasNext() and
+    CacheNode::hasPrevious(). For setting these two attributes,
+    CacheNode::setHavePreviousAndNext() should be used.
+
+    A CacheNode also have a nodeExtra attribute, that should be used internally
+    to carry informations about the CacheNode, that could be reused in different
     methods. nodeExtra actually acts like a collection of attributes. It is
     already used in Facebook to store informations about paging cursors.
 
-    Remark: the identifier for a Node and for a CacheEntry might be different:
+    Remark: the identifier for a CacheNode and for a CacheEntry might be different:
     in Facebook, you can use "me" to replace the identifier of the current user,
-    so the initial Node might have "me" as identifier. However, the retrieved
+    so the initial CacheNode might have "me" as identifier. However, the retrieved
     data will contain the identifier of current user, so the identifier of the
-    CacheEntry associated to the Node will not be "me".
+    CacheEntry associated to the CacheNode will not be "me".
 
-    Node are also explicitely shared. They can also be compared, and are
-    considered equal if they have the same identifier and filters.
+    CacheNode are also explicitely shared. They can also be compared, and are
+    considered equal if they have the same identifier, type and filters.
 
-    When a CacheEntry is set as the data of a Node, or as related data, it's
+    When a CacheEntry is set as the data of a CacheNode or as related data, it's
     refcout is automatically increased, and decreased if is replaced.
  */
 
@@ -155,23 +193,27 @@
     The caching system is rather simple. It is a QHash that associates an
     identifier, that is represented by a QString, to a CacheEntry.
 
-    Each "page" in an application is represented by a Node, and a QStack of Node
-    represents the whole set of pages. As said in the documentation describing
-    Node, each Node also contains a list of CacheEntry, either to represent the
-    node, or to represent related data.
+    CacheNodes are created when SNMI are attached to a SNI. The information associated
+    with a CacheNode may be presented by multiple SNMI instances simultaneously,
+    if different SNMI request the same information (same identifier, type and
+    filters). A list of CacheNodes represents all the created CacheNodes. There is also
+    a list of SNMI that represents all the models.
 
-    While a CacheEntry is used by a Node, it's refcount is increased. If it is no longer
-    used, often when a node is removed from the node stack, it's refcount is decreased.
+    While a CacheEntry is used by a CacheNode, it's refcount is increased. If it is no longer
+    used, often when a CacheNode is removed from the CacheNode list, it's refcount is decreased.
     If a refcount for a CacheEntry drops to zero, it means that it is no longer used,
     and is removed from the cache.
 
-    When the user makes a request for a Node (by setting an identifier and a set of
-    filters), the Node stack is searched. If a Node already exists in the stack, then it
-    is simply fetched and appended to the stack, without loading anything from the social
-    network. If only the node data exists for a cached Node, then the other part (related
-    data) is fetched. If nothing was found in the node stack, or if a Node that contains
-    neither a valid CacheEntry as node nor related data is found, the the social network
-    is queried for those two missing informations.
+    Refcount changing are triggered, either by loading of new data (old data get derefed)
+    or by the removal of CacheNodes. A CacheNode is removed if there is no longer any model
+    attached to it. If a CacheNode was the only one using some CacheEntry, their refcount will
+    go to 0, and they will be removed from the cache.
+
+    When an user perform a request by setting identifier, type and filters to a model, and
+    calling SocialNetworkModelInterface::populate(), CacheNodes are created or removed,
+    depending on the SNMI, and then, a CacheNode might be populated, or simply retrieved
+    from cache, and models be updated. If the user calls
+    SocialNetworkModelInterface::repopulate(), a CacheNode is sure to be updated.
 */
 
 /*
@@ -183,55 +225,89 @@
     SocialNetworkInterfacePrivate, and to never use CacheEntry::ref() and
     CacheEntry::deref().
 
-    In order to implement a SocialNetworkInterface, the following methods should be implemented:
-    - populateDataForLastNode()
-    - populateRelatedDataforLastNode()
-    - validateCacheEntryForLastNode()
+    In order to implement a SocialNetworkInterface, the following methods from
+    SocialNetworkInterfacePrivate should be implemented:
+    - populateDataForNode()
+    - populateRelatedDataforNode()
+    - contentItemFromData()
+    - validateCacheEntryForNode()
 
-    The first method is used to initiate a request to the data of the last node. That
-    node is often freshly pushed to the stack using SocialNetworkInterface::populate().
+    The first method is used to initiate a request to the data of the central entity
+    that should be in a given CacheNode. That CacheNode is often freshly pushed to
+    the list using SocialNetworkInterface::populate().
 
-    The second method is used to initiate a request to the related data of the last node.
+    The second method is used to initiate a request to the related data of a given CacheNode.
+
+    The third method is used to translate the data that is retrieved to C++ objects,
+    that should derives from ContentItemInterface.
 
     Finally, the last method is used when a query is in progress. Sometimes, the cached
     values are only partial, and this method should be used to validate if the data
-    that is cached, and that is going to be used for the last node contains enough
-    information. If not, SNI will reload the node in order to get more data.
+    that is cached, and that is going to be used for the central entity for a new
+    CacheNode contains enough information. If not, SNI will reload the central entity
+    in order to get more data.
 
-    A practical examble of that is in Facebook, when you query a list of friends, you
+    A practical example of that is in Facebook, when you query a list of friends, you
     only obtain a list of id / name. But when you click on a friend, you might want
     to retrieve all the informations related to that friend. So the implementation
     of FacebookInterface::validateCacheEntryForLastNode() checks if a cache entry
     contains a FacebookUserInterface that only have name and id, and returns false in
-    that case, forcing the node to be reloaded.
+    that case, forcing a retrieving of new data for that CacheEntry that will become
+    the central entity for a new CacheNode.
 
-    A set of private methods, available through the D-pointer, can be used:
+    You will also have to implement the following methods, that are used to perform
+    network requests:
+    - getRequest()
+    - postRequest()
+    - deleteRequest()
+    - handleFinished()
 
-    - setStatus() and setError() can be used to make status and error management easier.
-      As usual setters, they set the data, and emit the corresponding signals.
+    The last method is particulary important, because it handles the reply from the
+    social network. When implementing that method, be sure to differentiate the
+    two different loading scenarii, that is the loading of the central entity, and then,
+    the loading of the related data.
 
-    - lastNode() is very useful in order to get the last node, that is the node
-      that is being populated.
+    Optionally, you may also reimplement the following functions if you have specific
+    requirements:
+
+    - dataSection()
+    - handleError()
+    - handleSslError()
+
+    The first method is used to display a data section for the model. It can
+    return a data section, like the one specified in QML ListView documentation.
+
+    The two others relates to error management. You can implement them if you
+    want to handle errors in a specific way.
+
+    A set of private methods can be used:
+
+    - setReply() can be used to set the reply associated to a CacheNode. It is not
+      needed to retrieve the reply afterwards since all the methods that should
+      be reimplemented provide both the CacheNode and the reply that is associated
+      to it.
+
+    - setStatus() and setError() can be used to make status and error management
+      easier. As usual setters, they set the data, and emit the corresponding
+      signals. setError also sets the status to SocialNetworkInterface::Error.
+
+    - deleteReply() should be used to delete reply in finishedHandler(). Replies
+      are not automatically deleted, and their deletion should be handled by hand.
 
     - createCacheEntry() is used to create a CacheEntry, if the entry do not exist
       in the cache. If it already exists, the entry from the cache is retrived. It
-      is useful for populating related data and node.
+      is useful for populating related data and CacheNodes.
 
-    - setLastNodeCacheEntry() and setLastNodeData() are used to set the data of the
-      last node.
+    - updateModelNode() and updateModelRelatedData() are used to update either the
+      "node" attribute of models or related data of models that are associated to
+      a CacheNode. They should be called just after setting the data in the
+      CacheNode.
 
-    - atLastNode() is used to inform if the SocialNetworkInterface is currently
-      displaying the last node. And if it is the case, updateNode() or
-      updateRelatedData() can be used to automatically update all the attributes
-      that influences the display.
-
-    - insertContent() is used to perform population for related content. It can be used
-      in append mode (default), or prepend mode, and also sets the paging properties
-      (if there is a next or previous page).
+      Be careful when using updateModelNode(), because it requires that the QVariantMap
+      associated to the social network entity have a type attribute set, otherwise,
+      creation of the ContentItem interface associated to that data will fail.
 */
 
-// TODO XXX: CacheEntry::ref and deref should be made private and friend with some classes
-// to prevent misuse.
 
 // TODO XXX: We should document the contentItemFromData method, to use the saved type inside
 // data to create the item.
@@ -317,18 +393,6 @@ int CacheEntry::refcount() const
     return d->refCount;
 }
 
-void CacheEntry::ref()
-{
-    Q_D(CacheEntry);
-    d->refCount ++;
-}
-
-void CacheEntry::deref()
-{
-    Q_D(CacheEntry);
-    d->refCount --;
-}
-
 QString CacheEntry::identifier() const
 {
     Q_D(const CacheEntry);
@@ -384,6 +448,18 @@ void CacheEntry::deleteItem()
     d->item = 0;
 }
 
+void CacheEntry::ref()
+{
+    Q_D(CacheEntry);
+    ++ d->refCount;
+}
+
+void CacheEntry::deref()
+{
+    Q_D(CacheEntry);
+    -- d->refCount;
+}
+
 // This operator is used to compare the content of each CacheEntry
 // instead of comapring the value of the pointer. It is used for
 // caching. You usually want to retrieve one CacheEntry that have
@@ -395,7 +471,7 @@ bool operator==(CacheEntry::Ptr cacheEntry1, CacheEntry::Ptr cacheEntry2)
     return *(cacheEntry1.data()) == *(cacheEntry2.data());
 }
 
-NodePrivate::NodePrivate()
+CacheNodePrivate::CacheNodePrivate()
     : type(SocialNetworkInterface::Unknown)
     , hasPrevious(false)
     , hasNext(false)
@@ -403,83 +479,84 @@ NodePrivate::NodePrivate()
 {
 }
 
-NodePrivate::~NodePrivate()
+CacheNodePrivate::~CacheNodePrivate()
 {
 }
 
-Node::Ptr Node::create()
+CacheNode::Ptr CacheNode::create()
 {
-    return Node::Ptr(new Node());
+    return CacheNode::Ptr(new CacheNode());
 }
 
-Node::Ptr Node::create(const QString &identifier, int type, const QSet<FilterInterface *> &filters)
+CacheNode::Ptr CacheNode::create(const QString &identifier, int type,
+                                 const QSet<FilterInterface *> &filters)
 {
-    return Node::Ptr(new Node(identifier, type, filters));
+    return CacheNode::Ptr(new CacheNode(identifier, type, filters));
 }
 
-Node::Node()
-    : d_ptr(new NodePrivate())
+CacheNode::CacheNode()
+    : d_ptr(new CacheNodePrivate())
 {
 }
 
-Node::Node(const QString &identifier, int type, const QSet<FilterInterface *> &filters)
-    : d_ptr(new NodePrivate())
+CacheNode::CacheNode(const QString &identifier, int type, const QSet<FilterInterface *> &filters)
+    : d_ptr(new CacheNodePrivate())
 {
-    Q_D(Node);
+    Q_D(CacheNode);
     d->identifier = identifier;
     d->type = type;
     d->filters = filters;
     d->cacheEntry = CacheEntry::Ptr();
 }
 
-Node::~Node()
+CacheNode::~CacheNode()
 {
 }
 
-bool Node::operator==(const Node &other) const
+bool CacheNode::operator==(const CacheNode &other) const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return (d->identifier == other.identifier()) && (d->filters == other.filters());
 }
 
-bool Node::operator!=(const Node &other) const
+bool CacheNode::operator!=(const CacheNode &other) const
 {
     return !(*this == other);
 }
 
-bool Node::isNull() const
+bool CacheNode::isNull() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->identifier.isEmpty();
 }
 
-QString Node::identifier() const
+QString CacheNode::identifier() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->identifier;
 }
 
-int Node::type() const
+int CacheNode::type() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->type;
 }
 
-QSet<FilterInterface *> Node::filters() const
+QSet<FilterInterface *> CacheNode::filters() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->filters;
 }
 
-CacheEntry::Ptr Node::cacheEntry() const
+CacheEntry::Ptr CacheNode::cacheEntry() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->cacheEntry;
 }
 
-void Node::setCacheEntry(CacheEntry::Ptr cacheEntry)
+void CacheNode::setCacheEntry(CacheEntry::Ptr cacheEntry)
 {
-    Q_D(Node);
+    Q_D(CacheNode);
     if (!d->cacheEntry.isNull()) {
         d->cacheEntry->deref();
     }
@@ -487,15 +564,15 @@ void Node::setCacheEntry(CacheEntry::Ptr cacheEntry)
     d->cacheEntry->ref();
 }
 
-CacheEntry::List Node::relatedData() const
+CacheEntry::List CacheNode::relatedData() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->relatedData;
 }
 
-void Node::setRelatedData(const CacheEntry::List &relatedData)
+void CacheNode::setRelatedData(const CacheEntry::List &relatedData)
 {
-    Q_D(Node);
+    Q_D(CacheNode);
     foreach (CacheEntry::Ptr cacheEntry, d->relatedData) {
         cacheEntry->deref();
     }
@@ -507,46 +584,46 @@ void Node::setRelatedData(const CacheEntry::List &relatedData)
     }
 }
 
-bool Node::hasPrevious() const
+bool CacheNode::hasPrevious() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->hasPrevious;
 }
 
-bool Node::hasNext() const
+bool CacheNode::hasNext() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->hasNext;
 }
 
-void Node::setHavePreviousAndNext(bool hasPrevious, bool hasNext)
+void CacheNode::setHavePreviousAndNext(bool hasPrevious, bool hasNext)
 {
-    Q_D(Node);
+    Q_D(CacheNode);
     d->hasPrevious = hasPrevious;
     d->hasNext = hasNext;
 }
 
-QVariantMap Node::extraInfo() const
+QVariantMap CacheNode::extraInfo() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->extraInfo;
 }
 
-void Node::setExtraInfo(const QVariantMap &extraInfo)
+void CacheNode::setExtraInfo(const QVariantMap &extraInfo)
 {
-    Q_D(Node);
+    Q_D(CacheNode);
     d->extraInfo = extraInfo;
 }
 
-NodePrivate::Status Node::status() const
+CacheNodePrivate::Status CacheNode::status() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->status;
 }
 
-void Node::setStatus(NodePrivate::Status status)
+void CacheNode::setStatus(CacheNodePrivate::Status status)
 {
-    Q_D(Node);
+    Q_D(CacheNode);
     d->status = status;
 }
 
@@ -556,26 +633,26 @@ void Node::setStatus(NodePrivate::Status status)
 // already been created instead of creating a new one. So we compare
 // the content in order to find the node using QList::contains or
 // QList::indexOf.
-bool operator==(Node::Ptr node1, Node::Ptr node2)
+bool operator==(CacheNode::Ptr node1, CacheNode::Ptr node2)
 {
     return *(node1.data()) == *(node2.data());
 }
 
-SocialNetworkInterface::ErrorType Node::error() const
+SocialNetworkInterface::ErrorType CacheNode::error() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->error;
 }
 
-QString Node::errorMessage() const
+QString CacheNode::errorMessage() const
 {
-    Q_D(const Node);
+    Q_D(const CacheNode);
     return d->errorMessage;
 }
 
-void Node::setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage)
+void CacheNode::setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage)
 {
-    Q_D(Node);
+    Q_D(CacheNode);
     d->error = error;
     d->errorMessage = errorMessage;
 }
@@ -725,8 +802,8 @@ SocialNetworkInterfacePrivate::~SocialNetworkInterfacePrivate()
     }
 
     // Remove all nodes
-    foreach (Node::Ptr node, nodes) {
-        deleteNode(node);
+    foreach (CacheNode::Ptr cacheNode, cacheNodes) {
+        deleteNode(cacheNode);
     }
 
     // Remove all cache entries.
@@ -739,13 +816,13 @@ SocialNetworkInterfacePrivate::~SocialNetworkInterfacePrivate()
     replyToNodeMap.clear();
 }
 
-void SocialNetworkInterfacePrivate::populateDataForNode(Node::Ptr node)
+void SocialNetworkInterfacePrivate::populateDataForNode(CacheNode::Ptr node)
 {
     Q_UNUSED(node)
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
 }
 
-void SocialNetworkInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
+void SocialNetworkInterfacePrivate::populateRelatedDataforNode(CacheNode::Ptr node)
 {
     Q_UNUSED(node)
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
@@ -868,14 +945,14 @@ int SocialNetworkInterfacePrivate::guessType(const QString &identifier, int type
     return -1;
 }
 
-void SocialNetworkInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *reply)
+void SocialNetworkInterfacePrivate::handleFinished(CacheNode::Ptr node, QNetworkReply *reply)
 {
     Q_UNUSED(node)
     Q_UNUSED(reply)
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
 }
 
-void SocialNetworkInterfacePrivate::handleError(Node::Ptr node, QNetworkReply *reply,
+void SocialNetworkInterfacePrivate::handleError(CacheNode::Ptr node, QNetworkReply *reply,
                                                 QNetworkReply::NetworkError networkError)
 {
     Q_UNUSED(reply)
@@ -888,7 +965,7 @@ void SocialNetworkInterfacePrivate::handleError(Node::Ptr node, QNetworkReply *r
     qWarning() << Q_FUNC_INFO << "Content of the reply:" << reply->readAll();
 }
 
-void SocialNetworkInterfacePrivate::handleSslError(Node::Ptr node, QNetworkReply *reply,
+void SocialNetworkInterfacePrivate::handleSslError(CacheNode::Ptr node, QNetworkReply *reply,
                                                    const QList<QSslError> &sslErrors)
 {
     Q_UNUSED(reply)
@@ -906,7 +983,7 @@ void SocialNetworkInterfacePrivate::handleSslError(Node::Ptr node, QNetworkReply
     qWarning() << Q_FUNC_INFO << "Error: SSL error occurred:" << errorMessage;
 }
 
-void SocialNetworkInterfacePrivate::setReply(Node::Ptr node, QNetworkReply *reply)
+void SocialNetworkInterfacePrivate::setReply(CacheNode::Ptr node, QNetworkReply *reply)
 {
     Q_Q(SocialNetworkInterface);
     if (!reply) {
@@ -921,7 +998,7 @@ void SocialNetworkInterfacePrivate::setReply(Node::Ptr node, QNetworkReply *repl
                      q, SLOT(sslErrorsHandler(QList<QSslError>)));
 }
 
-void SocialNetworkInterfacePrivate::setStatus(Node::Ptr node, NodePrivate::Status status)
+void SocialNetworkInterfacePrivate::setStatus(CacheNode::Ptr node, CacheNodePrivate::Status status)
 {
     node->setStatus(status);
     SocialNetworkInterface::Status socialNetworkStatus = correspondingStatus(status);
@@ -933,11 +1010,11 @@ void SocialNetworkInterfacePrivate::setStatus(Node::Ptr node, NodePrivate::Statu
     }
 }
 
-void SocialNetworkInterfacePrivate::setError(Node::Ptr node,
+void SocialNetworkInterfacePrivate::setError(CacheNode::Ptr node,
                                              SocialNetworkInterface::ErrorType error,
                                              const QString &errorMessage)
 {
-    setStatus(node, NodePrivate::Error);
+    setStatus(node, CacheNodePrivate::Error);
     node->setError(error, errorMessage);
     foreach (SocialNetworkModelInterface *model, models) {
         if (matches(node, model)) {
@@ -963,7 +1040,7 @@ void SocialNetworkInterfacePrivate::deleteReply(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-void SocialNetworkInterfacePrivate::updateModelNode(Node::Ptr node)
+void SocialNetworkInterfacePrivate::updateModelNode(CacheNode::Ptr node)
 {
     Q_Q(SocialNetworkInterface);
     // If the current node is not created
@@ -994,12 +1071,12 @@ void SocialNetworkInterfacePrivate::updateModelNode(Node::Ptr node)
     }
 }
 
-void SocialNetworkInterfacePrivate::updateModelRelatedData(Node::Ptr node,
+void SocialNetworkInterfacePrivate::updateModelRelatedData(CacheNode::Ptr node,
                                                            const CacheEntry::List &relatedData)
 {
     // We use the status flag to see how the internal data should be updated
     switch (node->status()) {
-        case NodePrivate::LoadingRelatedDataReplacing: {
+        case CacheNodePrivate::LoadingRelatedDataReplacing: {
             node->setRelatedData(relatedData);
             foreach (SocialNetworkModelInterface *model, models) {
                 if (matches(node, model)) {
@@ -1008,7 +1085,7 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node::Ptr node,
             }
         }
         break;
-        case NodePrivate::LoadingRelatedDataPrepending: {
+        case CacheNodePrivate::LoadingRelatedDataPrepending: {
             CacheEntry::List data = relatedData;
             data.append(node->relatedData());
             node->setRelatedData(data);
@@ -1019,7 +1096,7 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node::Ptr node,
             }
         }
         break;
-        case NodePrivate::LoadingRelatedDataAppending: {
+        case CacheNodePrivate::LoadingRelatedDataAppending: {
             CacheEntry::List data = node->relatedData();
             data.append(relatedData);
             node->setRelatedData(data);
@@ -1036,7 +1113,7 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node::Ptr node,
 
 }
 
-void SocialNetworkInterfacePrivate::updateModelHavePreviousAndNext(Node::Ptr node,
+void SocialNetworkInterfacePrivate::updateModelHavePreviousAndNext(CacheNode::Ptr node,
                                                                    bool havePrevious,
                                                                    bool haveNext)
 {
@@ -1074,7 +1151,7 @@ CacheEntry::Ptr SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMa
 void SocialNetworkInterfacePrivate::setNodeExtraPaging(QVariantMap &nodeExtra,
                                                        const QVariantMap &previousExtra,
                                                        const QVariantMap &nextExtra,
-                                                       NodePrivate::Status insertionMode)
+                                                       CacheNodePrivate::Status insertionMode)
 {
     // Node::extraInfo is used to provide the cursors that are
     // often used to load next or previous page of data in social API.
@@ -1093,21 +1170,21 @@ void SocialNetworkInterfacePrivate::setNodeExtraPaging(QVariantMap &nodeExtra,
     // The type of storage, as well as managing the fact that there is new
     // data to be loaded is done by the implementer.
 
-    if (insertionMode != NodePrivate::LoadingRelatedDataReplacing
-        && insertionMode != NodePrivate::LoadingRelatedDataPrepending
-        && insertionMode != NodePrivate::LoadingRelatedDataAppending) {
+    if (insertionMode != CacheNodePrivate::LoadingRelatedDataReplacing
+        && insertionMode != CacheNodePrivate::LoadingRelatedDataPrepending
+        && insertionMode != CacheNodePrivate::LoadingRelatedDataAppending) {
         return;
     }
 
     // If we are prepending data, we should override "previous"
-    if (insertionMode == NodePrivate::LoadingRelatedDataReplacing
-        || insertionMode == NodePrivate::LoadingRelatedDataPrepending) {
+    if (insertionMode == CacheNodePrivate::LoadingRelatedDataReplacing
+        || insertionMode == CacheNodePrivate::LoadingRelatedDataPrepending) {
         nodeExtra.insert(NODE_EXTRA_PAGING_PREVIOUS_KEY, previousExtra);
     }
 
     // If we are appending data, we should override "next"
-    if (insertionMode == NodePrivate::LoadingRelatedDataReplacing
-        || insertionMode == NodePrivate::LoadingRelatedDataAppending) {
+    if (insertionMode == CacheNodePrivate::LoadingRelatedDataReplacing
+        || insertionMode == CacheNodePrivate::LoadingRelatedDataAppending) {
         nodeExtra.insert(NODE_EXTRA_PAGING_NEXT_KEY, nextExtra);
     }
 }
@@ -1147,7 +1224,7 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
 
 
     // Create or get the node from cache
-    Node::Ptr node = getOrCreateNode(identifier, guessedType, filterSet);
+    CacheNode::Ptr node = getOrCreateNode(identifier, guessedType, filterSet);
 
     // Purge the nodes if needed
     // This is needed if (eg) a model was associated to a Node,
@@ -1158,16 +1235,16 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
 
     // If the node is already loaded, and we didn't ask for a reload,
     // we should just set the nodes
-    if (node->status() == NodePrivate::Idle && !reload) {
+    if (node->status() == CacheNodePrivate::Idle && !reload) {
         model->d_func()->setNode(node->cacheEntry()->identifiableItem());
         model->d_func()->setData(node->relatedData());
         return;
     }
 
-    bool loading = node->status() == NodePrivate::LoadingNodeData
-                   || node->status() == NodePrivate::LoadingRelatedDataReplacing
-                   || node->status() == NodePrivate::LoadingRelatedDataPrepending
-                   || node->status() == NodePrivate::LoadingRelatedDataAppending;
+    bool loading = node->status() == CacheNodePrivate::LoadingNodeData
+                   || node->status() == CacheNodePrivate::LoadingRelatedDataReplacing
+                   || node->status() == CacheNodePrivate::LoadingRelatedDataPrepending
+                   || node->status() == CacheNodePrivate::LoadingRelatedDataAppending;
 
     // If the node is already being loaded and that we called reload
     // we should not perform a reload
@@ -1190,7 +1267,7 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     // or if the node have to be reloaded, we should start
     // loading the node
 
-    NodePrivate::Status status = NodePrivate::LoadingNodeData;
+    CacheNodePrivate::Status status = CacheNodePrivate::LoadingNodeData;
     IdentifiableContentItemInterface *newItem = 0;
 
     // We first check if the node is already in the stack
@@ -1202,7 +1279,7 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
             node->setCacheEntry(cacheEntry);
             newItem = node->cacheEntry()->identifiableItem();
 
-            status = NodePrivate::LoadingRelatedDataReplacing;
+            status = CacheNodePrivate::LoadingRelatedDataReplacing;
         }
     }
 
@@ -1218,11 +1295,11 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     }
 
     switch (status) {
-        case NodePrivate::LoadingNodeData: {
+        case CacheNodePrivate::LoadingNodeData: {
             populateDataForNode(node);
         }
         break;
-        case NodePrivate::LoadingRelatedDataReplacing: {
+        case CacheNodePrivate::LoadingRelatedDataReplacing: {
             populateRelatedDataforNode(node);
         }
         break;
@@ -1264,27 +1341,27 @@ void SocialNetworkInterfacePrivate::removeModel(SocialNetworkModelInterface *mod
 
 void SocialNetworkInterfacePrivate::loadNext(SocialNetworkModelInterface *model)
 {
-    Node::Ptr node = getNode(model->nodeIdentifier(), model->nodeType(),
-                             model->d_func()->filters.toSet());
+    CacheNode::Ptr node = getNode(model->nodeIdentifier(), model->nodeType(),
+                                  model->d_func()->filters.toSet());
     if (node.isNull()) {
         qWarning() << Q_FUNC_INFO << "The model is not loaded. Please call populate() first";
         return;
     }
 
-    setStatus(node, NodePrivate::LoadingRelatedDataAppending);
+    setStatus(node, CacheNodePrivate::LoadingRelatedDataAppending);
     populateRelatedDataforNode(node);
 }
 
 void SocialNetworkInterfacePrivate::loadPrevious(SocialNetworkModelInterface *model)
 {
-    Node::Ptr node = getNode(model->nodeIdentifier(), model->nodeType(),
-                             model->d_func()->filters.toSet());
+    CacheNode::Ptr node = getNode(model->nodeIdentifier(), model->nodeType(),
+                                  model->d_func()->filters.toSet());
     if (node.isNull()) {
         qWarning() << Q_FUNC_INFO << "The model is not loaded. Please call populate() first";
         return;
     }
 
-    setStatus(node, NodePrivate::LoadingRelatedDataPrepending);
+    setStatus(node, CacheNodePrivate::LoadingRelatedDataPrepending);
     populateRelatedDataforNode(node);
 }
 
@@ -1311,7 +1388,7 @@ void SocialNetworkInterfacePrivate::finishedHandler()
         return;
     }
 
-    Node::Ptr node = replyToNodeMap.value(reply);
+    CacheNode::Ptr node = replyToNodeMap.value(reply);
     handleFinished(node, reply);
     replyToNodeMap.remove(reply);
 }
@@ -1330,7 +1407,7 @@ void SocialNetworkInterfacePrivate::errorHandler(QNetworkReply::NetworkError net
         return;
     }
 
-    Node::Ptr node = replyToNodeMap.value(reply);
+    CacheNode::Ptr node = replyToNodeMap.value(reply);
     handleError(node, reply, networkError);
 }
 
@@ -1348,11 +1425,11 @@ void SocialNetworkInterfacePrivate::sslErrorsHandler(const QList<QSslError> &ssl
         return;
     }
 
-    Node::Ptr node = replyToNodeMap.value(reply);
+    CacheNode::Ptr node = replyToNodeMap.value(reply);
     handleSslError(node, reply, sslErrors);
 }
 
-/*! \interface */
+/*! \internal */
 void SocialNetworkInterfacePrivate::filterDestroyedHandler(QObject *object)
 {
     FilterInterface *filter = static_cast<FilterInterface *>(object);
@@ -1364,24 +1441,24 @@ void SocialNetworkInterfacePrivate::filterDestroyedHandler(QObject *object)
     // If the node have the filter, we invalidate the content
     // of the node (and set the models associated to invalid)
 
-    Node::List doomedNodes;
+    CacheNode::List doomedCacheNodes;
 
-    foreach (Node::Ptr node, nodes) {
-        if (node->filters().contains(filter)) {
-            doomedNodes.append(node);
+    foreach (CacheNode::Ptr cacheNode, cacheNodes) {
+        if (cacheNode->filters().contains(filter)) {
+            doomedCacheNodes.append(cacheNode);
         }
     }
 
-    foreach (Node::Ptr node, doomedNodes) {
-        qWarning() << "Destroying a filter affected the node associated to" << node->identifier();
-        nodes.removeAll(node);
+    foreach (CacheNode::Ptr cacheNode, doomedCacheNodes) {
+        qWarning() << "Destroying a filter affected the node associated to" << cacheNode->identifier();
+        cacheNodes.removeAll(cacheNode);
         foreach (SocialNetworkModelInterface *model, models) {
-            if (matches(node, model)) {
+            if (matches(cacheNode, model)) {
                 model->d_func()->clean();
             }
         }
-        setStatus(node, NodePrivate::Invalid);
-        deleteNode(node);
+        setStatus(cacheNode, CacheNodePrivate::Invalid);
+        deleteNode(cacheNode);
     }
 }
 
@@ -1447,35 +1524,36 @@ bool SocialNetworkInterfacePrivate::matches(const QString &identifier, int type,
     return true;
 }
 
-bool SocialNetworkInterfacePrivate::matches(Node::ConstPtr node, SocialNetworkModelInterface *model)
+bool SocialNetworkInterfacePrivate::matches(CacheNode::ConstPtr node,
+                                            SocialNetworkModelInterface *model)
 {
     return matches(node->identifier(), node->type(), node->filters(), model);
 }
 
-SocialNetworkInterface::Status SocialNetworkInterfacePrivate::correspondingStatus(NodePrivate::Status status)
+SocialNetworkInterface::Status SocialNetworkInterfacePrivate::correspondingStatus(CacheNodePrivate::Status status)
 {
     SocialNetworkInterface::Status newStatus;
     switch (status) {
-        case NodePrivate::Initializing: {
+        case CacheNodePrivate::Initializing: {
             newStatus = SocialNetworkInterface::Initializing;
         }
         break;
-        case NodePrivate::Idle: {
+        case CacheNodePrivate::Idle: {
             newStatus = SocialNetworkInterface::Idle;
         }
         break;
-        case NodePrivate::LoadingNodeData:
-        case NodePrivate::LoadingRelatedDataReplacing:
-        case NodePrivate::LoadingRelatedDataPrepending:
-        case NodePrivate::LoadingRelatedDataAppending: {
+        case CacheNodePrivate::LoadingNodeData:
+        case CacheNodePrivate::LoadingRelatedDataReplacing:
+        case CacheNodePrivate::LoadingRelatedDataPrepending:
+        case CacheNodePrivate::LoadingRelatedDataAppending: {
             newStatus = SocialNetworkInterface::Busy;
         }
         break;
-        case NodePrivate::Error: {
+        case CacheNodePrivate::Error: {
             newStatus = SocialNetworkInterface::Error;
         }
         break;
-        case NodePrivate::Invalid: {
+        case CacheNodePrivate::Invalid: {
             newStatus = SocialNetworkInterface::Invalid;
         }
         break;
@@ -1492,46 +1570,46 @@ SocialNetworkInterface::Status SocialNetworkInterfacePrivate::correspondingStatu
     the filters to the destruction handlers, and adds the new
     node into the cache.
 */
-Node::Ptr SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
-                                                         int type,
-                                                         const QSet<FilterInterface *> &filters)
+CacheNode::Ptr SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
+                                                              int type,
+                                                              const QSet<FilterInterface *> &filters)
 {
     Q_Q(SocialNetworkInterface);
-    Node::Ptr node = Node::create(identifier, type, filters);
-    int index = nodes.indexOf(node);
+    CacheNode::Ptr cacheNode = CacheNode::create(identifier, type, filters);
+    int index = cacheNodes.indexOf(cacheNode);
     if (index == -1) {
         // Connect to filter destruction handler
         foreach (FilterInterface *filter, filters) {
             QObject::connect(filter, SIGNAL(destroyed(QObject*)),
                              q, SLOT(filterDestroyedHandler(QObject*)));
         }
-        nodes.append(node);
-        return node;
+        cacheNodes.append(cacheNode);
+        return cacheNode;
     } else {
-        return nodes[index];
+        return cacheNodes[index];
     }
 }
 
-Node::Ptr SocialNetworkInterfacePrivate::getNode(const QString &identifier, int type,
-                                                 const QSet<FilterInterface *> &filters)
+CacheNode::Ptr SocialNetworkInterfacePrivate::getNode(const QString &identifier, int type,
+                                                      const QSet<FilterInterface *> &filters)
 {
-    Node::Ptr node = Node::create(identifier, type, filters);
-    int index = nodes.indexOf(node);
+    CacheNode::Ptr cacheNode = CacheNode::create(identifier, type, filters);
+    int index = cacheNodes.indexOf(cacheNode);
     if (index == -1) {
-        return Node::Ptr();
+        return CacheNode::Ptr();
     } else {
-        return nodes[index];
+        return cacheNodes[index];
     }
 }
 
 void SocialNetworkInterfacePrivate::checkDoomedNodes()
 {
-    Node::List currentNodes = nodes;
-    Node::List doomedNodes;
-    Node::List savedNodes;
-    while (!currentNodes.isEmpty()) {
+    CacheNode::List currentCacheNodes = cacheNodes;
+    CacheNode::List doomedCacheNodes;
+    CacheNode::List savedCacheNodes;
+    while (!currentCacheNodes.isEmpty()) {
         bool doomed = true;
-        Node::Ptr node = currentNodes.takeFirst();
+        CacheNode::Ptr node = currentCacheNodes.takeFirst();
         foreach (SocialNetworkModelInterface *otherModel, models) {
             if (matches(node, otherModel)) {
                 doomed = false;
@@ -1540,16 +1618,16 @@ void SocialNetworkInterfacePrivate::checkDoomedNodes()
         }
 
         if (doomed) {
-            doomedNodes.append(node);
+            doomedCacheNodes.append(node);
         } else {
-            savedNodes.append(node);
+            savedCacheNodes.append(node);
         }
     }
 
-    nodes = savedNodes;
+    cacheNodes = savedCacheNodes;
 
     // Destroy the doomed nodes
-    foreach (Node::Ptr node, doomedNodes) {
+    foreach (CacheNode::Ptr node, doomedCacheNodes) {
         deleteNode(node);
     }
 }
@@ -1562,10 +1640,10 @@ void SocialNetworkInterfacePrivate::checkCacheEntryRefcount(CacheEntry::Ptr entr
     }
 }
 
-void SocialNetworkInterfacePrivate::deleteNode(Node::Ptr node)
+void SocialNetworkInterfacePrivate::deleteNode(CacheNode::Ptr node)
 {
     Q_Q(SocialNetworkInterface);
-    int index = nodes.indexOf(node);
+    int index = cacheNodes.indexOf(node);
     if (index == -1) {
         return;
     }
@@ -1575,8 +1653,8 @@ void SocialNetworkInterfacePrivate::deleteNode(Node::Ptr node)
 
         // Be sure that the filter is not used by another node
         bool doomed = true;
-        foreach (Node::Ptr otherNode, nodes) {
-            if (otherNode != node && otherNode->filters().contains(filter)) {
+        foreach (CacheNode::Ptr otherCacheNode, cacheNodes) {
+            if (otherCacheNode != node && otherCacheNode->filters().contains(filter)) {
                 doomed = false;
                 break;
             }
@@ -1603,7 +1681,7 @@ void SocialNetworkInterfacePrivate::deleteNode(Node::Ptr node)
         checkCacheEntryRefcount(entry);
     }
 
-    nodes.removeAt(index);
+    cacheNodes.removeAt(index);
 }
 
 //----------------------------------------------------
@@ -1612,31 +1690,37 @@ void SocialNetworkInterfacePrivate::deleteNode(Node::Ptr node)
     \qmltype SocialNetwork
     \instantiates SocialNetworkInterface
     \inqmlmodule org.nemomobile.social 1
-    \brief Provides an abstraction API for graph- or model-based social
-    network APIs.
+    \brief Provides an abstraction for social network APIs.
 
-    The SocialNetwork type should never be used directly by clients.
-    Instead, clients should use specific implementations of the SocialNetwork
-    interface, such as the Facebook adapter.
+    The \c SocialNetwork type should never be used directly by clients.
+    Instead, clients should use specific implementations of the \c SocialNetwork
+    interface, such as the \l{Facebook} or the \l{Twitter} adapter.
 
-    The SocialNetwork type provides a generic API which allows content
-    to be retrieved from a social network and exposed via a model.
-    The API consists of a central \c node which is an IdentifiableContentItem,
-    which may be specified by the client via the \c nodeIdentifier property.
-    The data in the model will be populated from the graph connections of
-    the node.
+    \c SocialNetwork is used to interface to social networks. It do not provide public
+    API but is used by other components, such as \l{SocialNetworkModel} or
+    \l{ContentItem} based components. In fact, it is used to cache the data that
+    are retrieved from a given social network, and provide them in a formatted
+    way to these components.
 
-    The model roles are as follows:
-    \list
-    \li contentItem - the instantiated ContentItem related to the node
-    \li contentItemType - the type of the ContentItem related to the node
-    \li contentItemData - the underlying QVariantMap data of the ContentItem related to the node
-    \li contentItemIdentifier - the identifier of the ContentItem related to the node, or an empty string
-    \endlist
 
-    Please see the documentation of the Facebook adapter for an example
-    of how clients can use the SocialNetwork model in an application.
-*/  
+    Please see the documentation of the \l{Facebook} or \l{Twitter} adapter for an
+    example of how clients can use a \c SocialNetwork in an application.
+
+    \sa {The caching system}
+    \sa {Facebook}
+    \sa {Twitter}
+*/
+
+/*!
+    \qmlproperty bool SocialNetwork::initialized
+
+    Holds if the \c SocialNetwork is initialized. The initialization process is
+    (currently) the process to initialize a QML component.
+
+    A non-initialized \c SocialNetwork will refuse all tasks that are sent
+    to it. You should wait for the \c SocialNetwork to be initialized before
+    performing other actions.
+*/
 
 SocialNetworkInterface::SocialNetworkInterface(QObject *parent)
     : QObject(parent), d_ptr(new SocialNetworkInterfacePrivate(this))
@@ -1677,13 +1761,41 @@ void SocialNetworkInterface::componentComplete()
     emit initializedChanged();
 }
 
-/*!
-    \qmlmethod bool SocialNetwork::arbitraryRequest(SocialNetwork::RequestType requestType, const QString &requestUri, const QVariantMap &queryItems = QVariantMap(), const QString &postData = QString())
+/*
+    \qmlmethod SocialNetwork::arbitraryRequest(SocialNetwork::RequestType requestType, const QString &requestUri, const QVariantMap &queryItems = QVariantMap(), const QString &postData = QString())
+*/
+/*
+    \qmlmethod SocialNetworkInterface::arbitraryRequest()
+*/
 
-    Performs the HTTP request of the specified \a requestType (\c Get, \c Post or \c Delete) with
-    the specified \a requestUri and \a queryItems.  If the request is a Post request, the given
-    \a postData will be converted to a QByteArray via \c{QByteArray::fromBase64(postData.toLatin1())}
-    and used as the \c Post data.
+/*!
+    \qmlsignal SocialNetwork::arbitraryRequestResponseReceived(bool isSuccess,
+    const QVariantMap &data)
+
+    This signal is emitted when an arbitrary request handler is performed. It carries
+    the status of the request via \a isSuccess, and the data that is retrieved via
+    \a data.
+
+
+    The corresponding handler is \c onArbitraryRequestResponseReceived.
+*/
+
+/*!
+    \qmlmethod bool SocialNetwork::arbitraryRequest(RequestType requestType, const QString &requestUri,
+                                      const QVariantMap &queryItems = QVariantMap(),
+                                      const QString &postData = QString())
+
+    Performs the HTTP request of the specified \a requestType with the specified \a requestUri
+    and \a queryItems.  If the request is a Post request, the given \a postData will be converted
+    to a QByteArray via \c{QByteArray::fromBase64(postData.toLatin1())} and used as the HTTP POST
+    data.
+
+    \a requestType can be one of:
+    \list
+    \li SocialNetwork.Get
+    \li SocialNetwork.Post
+    \li SocialNetwork.Delete
+    \endlist
 
     When a successfully started request is completed, the \c arbitraryRequestResponseReceived()
     signal will be emitted, with the response data included as the \c data parameter.

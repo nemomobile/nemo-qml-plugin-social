@@ -1,17 +1,17 @@
 {
-    "name": "post_action",
-    "doc": "An entry representing a action for a post",
     "identifiable": false,
+    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookPostAction represents an action that can be done on a\nFacebookPost\n\nFacebookPostAction is a specialized ContentItem that is used to represent\na generic or customized action that can be done on a FacebookPost, like\n\"like\", \"comment\", or \"play this game\".\n\n\\sa{ContentItem}\n\\sa{FacebookPost}\n",
+    "name": "post_action",
     "properties": [
         {
-            "name": "name",
+            "doc": "Holds the name of the action",
             "type": "QString",
-            "doc": "Holds the name of the action"
+            "name": "name"
         },
         {
-            "name": "link",
+            "doc": "Holds the link used to perform the action",
             "type": "QString",
-            "doc": "Holds the link used to perform the action"
+            "name": "link"
         }
     ]
 }

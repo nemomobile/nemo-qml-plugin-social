@@ -705,6 +705,13 @@ int FacebookPostInterfacePrivate::with_tags_count(QDeclarativeListProperty<Faceb
 /*!
     \qmltype FacebookPost
     \instantiates FacebookPostInterface
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookPost represents a post from the Facebook OpenGraph API
+    
+    FacebookPost is a specialized IdentifiableContentItem that is used
+    to hold data that represents a post in the Facebook OpenGraph API.
+    
+    \sa{IdentifiableContentItem}
     
 */
 FacebookPostInterface::FacebookPostInterface(QObject *parent)
@@ -847,7 +854,7 @@ bool FacebookPostInterface::removeComment(const QString &commentIdentifier)
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookPost::from
+    \qmlproperty FacebookObjectReference FacebookPost::from
     Holds a reference to the user or profile which uploaded this post.
 */
 FacebookObjectReferenceInterface * FacebookPostInterface::from() const
@@ -857,7 +864,7 @@ FacebookObjectReferenceInterface * FacebookPostInterface::from() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookObjectReferenceInterface> FacebookPost::to
+    \qmlproperty list<FacebookObjectReference> FacebookPost::to
     Holds a list of references to the users or profiles which are targetted by this post.
 */
 QDeclarativeListProperty<FacebookObjectReferenceInterface> FacebookPostInterface::to()
@@ -871,7 +878,7 @@ QDeclarativeListProperty<FacebookObjectReferenceInterface> FacebookPostInterface
 }
 
 /*!
-    \qmlproperty QString FacebookPost::message
+    \qmlproperty string FacebookPost::message
     Holds the message text of the post.
 */
 QString FacebookPostInterface::message() const
@@ -881,7 +888,7 @@ QString FacebookPostInterface::message() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookNameTagInterface> FacebookPost::messageTags
+    \qmlproperty list<FacebookNameTag> FacebookPost::messageTags
     Holds the objects tagged in the message.
 */
 QDeclarativeListProperty<FacebookNameTagInterface> FacebookPostInterface::messageTags()
@@ -895,7 +902,7 @@ QDeclarativeListProperty<FacebookNameTagInterface> FacebookPostInterface::messag
 }
 
 /*!
-    \qmlproperty QUrl FacebookPost::picture
+    \qmlproperty url FacebookPost::picture
     Holds a link to the picture of the post, if available.
 */
 QUrl FacebookPostInterface::picture() const
@@ -905,7 +912,7 @@ QUrl FacebookPostInterface::picture() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookPost::link
+    \qmlproperty url FacebookPost::link
     Holds the link attached to this post.
 */
 QUrl FacebookPostInterface::link() const
@@ -915,7 +922,7 @@ QUrl FacebookPostInterface::link() const
 }
 
 /*!
-    \qmlproperty QString FacebookPost::name
+    \qmlproperty string FacebookPost::name
     Holds the name of the link that is attached to this post.
 */
 QString FacebookPostInterface::name() const
@@ -925,7 +932,7 @@ QString FacebookPostInterface::name() const
 }
 
 /*!
-    \qmlproperty QString FacebookPost::caption
+    \qmlproperty string FacebookPost::caption
     Holds the caption of the link that is attached to this post.
 */
 QString FacebookPostInterface::caption() const
@@ -935,7 +942,7 @@ QString FacebookPostInterface::caption() const
 }
 
 /*!
-    \qmlproperty QString FacebookPost::description
+    \qmlproperty string FacebookPost::description
     Holds the description of the link that is attached to this post.
 */
 QString FacebookPostInterface::description() const
@@ -945,7 +952,7 @@ QString FacebookPostInterface::description() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookPost::source
+    \qmlproperty url FacebookPost::source
     Holds the link to a video or flash movie that is embedded in this post.
 */
 QUrl FacebookPostInterface::source() const
@@ -955,7 +962,7 @@ QUrl FacebookPostInterface::source() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookPostPropertyInterface> FacebookPost::properties
+    \qmlproperty list<FacebookPostProperty> FacebookPost::properties
     Holds a list of properties for the attached content.
 */
 QDeclarativeListProperty<FacebookPostPropertyInterface> FacebookPostInterface::properties()
@@ -969,7 +976,7 @@ QDeclarativeListProperty<FacebookPostPropertyInterface> FacebookPostInterface::p
 }
 
 /*!
-    \qmlproperty QUrl FacebookPost::icon
+    \qmlproperty url FacebookPost::icon
     Holds a link to an icon representing the type of this post.
 */
 QUrl FacebookPostInterface::icon() const
@@ -979,7 +986,7 @@ QUrl FacebookPostInterface::icon() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookPostActionInterface> FacebookPost::actions
+    \qmlproperty list<FacebookPostAction> FacebookPost::actions
     Holds a list of actions that can be done with this post. (not generated yet)
 */
 QDeclarativeListProperty<FacebookPostActionInterface> FacebookPostInterface::actions()
@@ -993,7 +1000,7 @@ QDeclarativeListProperty<FacebookPostActionInterface> FacebookPostInterface::act
 }
 
 /*!
-    \qmlproperty QString FacebookPost::postType
+    \qmlproperty string FacebookPost::postType
     Holds the type of this post.
 */
 QString FacebookPostInterface::postType() const
@@ -1003,7 +1010,7 @@ QString FacebookPostInterface::postType() const
 }
 
 /*!
-    \qmlproperty QString FacebookPost::story
+    \qmlproperty string FacebookPost::story
     Holds the story, if this post represents a story.
 */
 QString FacebookPostInterface::story() const
@@ -1013,7 +1020,7 @@ QString FacebookPostInterface::story() const
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookNameTagInterface> FacebookPost::storyTags
+    \qmlproperty list<FacebookNameTag> FacebookPost::storyTags
     Holds the objects tagged in the story.
 */
 QDeclarativeListProperty<FacebookNameTagInterface> FacebookPostInterface::storyTags()
@@ -1027,7 +1034,7 @@ QDeclarativeListProperty<FacebookNameTagInterface> FacebookPostInterface::storyT
 }
 
 /*!
-    \qmlproperty QDeclarativeListProperty<FacebookObjectReferenceInterface> FacebookPost::withTags
+    \qmlproperty list<FacebookObjectReference> FacebookPost::withTags
     Holds the objects or users that are tagged with the "Who are you with ?" field. (not generated yet)
 */
 QDeclarativeListProperty<FacebookObjectReferenceInterface> FacebookPostInterface::withTags()
@@ -1041,7 +1048,7 @@ QDeclarativeListProperty<FacebookObjectReferenceInterface> FacebookPostInterface
 }
 
 /*!
-    \qmlproperty QString FacebookPost::objectIdentifier
+    \qmlproperty string FacebookPost::objectIdentifier
     Hold the identifier of the uploaded photo or video attached to this post.
 */
 QString FacebookPostInterface::objectIdentifier() const
@@ -1051,7 +1058,7 @@ QString FacebookPostInterface::objectIdentifier() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookPost::application
+    \qmlproperty FacebookObjectReference FacebookPost::application
     Hold the application that was used to upload this post.
 */
 FacebookObjectReferenceInterface * FacebookPostInterface::application() const
@@ -1061,7 +1068,7 @@ FacebookObjectReferenceInterface * FacebookPostInterface::application() const
 }
 
 /*!
-    \qmlproperty QString FacebookPost::createdTime
+    \qmlproperty string FacebookPost::createdTime
     Holds the creation time of the post in an ISO8601-formatted string.
 */
 QString FacebookPostInterface::createdTime() const
@@ -1071,7 +1078,7 @@ QString FacebookPostInterface::createdTime() const
 }
 
 /*!
-    \qmlproperty QString FacebookPost::updatedTime
+    \qmlproperty string FacebookPost::updatedTime
     Holds the last-update time of the post in an ISO8601-formatted string.
 */
 QString FacebookPostInterface::updatedTime() const
@@ -1107,7 +1114,7 @@ bool FacebookPostInterface::hidden() const
 }
 
 /*!
-    \qmlproperty QString FacebookPost::statusType
+    \qmlproperty string FacebookPost::statusType
     Hold the type of status update.
 */
 QString FacebookPostInterface::statusType() const

@@ -66,6 +66,22 @@ void FacebookObjectReferenceInterfacePrivate::emitPropertyChangeSignals(const QV
 
 //-------------------------------
 
+/*!
+    \qmltype FacebookObjectReference
+    \instantiates FacebookObjectReferenceInterface
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookObjectReference represents a reference to an entity in the Facebook
+    OpenGraph API
+
+    FacebookObjectReference is a specialized ContentItem that is used
+    to hold data that represents an reference to an intity in the Facebook
+    OpenGraph API. These references can be, for example a reference to an
+    user that posted a given comment.
+
+    \sa{ContentItem}
+*/
+
+
 FacebookObjectReferenceInterface::FacebookObjectReferenceInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookObjectReferenceInterfacePrivate(this)), parent)
 {
@@ -98,7 +114,7 @@ QString FacebookObjectReferenceInterface::objectName() const
 }
 
 /*!
-    \qmlproperty Facebook::ContentItemType FacebookObjectReference::objectType
+    \qmlproperty enumeration FacebookObjectReference::objectType
     Holds the type of the object to which this object reference refers
 */
 FacebookInterface::ContentItemType FacebookObjectReferenceInterface::objectType() const

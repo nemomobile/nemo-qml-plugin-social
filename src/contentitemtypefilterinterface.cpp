@@ -48,6 +48,134 @@ ContentItemTypeFilterInterfacePrivate::ContentItemTypeFilterInterfacePrivate()
 
 // ------------------------------
 
+
+/*!
+    \qmltype ContentItemTypeFilter
+    \instantiates ContentItemTypeFilterInterface
+    \inqmlmodule org.nemomobile.social 1
+    \brief A filter used to query related data based on their types
+
+    The ContentItemTypeFilter is used to perform queries based on
+    the type of the related data to get using the \l type property.
+    It also provides the capability to only select some given fields
+    using \l whichFields and a limited number of entries using \l limit.
+
+    \note Twitter does not support \l whichFields.
+
+    The following example shows how to select a list of friends for the current
+    user in Facebook retrieved using ContentItemTypeFilter.
+
+    \qml
+    import QtQuick 1.1
+    import org.nemomobile.social 1.0
+
+    Item {
+        Facebook {
+            id: facebook
+            accessToken: "..." // Need a valid access token
+        }
+
+        SocialNetworkModel {
+            id: friendsModel
+            nodeIdentifier: "me"
+            socialNetwork: facebook
+            filters: ContentItemTypeFilter { type: Facebook.User; limit: 30 }
+        }
+
+        ListView {
+            model: friendsModel
+            delegate: Text { text: contentItem.name }
+        }
+
+        Component.onCompleted: friendsModel.populate()
+    }
+    \endqml
+
+
+    \section1 Selected data using this filter
+
+    \section2 Facebook
+
+    The following tables describes the Facebook entities that are selected
+    given a type passed in the filter and a node type. Types that are not
+    listed should not be used to filtering or filtering will fail.
+
+    \section3 User
+
+    \table
+    \header
+        \li Filter type
+        \li
+    \row
+        \li Album
+        \li Albums of the user
+    \row
+        \li Notification
+        \li Notifications for the current user (only works if the node corresponds to the
+            logged user)
+    \row
+        \li Photo
+        \li Photos of the user
+    \row
+        \li Post
+        \li The feed posted on the user's wall
+    \row
+        \li User
+        \li Friends of the current user (only works if the node corresponds to the  logged user)
+    \endtable
+
+    \section3 Album
+
+    \table
+    \header
+        \li Filter type
+        \li
+    \row
+        \li Comment
+        \li The comments posted on the album
+    \row
+        \li Photo
+        \li The photos in the album
+    \row
+        \li Like
+        \li The likes posted on the album
+    \endtable
+
+    \section3 Photo
+
+    \table
+    \header
+        \li Filter type
+        \li
+    \row
+        \li Comment
+        \li The comments posted on the photo
+    \row
+        \li Like
+        \li The likes posted on the photo
+    \endtable
+
+    \section3 Post
+
+    \table
+    \header
+        \li Filter type
+        \li
+    \row
+        \li Comment
+        \li The comments posted on the post
+    \row
+        \li Like
+        \li The likes posted on the post
+    \endtable
+
+    \section2 Twitter
+
+    TODO
+
+
+ */
+
 ContentItemTypeFilterInterface::ContentItemTypeFilterInterface(QObject *parent)
     : FilterInterface(parent), d_ptr(new ContentItemTypeFilterInterfacePrivate)
 {
@@ -57,6 +185,14 @@ ContentItemTypeFilterInterface::~ContentItemTypeFilterInterface()
 {
 }
 
+
+/*!
+    \qmlproperty enum ContentItemTypeFilter::type
+
+    Hold the type that is used by this ContentItemTypeFilter. Be sure
+    to use types that are exposed by the SocialNetwork subclass you
+    intend to use.
+*/
 int ContentItemTypeFilterInterface::type() const
 {
     Q_D(const ContentItemTypeFilterInterface);
@@ -72,6 +208,14 @@ void ContentItemTypeFilterInterface::setType(int type)
     }
 }
 
+/*!
+    \qmlproperty int ContentItemTypeFilter::limit
+
+    Hold the limit that is used by this ContentItemTypeFilter. The
+    limit property is used to determine how many related items should
+    be queried from the social network.
+*/
+
 int ContentItemTypeFilterInterface::limit() const
 {
     Q_D(const ContentItemTypeFilterInterface);
@@ -86,6 +230,13 @@ void ContentItemTypeFilterInterface::setLimit(int limit)
         emit limitChanged();
     }
 }
+
+/*!
+    \qmlproperty list<string> ContentItemTypeFilter::whichFields
+
+    Hold a list of fields that should be queried using this
+    ContentItemTypeFilter.
+*/
 
 QStringList ContentItemTypeFilterInterface::whichFields() const
 {

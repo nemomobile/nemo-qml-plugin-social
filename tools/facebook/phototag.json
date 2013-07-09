@@ -1,42 +1,42 @@
 {
-    "name": "photo_tag",
-    "doc": "An entry representing a tag",
     "identifiable": false,
+    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookPhotoTag represents a tag posted on a FacebookPhoto\n\nFacebookPhotoTag is a specialized ContentItem that is used to represent\na tag posted on a FacebookPhoto.\n\n\\sa{ContentItem}\n\\sa{FacebookPhoto}\n",
+    "name": "photo_tag",
     "properties": [
         {
-            "name": "id",
             "alias": "user_identifier",
             "type": "QString",
+            "name": "id",
             "doc": "Holds the identifier of the tagged entity"
         },
         {
-            "name": "name",
             "alias": "user_name",
-            "type": "QString",
             "doc": "Holds the name of the tagged entity",
+            "type": "QString",
+            "name": "name",
             "custom": true
         },
         {
-            "name": "text",
-            "type": "QString",
             "doc": "Holds text that is used to tag something",
             "is_ontology": false,
+            "type": "QString",
+            "name": "text",
             "custom": true
         },
         {
-            "name": "x",
+            "doc": "Holds the x position of the tagged entity or text in the photo.\nThis coordinate is a percentage from the left edge of the photo.",
             "type": "float",
-            "doc": "Holds the x position of the tagged entity or text in the photo.\nThis coordinate is a percentage from the left edge of the photo."
+            "name": "x"
         },
         {
-            "name": "y",
+            "doc": "Holds the y position of the tagged entity or text in the photo.\nThis coordinate is a percentage from the top edge of the photo.",
             "type": "float",
-            "doc": "Holds the y position of the tagged entity or text in the photo.\nThis coordinate is a percentage from the top edge of the photo."
+            "name": "y"
         },
         {
-            "name": "created_time",
+            "doc": "Holds the creation time of the tag in an ISO8601-formatted string.",
             "type": "QString",
-            "doc": "Holds the creation time of the tag in an ISO8601-formatted string."
+            "name": "created_time"
         }
     ]
 }

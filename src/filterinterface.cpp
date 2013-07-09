@@ -33,6 +33,23 @@
 
 #include "contentiteminterface.h"
 
+/*!
+    \qmltype Filter
+    \instantiates FilterInterface
+    \inqmlmodule org.nemomobile.social 1
+    \brief A filter used to create social network queries
+
+    The \c Filter type should never be used directly by clients. Instead
+    clients should use more specialized implementations of the \c Filter
+    interface, such as ContentItemTypeFilter.
+
+    \c Filter is used by SocialNetwork to create requests to a given
+    social network. They should be used in the \c filters property of
+    SocialNetworkModel.
+
+    \sa {The caching system}
+ */
+
 FilterInterface::FilterInterface(QObject *parent)
     : QObject(parent)
 {
