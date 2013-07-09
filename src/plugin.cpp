@@ -44,6 +44,7 @@
 
 // social plugin headers
 #include "socialnetworkinterface.h"
+#include "socialnetworkmodelinterface.h"
 #include "contentiteminterface.h"
 #include "identifiablecontentiteminterface.h"
 #include "filterinterface.h"
@@ -91,6 +92,7 @@ public:
         qmlRegisterType<SorterInterface>(uri, 1, 0, "Sorter");
 
         // creatable types from the social plugin
+        qmlRegisterType<SocialNetworkModelInterface>(uri, 1, 0, "SocialNetworkModel");
         qmlRegisterType<ContentItemTypeFilterInterface>(uri, 1, 0, "ContentItemTypeFilter");
 
         // creatable types from the facebook implementation

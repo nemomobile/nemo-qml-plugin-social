@@ -101,16 +101,6 @@ Q_SIGNALS:
 public:
     Q_INVOKABLE void loadNextRelatedData();
     Q_INVOKABLE void loadPreviousRelatedData();
-protected:
-    QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath, const QStringList &whichFields, const QVariantMap &extraData);
-    QNetworkReply *postRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &data, const QVariantMap &extraData);
-    QNetworkReply *deleteRequest(const QString &objectIdentifier, const QString &extraPath, const QVariantMap &extraData);
-    QString dataSection(int type, const QVariantMap &data) const;
-    ContentItemInterface *contentItemFromData(QObject *parent, const QVariantMap &data) const;
-    void populateDataForLastNode();
-    void populateRelatedDataforLastNode();
-    bool validateCacheEntryForLastNode(const QVariantMap &cacheEntryData);
-
     // private API for all Facebook adapters to use
 private:
     void updateCurrentUserIdentifier();
@@ -126,17 +116,8 @@ private:
     friend class FacebookPostInterfacePrivate;
     friend class FacebookUserInterfacePrivate;
 
-    // impl. detail
-private:
-    void retrieveRelatedContent(IdentifiableContentItemInterface *whichNode);
-    void continuePopulateDataForUnseenNode(const QVariantMap &nodeData);
-    void continuePopulateDataForSeenNode(const QVariantMap &nodeData, const QUrl &requestUrl);
-    // private data
 private:
     Q_DECLARE_PRIVATE(FacebookInterface)
-    Q_PRIVATE_SLOT(d_func(), void finishedHandler())
-    Q_PRIVATE_SLOT(d_func(), void errorHandler(QNetworkReply::NetworkError))
-    Q_PRIVATE_SLOT(d_func(), void sslErrorsHandler(const QList<QSslError>&))
     Q_PRIVATE_SLOT(d_func(), void updateCurrentUserIdentifierHandler(bool, const QVariantMap&))
 };
 

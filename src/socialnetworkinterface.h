@@ -63,27 +63,13 @@ class IdentifiableContentItemInterface;
  */
 
 class CacheEntry;
+class SocialNetworkModelInterface;
 class SocialNetworkInterfacePrivate;
-class SocialNetworkInterface : public QAbstractListModel, public QDeclarativeParserStatus
+class SocialNetworkInterface : public QObject, public QDeclarativeParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
-
-    Q_PROPERTY(QString nodeIdentifier READ nodeIdentifier WRITE setNodeIdentifier
-               NOTIFY nodeIdentifierChanged)
-    Q_PROPERTY(IdentifiableContentItemInterface *node READ node NOTIFY nodeChanged)
-    Q_PROPERTY(QVariantMap relevanceCriteria READ relevanceCriteria WRITE setRelevanceCriteria
-               NOTIFY relevanceCriteriaChanged)
-    Q_PROPERTY(bool hasPreviousNode READ hasPreviousNode NOTIFY hasPreviousNodeChanged)
-    Q_PROPERTY(bool hasNextNode READ hasNextNode NOTIFY hasNextNodeChanged)
-    Q_PROPERTY(bool hasPreviousRelatedData READ hasPreviousRelatedData NOTIFY hasPreviousRelatedDataChanged)
-    Q_PROPERTY(bool hasNextRelatedData READ hasNextRelatedData NOTIFY hasRelatedDataNextChanged)
-    Q_PROPERTY(QDeclarativeListProperty<FilterInterface> filters READ filters)
-    Q_PROPERTY(QDeclarativeListProperty<SorterInterface> sorters READ sorters)
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(Status status READ status NOTIFY statusChanged)
-    Q_PROPERTY(ErrorType error READ error NOTIFY errorChanged)
-    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
+    Q_PROPERTY(bool initialized READ isInitialized NOTIFY initializedChanged)
 
     Q_ENUMS(Status)
     Q_ENUMS(ErrorType)
@@ -127,58 +113,11 @@ public:
 public:
     explicit SocialNetworkInterface(QObject *parent = 0);
     virtual ~SocialNetworkInterface();
+    bool isInitialized() const;
 
     // QDeclarativeParserStatus
     virtual void classBegin();
     virtual void componentComplete();
-
-    // QAbstractListModel
-    int rowCount(const QModelIndex &index = QModelIndex()) const;
-    int columnCount(const QModelIndex &index) const;
-    QVariant data(const QModelIndex &index, int role) const;
-
-    // Invokable api.
-    Q_INVOKABLE void populate();
-    Q_INVOKABLE void nextNode();
-    Q_INVOKABLE void previousNode();
-    Q_INVOKABLE void popNode();
-    Q_INVOKABLE QObject *relatedItem(int index) const;
-    Q_INVOKABLE virtual void loadNextRelatedData();
-    Q_INVOKABLE virtual void loadPreviousRelatedData();
-
-    // Property accessors.
-    Status status() const;
-    ErrorType error() const;
-    QString errorMessage() const;
-
-    QString nodeIdentifier() const;
-    IdentifiableContentItemInterface *node() const;
-    QVariantMap relevanceCriteria() const;
-    bool hasPreviousNode() const;
-    bool hasNextNode() const;
-    bool hasPreviousRelatedData() const;
-    bool hasNextRelatedData() const;
-    QDeclarativeListProperty<FilterInterface> filters();
-    QDeclarativeListProperty<SorterInterface> sorters();
-    int count() const;
-
-    // Property mutators.
-    void setNodeIdentifier(const QString &contentItemIdentifier);
-    void setRelevanceCriteria(const QVariantMap &relevanceCriteria);
-
-Q_SIGNALS:
-    void statusChanged();
-    void errorChanged();
-    void errorMessageChanged();
-
-    void nodeIdentifierChanged();
-    void nodeChanged();
-    void relevanceCriteriaChanged();
-    void hasPreviousNodeChanged();
-    void hasNextNodeChanged();
-    void hasPreviousRelatedDataChanged();
-    void hasRelatedDataNextChanged();
-    void countChanged();
 
 public:
     Q_INVOKABLE bool arbitraryRequest(RequestType requestType, const QString &requestUri,
@@ -186,34 +125,14 @@ public:
                                       const QString &postData = QString());
 Q_SIGNALS:
     void arbitraryRequestResponseReceived(bool isError, const QVariantMap &data);
+    void initializedChanged();
 
 protected:
     SocialNetworkInterface(SocialNetworkInterfacePrivate &dd, QObject *parent = 0);
-    bool isInitialized() const;
-    bool event(QEvent *e);
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    QHash<int, QByteArray> roleNames() const;
-#endif
-
-    // Utilities
-    virtual QNetworkReply *getRequest(const QString &objectIdentifier, const QString &extraPath,
-                                      const QStringList &whichFields, const QVariantMap &extraData);
-    virtual QNetworkReply *postRequest(const QString &objectIdentifier, const QString &extraPath,
-                                       const QVariantMap &data, const QVariantMap &extraData);
-    virtual QNetworkReply *deleteRequest(const QString &objectIdentifier, const QString &extraPath,
-                                         const QVariantMap &extraData);
 
     QVariantMap contentItemData(ContentItemInterface *contentItem) const;
     void setContentItemData(ContentItemInterface *contentItem, const QVariantMap &data) const;
 
-    // Virtual methods
-    virtual QString dataSection(int type, const QVariantMap &data) const;
-    virtual ContentItemInterface *contentItemFromData(QObject *parent, const QVariantMap &data) const;
-    virtual QList<CacheEntry> sortedData(const QList<CacheEntry> &data);
-    virtual void populateDataForLastNode();
-    virtual void populateRelatedDataforLastNode();
-    virtual bool validateCacheEntryForLastNode(const QVariantMap &cacheEntryData);
     QScopedPointer<SocialNetworkInterfacePrivate> d_ptr;
     friend class IdentifiableContentItemInterfacePrivate;
     friend class ContentItemInterface;
@@ -222,8 +141,12 @@ protected:
 private:
     Q_DECLARE_PRIVATE(SocialNetworkInterface)
     Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler(QObject*))
-    Q_PRIVATE_SLOT(d_func(), void sorterDestroyedHandler(QObject*))
+    Q_PRIVATE_SLOT(d_func(), void finishedHandler())
+    Q_PRIVATE_SLOT(d_func(), void errorHandler(QNetworkReply::NetworkError))
+    Q_PRIVATE_SLOT(d_func(), void sslErrorsHandler(const QList<QSslError>&))
     Q_PRIVATE_SLOT(d_func(), void itemDataChangedHandler())
+    Q_PRIVATE_SLOT(d_func(), void modelDestroyedHandler(QObject*))
+    friend class SocialNetworkModelInterface;
 };
 
 #endif // SOCIALNETWORKINTERFACE_H

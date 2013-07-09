@@ -35,15 +35,29 @@ import org.nemomobile.social 1.0
 Item {
     id: container
     anchors.fill: parent
-    property alias model: view.model
     signal backClicked
     signal postClicked(string postId)
+    function populate(nodeId) {
+        model.nodeIdentifier = nodeId
+        model.populate()
+        view.positionViewAtBeginning()
+    }
+
+    SocialNetworkModel {
+        id: model
+        socialNetwork: facebook
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Post
+            }
+        ]
+    }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "There is " + model.count + " posts" : ""
+        text: "There are " + model.count + " posts"
     }
 
     Button {
@@ -61,6 +75,16 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
+        model: model
+        footer: Item {
+            width: view.width
+            height: childrenRect.height
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: model.hasNext ? "Load more" : "Cannot load more"
+                onClicked: model.loadNext()
+            }
+        }
         delegate: ButtonBackground {
             width: view.width
             height: column.height + 20

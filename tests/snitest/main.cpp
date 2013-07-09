@@ -37,346 +37,419 @@
 #include <socialnetworkinterface.h>
 #include <socialnetworkinterface_p.h>
 #include <contentitemtypefilterinterface.h>
+#include <identifiablecontentiteminterface.h>
 
-class TestSocialNetworkInterface: public SocialNetworkInterface
-{
-    Q_OBJECT
-public:
-    enum InternalState
-    {
-        Idle,
-        PopulateData,
-        PopulateModelData
-    };
+//class TestSocialNetworkInterface: public SocialNetworkInterface
+//{
+//    Q_OBJECT
+//public:
+//    enum InternalState
+//    {
+//        Idle,
+//        PopulateData,
+//        PopulateModelData
+//    };
 
-    explicit TestSocialNetworkInterface(QObject *parent = 0):
-        SocialNetworkInterface(parent)
-    {
-        m_internalState = Idle;
-        m_timer = new QTimer(this);
-        m_timer->setSingleShot(true);
-        connect(m_timer, SIGNAL(timeout()), this, SLOT(finishedHandler()));
-    }
-    void publicSetFilters(const QList<FilterInterface *> &filters)
-    {
-        Q_D(SocialNetworkInterface);
-        d->publicSetFilters(filters);
-    }
-    QList<FilterInterface *> publicFilters() const
-    {
-        Q_D(const SocialNetworkInterface);
-        return d->publicFilters();
-    }
-    QStack<Node> publicNodeStack() const
-    {
-        Q_D(const SocialNetworkInterface);
-        return d->publicNodeStack();
-    }
-    QHash<QString, CacheEntry> publicCache() const
-    {
-        Q_D(const SocialNetworkInterface);
-        return d->publicCache();
-    }
-    virtual void populateDataForLastNode()
-    {
-        m_internalState = PopulateData;
-        m_timer->start(500);
-    }
-    virtual void populateModelDataforLastNode()
-    {
-        m_internalState = PopulateModelData;
-        m_timer->start(500);
-    }
-    void publicDeleteLastNode()
-    {
-        Q_D(SocialNetworkInterface);
-        d->publicDeleteLastNode();
-    }
+//    explicit TestSocialNetworkInterface(QObject *parent = 0):
+//        SocialNetworkInterface(parent)
+//    {
+//        m_internalState = Idle;
+//        m_timer = new QTimer(this);
+//        m_timer->setSingleShot(true);
+//        connect(m_timer, SIGNAL(timeout()), this, SLOT(finishedHandler()));
+//    }
+//    void publicSetFilters(const QList<FilterInterface *> &filters)
+//    {
+//        Q_D(SocialNetworkInterface);
+//        d->publicSetFilters(filters);
+//    }
+//    QList<FilterInterface *> publicFilters() const
+//    {
+//        Q_D(const SocialNetworkInterface);
+//        return d->publicFilters();
+//    }
+//    QStack<Node> publicNodeStack() const
+//    {
+//        Q_D(const SocialNetworkInterface);
+//        return d->publicNodeStack();
+//    }
+//    QHash<QString, CacheEntry> publicCache() const
+//    {
+//        Q_D(const SocialNetworkInterface);
+//        return d->publicCache();
+//    }
+//    virtual void populateDataForLastNode()
+//    {
+//        m_internalState = PopulateData;
+//        m_timer->start(500);
+//    }
+//    virtual void populateModelDataforLastNode()
+//    {
+//        m_internalState = PopulateModelData;
+//        m_timer->start(500);
+//    }
+//    void publicDeleteLastNode()
+//    {
+//        Q_D(SocialNetworkInterface);
+//        d->publicDeleteLastNode();
+//    }
 
-private:
-    Q_DECLARE_PRIVATE(SocialNetworkInterface)
-    InternalState m_internalState;
-    QTimer *m_timer;
-private slots:
-    void finishedHandler()
-    {
-        Q_D(SocialNetworkInterface);
-        switch (m_internalState) {
-        case PopulateData:
-            populateData();
-            d->updateNodePositionStatus();
-            break;
-        case PopulateModelData:
-            populateModelData();
-            d->updateRelatedData();
-            break;
-        default:
-            break;
-        }
-    }
-    void populateData()
-    {
-        Q_D(SocialNetworkInterface);
-        QVariantMap data;
-        data.insert("test", 123456);
+//private:
+//    Q_DECLARE_PRIVATE(SocialNetworkInterface)
+//    InternalState m_internalState;
+//    QTimer *m_timer;
+//private slots:
+//    void finishedHandler()
+//    {
+//        Q_D(SocialNetworkInterface);
+//        switch (m_internalState) {
+//        case PopulateData:
+//            populateData();
+//            d->updateNodePositionStatus();
+//            break;
+//        case PopulateModelData:
+//            populateModelData();
+//            d->updateRelatedData();
+//            break;
+//        default:
+//            break;
+//        }
+//    }
+//    void populateData()
+//    {
+//        Q_D(SocialNetworkInterface);
+//        QVariantMap data;
+//        data.insert("test", 123456);
 
-        const Node &lastNode = d->publicNodeStack().top();
+//        const Node &lastNode = d->publicNodeStack().top();
 
-        d->setLastNodeCacheEntry(d->createCacheEntry(data, lastNode.identifier()));
+//        d->setLastNodeCacheEntry(d->createCacheEntry(data, lastNode.identifier()));
 
-        populateModelDataforLastNode();
-    }
-    void populateModelData()
-    {
-        Q_D(SocialNetworkInterface);
-        QList<CacheEntry> modelData;
-        QVariantMap data;
-        for (int i = 0; i < 10; i++) {
-            data.insert("test", i);
-            CacheEntry cacheEntry = d->createCacheEntry(data, QString::number(i));
-            modelData.append(cacheEntry);
-        }
+//        populateModelDataforLastNode();
+//    }
+//    void populateModelData()
+//    {
+//        Q_D(SocialNetworkInterface);
+//        QList<CacheEntry> modelData;
+//        QVariantMap data;
+//        for (int i = 0; i < 10; i++) {
+//            data.insert("test", i);
+//            CacheEntry cacheEntry = d->createCacheEntry(data, QString::number(i));
+//            modelData.append(cacheEntry);
+//        }
 
-        d->setLastNodeData(modelData);
+//        d->setLastNodeData(modelData);
 
-        m_internalState = Idle;
-        d->setStatus(SocialNetworkInterface::Idle);
-    }
-};
+//        m_internalState = Idle;
+//        d->setStatus(SocialNetworkInterface::Idle);
+//    }
+//};
 
 class SniTest: public QObject
 {
     Q_OBJECT
 private slots:
-    void testSocialNetworkInterfaceSingleNode()
+    void testCacheEntry()
     {
-        // Check node identifier settings
-        QString identifier = "Test_node_identifier";
-        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
-        sni->classBegin();
-        sni->componentComplete();
-        QSignalSpy nodeIdentifierSpy (sni, SIGNAL(nodeIdentifierChanged()));
-        sni->setNodeIdentifier(identifier);
-        QCOMPARE(sni->nodeIdentifier(), identifier);
-        QCOMPARE(nodeIdentifierSpy.count(), 1);
-        QCOMPARE(nodeIdentifierSpy.first().isEmpty() == true, true);
+        QVariantMap data;
+        data.insert(QLatin1String("1"), 1);
+        data.insert(QLatin1String("two"), QLatin1String("two"));
 
+        // Test setters
+        CacheEntry testEntry;
+        QVERIFY(testEntry.isNull());
+        testEntry.setData(data);
+        QVERIFY(!testEntry.isNull());
+        QCOMPARE(testEntry.data(), data);
 
-        ContentItemTypeFilterInterface *filter = new ContentItemTypeFilterInterface(this);
-        filter->setType(3);
+        CacheEntry testEntry2;
+        IdentifiableContentItemInterface *testItem = new IdentifiableContentItemInterface();
+        testEntry2.setItem(testItem);
+        QVERIFY(!testEntry2.isNull());
+        QCOMPARE(testEntry2.item(), testItem);
+        testItem->deleteLater();
 
-        QList<FilterInterface *> filters;
-        filters.append(filter);
+        // Test effective copying with copy constructor
+        CacheEntry entry (data);
+        CacheEntry entryCopy1 (entry);
+        QCOMPARE(entry, entryCopy1);
 
-        sni->publicSetFilters(filters);
+        // Test effective copying with assignment operator
+        CacheEntry entryCopy2;
+        QVERIFY (entry != entryCopy2);
+        entryCopy2 = entry;
 
-        // Check if (when initialized), the SNI do not contain anything
-        // and that the node returns a null pointer
-        QCOMPARE(sni->publicNodeStack().count(), 0);
-        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
+        QCOMPARE(entry, entryCopy2);
 
+        // Test explicitely sharing capabilities
+        IdentifiableContentItemInterface *item = new IdentifiableContentItemInterface();
+        entry.setItem(item);
 
-        // Now let's do a request (so we can push a node)
-        sni->populate();
+        QCOMPARE(entry, entryCopy1);
+        QCOMPARE(entry, entryCopy2);
 
-        // Check if the newly created node got pushed in the stack
-        // It should not have any information though
-        QCOMPARE(sni->publicNodeStack().count(), 1);
-        QCOMPARE(sni->publicNodeStack().top().isNull() == false, true);
-        QCOMPARE(sni->publicNodeStack().top().identifier(), identifier);
-        QCOMPARE(sni->publicNodeStack().top().filters().contains(filter) == true, true);
-        QCOMPARE(sni->publicNodeStack().top().filters().count(), 1);
-
-        // After 500 msecs, the node should have the CacheEntry populated
-        // A new entry in the cache should have been created, associated
-        // to the same identifier as the node, and the cache entry of the
-        // node should be the same
-        QTest::qWait(750);
-
-        QCOMPARE(sni->publicCache().count(), 1);
-        QCOMPARE(sni->publicCache().contains(identifier) == true, true);
-        QCOMPARE(sni->publicNodeStack().top().cacheEntry(), sni->publicCache().value(identifier));
-
-        // Wait for the end of the other request
-        QTest::qWait(500);
-
-        // Perform a test about the explicitely shared status
-        QVariantMap data = sni->publicCache().value(identifier).data();
-        data.insert("test2", "abcdef");
-        sni->publicCache()[identifier].setData(data);
-
-        QCOMPARE(sni->publicNodeStack().top().cacheEntry().data().value("test").toInt(), 123456);
-        QCOMPARE(sni->publicNodeStack().top().cacheEntry().data().value("test2").toString(),
-                 QString("abcdef"));
-
-        // We remove the last node to test if the cache got
-        // cleared as well
-        sni->publicDeleteLastNode();
-        QCOMPARE(sni->publicNodeStack().isEmpty() == true, true);
-        QCOMPARE(sni->publicCache().isEmpty() == true, true);
-
-        sni->deleteLater();
+        // Test refcounting and refcounting sharing
+        QCOMPARE(entry.refcount(), 0);
+        QCOMPARE(entry.refcount(), entryCopy1.refcount());
+        QCOMPARE(entry.refcount(), entryCopy2.refcount());
+        entry.ref();
+        QCOMPARE(entry.refcount(), 1);
+        QCOMPARE(entry.refcount(), entryCopy1.refcount());
+        QCOMPARE(entry.refcount(), entryCopy2.refcount());
+        entry.deref();
+        QCOMPARE(entry.refcount(), 0);
+        QCOMPARE(entry.refcount(), entryCopy1.refcount());
+        QCOMPARE(entry.refcount(), entryCopy2.refcount());
     }
 
-    void testSocialNetworkInterfaceSeveralNodes()
+    void testNode()
     {
-        // Let's create a new node
-        QString identifier1 = "Test_node_identifier";
-        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
-        sni->classBegin();
-        sni->componentComplete();
-        sni->setNodeIdentifier(identifier1);
+        QVariantMap data;
+        data.insert(QLatin1String("3"), 3);
+        data.insert(QLatin1String("four"), QLatin1String("four"));
 
-
-        ContentItemTypeFilterInterface *filter1 = new ContentItemTypeFilterInterface(this);
-        filter1->setType(3);
-        QList<FilterInterface *> filters1;
-        filters1.append(filter1);
-        sni->publicSetFilters(filters1);
-        sni->populate();
-        sni->nextNode();
-
-        QSignalSpy spy (sni, SIGNAL(statusChanged()));
-
-        QTest::qWait(750);
-        QCOMPARE(sni->publicNodeStack().count(), 1);
-        QTest::qWait(500);
-
-        // After 400 msec, the "whole node", with the model data, should be loaded.
-        QCOMPARE(spy.count(), 1);
-        QCOMPARE(spy.first().isEmpty() == true, true);
-
-        QString identifier2 = "Other_test_node_identifier";
-        sni->setNodeIdentifier(identifier2);
-
-        ContentItemTypeFilterInterface *filter2 = new ContentItemTypeFilterInterface(this);
-        filter2->setType(5);
-        QList<FilterInterface *> filters2;
-        filters2.append(filter2);
-        sni->publicSetFilters(filters2);
-        sni->populate();
-        sni->nextNode();
-
-        QCOMPARE(spy.count(), 2);
-        QCOMPARE(spy.last().isEmpty() == true, true);
-
-        QTest::qWait(750);
-        QCOMPARE(sni->publicNodeStack().count(), 2);
-
-        QTest::qWait(500);
-
-        // Now we should have 2 nodes, with identical model data
-        // Check the refcount of these model data
-        const Node &node1 = sni->publicNodeStack().at(0);
-        foreach (CacheEntry entry, node1.relatedData()) {
-            QCOMPARE(entry.refcount(), 2);
-        }
-        const Node &node2 = sni->publicNodeStack().at(1);
-        foreach (CacheEntry entry, node2.relatedData()) {
-            QCOMPARE(entry.refcount(), 2);
-        }
-
-        // Remove one node and check if the cache entry associated to the second
-        // node got derefed
-        sni->publicDeleteLastNode();
-        QCOMPARE(sni->publicCache().contains(identifier2) == false, true);
-
-        // Remove the second node, and everything should be removed
-        sni->publicDeleteLastNode();
-        QCOMPARE(sni->publicNodeStack().isEmpty() == true, true);
-        QCOMPARE(sni->publicCache().isEmpty() == true, true);
-        sni->deleteLater();
-    }
-
-    void testSocialNetworkInterfacePreviousNext()
-    {
-        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
-        sni->classBegin();
-        sni->componentComplete();
-
-        // Test the current node
-        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
-
-        // Test changing to previous and next
-        // should not do anything
-        sni->previousNode();
-        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
-        sni->nextNode();
-        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
-        sni->nextNode();
-        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
-        sni->previousNode();
-        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
-        QCOMPARE(sni->hasPreviousNode() == false, true);
-        QCOMPARE(sni->hasNextNode() == false, true);
-
-        // Push a node and test again
-        QString identifier = "Test_node_identifier";
-        ContentItemTypeFilterInterface *filter = new ContentItemTypeFilterInterface(this);
-        filter->setType(3);
-        QList<FilterInterface *> filters;
-        filters.append(filter);
-        sni->setNodeIdentifier(identifier);
-        sni->publicSetFilters(filters);
-        sni->populate();
-
-        QTest::qWait(1250);
-
-        QCOMPARE(sni->hasPreviousNode() == false, true);
-        QCOMPARE(sni->hasNextNode() == true, true);
-        sni->nextNode();
-
-        IdentifiableContentItemInterface *interface
-                = sni->publicNodeStack().top().cacheEntry().identifiableItem();
-        QCOMPARE(sni->node(), interface);
-        QCOMPARE(sni->count(), 10);
-        QCOMPARE(sni->hasPreviousNode() == true, true);
-        QCOMPARE(sni->hasNextNode() == false, true);
-
-        // Just test that we cannot go to the next node
-        sni->nextNode();
-
-        // Test if data behave well
-        // TODO XXX do this
-
-        // Go back now
-        sni->previousNode();
-
-        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
-        QCOMPARE(sni->count(), 0);
 
     }
 
-    void testSocialNetworkInterfaceDelayedCall()
-    {
-        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
-        sni->classBegin();
 
-        // Queue some requests
-        ContentItemTypeFilterInterface *filter = new ContentItemTypeFilterInterface(this);
-        filter->setType(3);
-        QList<FilterInterface *> filters;
-        filters.append(filter);
-        sni->publicSetFilters(filters);
 
-        QString identifier1 = "Test_node_identifier";
-        QString identifier2 = "Other_test_node_identifier";
-        QString identifier3 = "Yet_another_test_node_identifier";
 
-        sni->setNodeIdentifier(identifier1);
-        sni->populate();
-        sni->setNodeIdentifier(identifier2);
-        sni->populate();
-        sni->setNodeIdentifier(identifier3);
-        sni->populate();
-        sni->componentComplete();
 
-        // Only the last identifier should be taken in account
-        QTest::qWait(1250);
 
-        QCOMPARE(sni->publicNodeStack().count(), 1);
-        QCOMPARE(sni->publicNodeStack().top().identifier(), identifier3);
-    }
+
+
+
+
+
+//    void testSocialNetworkInterfaceSingleNode()
+//    {
+//        // Check node identifier settings
+//        QString identifier = "Test_node_identifier";
+//        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
+//        sni->classBegin();
+//        sni->componentComplete();
+//        QSignalSpy nodeIdentifierSpy (sni, SIGNAL(nodeIdentifierChanged()));
+//        sni->setNodeIdentifier(identifier);
+//        QCOMPARE(sni->nodeIdentifier(), identifier);
+//        QCOMPARE(nodeIdentifierSpy.count(), 1);
+//        QCOMPARE(nodeIdentifierSpy.first().isEmpty() == true, true);
+
+
+//        ContentItemTypeFilterInterface *filter = new ContentItemTypeFilterInterface(this);
+//        filter->setType(3);
+
+//        QList<FilterInterface *> filters;
+//        filters.append(filter);
+
+//        sni->publicSetFilters(filters);
+
+//        // Check if (when initialized), the SNI do not contain anything
+//        // and that the node returns a null pointer
+//        QCOMPARE(sni->publicNodeStack().count(), 0);
+//        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
+
+
+//        // Now let's do a request (so we can push a node)
+//        sni->populate();
+
+//        // Check if the newly created node got pushed in the stack
+//        // It should not have any information though
+//        QCOMPARE(sni->publicNodeStack().count(), 1);
+//        QCOMPARE(sni->publicNodeStack().top().isNull() == false, true);
+//        QCOMPARE(sni->publicNodeStack().top().identifier(), identifier);
+//        QCOMPARE(sni->publicNodeStack().top().filters().contains(filter) == true, true);
+//        QCOMPARE(sni->publicNodeStack().top().filters().count(), 1);
+
+//        // After 500 msecs, the node should have the CacheEntry populated
+//        // A new entry in the cache should have been created, associated
+//        // to the same identifier as the node, and the cache entry of the
+//        // node should be the same
+//        QTest::qWait(750);
+
+//        QCOMPARE(sni->publicCache().count(), 1);
+//        QCOMPARE(sni->publicCache().contains(identifier) == true, true);
+//        QCOMPARE(sni->publicNodeStack().top().cacheEntry(), sni->publicCache().value(identifier));
+
+//        // Wait for the end of the other request
+//        QTest::qWait(500);
+
+//        // Perform a test about the explicitely shared status
+//        QVariantMap data = sni->publicCache().value(identifier).data();
+//        data.insert("test2", "abcdef");
+//        sni->publicCache()[identifier].setData(data);
+
+//        QCOMPARE(sni->publicNodeStack().top().cacheEntry().data().value("test").toInt(), 123456);
+//        QCOMPARE(sni->publicNodeStack().top().cacheEntry().data().value("test2").toString(),
+//                 QString("abcdef"));
+
+//        // We remove the last node to test if the cache got
+//        // cleared as well
+//        sni->publicDeleteLastNode();
+//        QCOMPARE(sni->publicNodeStack().isEmpty() == true, true);
+//        QCOMPARE(sni->publicCache().isEmpty() == true, true);
+
+//        sni->deleteLater();
+//    }
+
+//    void testSocialNetworkInterfaceSeveralNodes()
+//    {
+//        // Let's create a new node
+//        QString identifier1 = "Test_node_identifier";
+//        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
+//        sni->classBegin();
+//        sni->componentComplete();
+//        sni->setNodeIdentifier(identifier1);
+
+
+//        ContentItemTypeFilterInterface *filter1 = new ContentItemTypeFilterInterface(this);
+//        filter1->setType(3);
+//        QList<FilterInterface *> filters1;
+//        filters1.append(filter1);
+//        sni->publicSetFilters(filters1);
+//        sni->populate();
+//        sni->nextNode();
+
+//        QSignalSpy spy (sni, SIGNAL(statusChanged()));
+
+//        QTest::qWait(750);
+//        QCOMPARE(sni->publicNodeStack().count(), 1);
+//        QTest::qWait(500);
+
+//        // After 400 msec, the "whole node", with the model data, should be loaded.
+//        QCOMPARE(spy.count(), 1);
+//        QCOMPARE(spy.first().isEmpty() == true, true);
+
+//        QString identifier2 = "Other_test_node_identifier";
+//        sni->setNodeIdentifier(identifier2);
+
+//        ContentItemTypeFilterInterface *filter2 = new ContentItemTypeFilterInterface(this);
+//        filter2->setType(5);
+//        QList<FilterInterface *> filters2;
+//        filters2.append(filter2);
+//        sni->publicSetFilters(filters2);
+//        sni->populate();
+//        sni->nextNode();
+
+//        QCOMPARE(spy.count(), 2);
+//        QCOMPARE(spy.last().isEmpty() == true, true);
+
+//        QTest::qWait(750);
+//        QCOMPARE(sni->publicNodeStack().count(), 2);
+
+//        QTest::qWait(500);
+
+//        // Now we should have 2 nodes, with identical model data
+//        // Check the refcount of these model data
+//        const Node &node1 = sni->publicNodeStack().at(0);
+//        foreach (CacheEntry entry, node1.relatedData()) {
+//            QCOMPARE(entry.refcount(), 2);
+//        }
+//        const Node &node2 = sni->publicNodeStack().at(1);
+//        foreach (CacheEntry entry, node2.relatedData()) {
+//            QCOMPARE(entry.refcount(), 2);
+//        }
+
+//        // Remove one node and check if the cache entry associated to the second
+//        // node got derefed
+//        sni->publicDeleteLastNode();
+//        QCOMPARE(sni->publicCache().contains(identifier2) == false, true);
+
+//        // Remove the second node, and everything should be removed
+//        sni->publicDeleteLastNode();
+//        QCOMPARE(sni->publicNodeStack().isEmpty() == true, true);
+//        QCOMPARE(sni->publicCache().isEmpty() == true, true);
+//        sni->deleteLater();
+//    }
+
+//    void testSocialNetworkInterfacePreviousNext()
+//    {
+//        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
+//        sni->classBegin();
+//        sni->componentComplete();
+
+//        // Test the current node
+//        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
+
+//        // Test changing to previous and next
+//        // should not do anything
+//        sni->previousNode();
+//        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
+//        sni->nextNode();
+//        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
+//        sni->nextNode();
+//        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
+//        sni->previousNode();
+//        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
+//        QCOMPARE(sni->hasPreviousNode() == false, true);
+//        QCOMPARE(sni->hasNextNode() == false, true);
+
+//        // Push a node and test again
+//        QString identifier = "Test_node_identifier";
+//        ContentItemTypeFilterInterface *filter = new ContentItemTypeFilterInterface(this);
+//        filter->setType(3);
+//        QList<FilterInterface *> filters;
+//        filters.append(filter);
+//        sni->setNodeIdentifier(identifier);
+//        sni->publicSetFilters(filters);
+//        sni->populate();
+
+//        QTest::qWait(1250);
+
+//        QCOMPARE(sni->hasPreviousNode() == false, true);
+//        QCOMPARE(sni->hasNextNode() == true, true);
+//        sni->nextNode();
+
+//        IdentifiableContentItemInterface *interface
+//                = sni->publicNodeStack().top().cacheEntry().identifiableItem();
+//        QCOMPARE(sni->node(), interface);
+//        QCOMPARE(sni->count(), 10);
+//        QCOMPARE(sni->hasPreviousNode() == true, true);
+//        QCOMPARE(sni->hasNextNode() == false, true);
+
+//        // Just test that we cannot go to the next node
+//        sni->nextNode();
+
+//        // Test if data behave well
+//        // TODO XXX do this
+
+//        // Go back now
+//        sni->previousNode();
+
+//        QCOMPARE(sni->node(), static_cast<IdentifiableContentItemInterface *>(0));
+//        QCOMPARE(sni->count(), 0);
+
+//    }
+
+//    void testSocialNetworkInterfaceDelayedCall()
+//    {
+//        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
+//        sni->classBegin();
+
+//        // Queue some requests
+//        ContentItemTypeFilterInterface *filter = new ContentItemTypeFilterInterface(this);
+//        filter->setType(3);
+//        QList<FilterInterface *> filters;
+//        filters.append(filter);
+//        sni->publicSetFilters(filters);
+
+//        QString identifier1 = "Test_node_identifier";
+//        QString identifier2 = "Other_test_node_identifier";
+//        QString identifier3 = "Yet_another_test_node_identifier";
+
+//        sni->setNodeIdentifier(identifier1);
+//        sni->populate();
+//        sni->setNodeIdentifier(identifier2);
+//        sni->populate();
+//        sni->setNodeIdentifier(identifier3);
+//        sni->populate();
+//        sni->componentComplete();
+
+//        // Only the last identifier should be taken in account
+//        QTest::qWait(1250);
+
+//        QCOMPARE(sni->publicNodeStack().count(), 1);
+//        QCOMPARE(sni->publicNodeStack().top().identifier(), identifier3);
+//    }
 };
 
 QTEST_MAIN(SniTest)

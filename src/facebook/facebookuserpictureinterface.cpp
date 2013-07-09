@@ -54,13 +54,13 @@ void FacebookUserPictureInterfacePrivate::emitPropertyChangeSignals(const QVaria
                                                                     const QVariantMap &newData)
 {
     Q_Q(FacebookUserPictureInterface);
-    QVariant oldSource = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_SOURCE);
-    QVariant newSource = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_SOURCE);
+    QVariant oldUrl = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_URL);
+    QVariant newUrl = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_URL);
     QVariant oldIsSilhouette = oldData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE);
     QVariant newIsSilhouette = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE);
 
-    if (newSource != oldSource)
-        emit q->sourceChanged();
+    if (newUrl != oldUrl)
+        emit q->urlChanged();
     if (newIsSilhouette != oldIsSilhouette)
         emit q->isSilhouetteChanged();
 
@@ -88,13 +88,13 @@ int FacebookUserPictureInterface::type() const
 
 
 /*!
-    \qmlproperty QUrl FacebookUserPicture::source
+    \qmlproperty QUrl FacebookUserPicture::url
     Holds the url to the image source of the picture.
 */
-QUrl FacebookUserPictureInterface::source() const
+QUrl FacebookUserPictureInterface::url() const
 {
     Q_D(const FacebookUserPictureInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_SOURCE).toString());
+    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_URL).toString());
 }
 
 /*!

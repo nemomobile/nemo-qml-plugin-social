@@ -19,8 +19,3 @@ qml.files = $${OTHER_FILES}
 qml.path = $${PREFIX}/share
 
 INSTALLS += target qml
-
-OTHER_FILES += \
-    PostList.qml \
-    ButtonBackground.qml \
-    PostCommentsList.qml

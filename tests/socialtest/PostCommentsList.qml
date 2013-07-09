@@ -34,15 +34,25 @@ import org.nemomobile.social 1.0
 
 Item {
     id: root
-    property alias model: view.model
-    signal backClicked
     anchors.fill: parent
+    signal backClicked
+    function populate(nodeId) {
+        model.nodeIdentifier = nodeId
+        model.populate()
+        view.positionViewAtBeginning()
+    }
+
+    SocialNetworkModel {
+        id: model
+        socialNetwork: facebook
+        filters: [ commentsFilter ]
+    }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model != null ? "There are " + model.count + " comments on this post" : ""
+        text: "There are " + model.count + " comments on this post"
     }
 
     Button {
@@ -60,13 +70,16 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
+        model: model
         delegate: Item {
             id: commentDelegate
             width: parent.width
-            height: childrenRect.height
+            height: childrenRect.height + 20
             Column {
-                width: parent.width
-                height: nameLabel.height + countLabel.height
+                anchors.left: parent.left; anchors.leftMargin: 10
+                anchors.right: parent.right; anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+
                 Text {
                     id: nameLabel
                     text: "From: " + contentItem.from.objectName

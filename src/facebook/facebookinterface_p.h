@@ -57,36 +57,19 @@ public:
     QString accessToken;
     QString currentUserIdentifier;
 
-    bool prependingRelatedData;
-    bool appendingRelatedData;
-
-    enum InternalStatus {
-        // Maybe other entries will come, like PopulatingNodeModelAdditionalData
-        Idle = 0,
-        PopulatingNodeData,
-        PopulatingNodeAdditionalData,
-        PopulatingNodeRelatedData
-    };
-    InternalStatus internalStatus; // used for state machine in reply finished.
-
-    void setCurrentReply(QNetworkReply *newCurrentReply, const QString &whichNodeIdentifier);
-    QNetworkReply *currentReply; // this should never be set directly, always use the above mutator.
+    bool loadingSecondPartOfNodeDataRunning;
 
     QUrl requestUrl(const QString &objectId, const QString &extraPath,
                     const QStringList &whichFields, const QVariantMap &extraData);
-    QNetworkReply *uploadImage(const QString &objectId, const QString &extraPath,
-                               const QVariantMap &data, const QVariantMap &extraData);
+    QNetworkReply * uploadImage(const QString &objectId, const QString &extraPath,
+                                const QVariantMap &data, const QVariantMap &extraData);
 
     int detectTypeFromData(const QVariantMap &data) const;
-    void populateRelatedDataForLastNode(const QVariantMap &relatedData, const QUrl &requestUrl);
-    void connectFinishedAndErrors();
+    void handlePopulateRelatedData(Node &node, const QVariantMap &relatedData,
+                                   const QUrl &requestUrl);
 
     // Slots
     void updateCurrentUserIdentifierHandler(bool isError, const QVariantMap &data);
-    void finishedHandler();
-    void errorHandler(QNetworkReply::NetworkError networkError);
-    void sslErrorsHandler(const QList<QSslError> &sslErrors);
-    void deleteReply();
 
 public:
     // the following is for identifiable content item "actions"
@@ -105,13 +88,31 @@ public:
         UploadAlbumAction,
         DeleteAlbumAction
     };
+protected:
+    // Reimplemented
+    void populateDataForNode(Node &node);
+    void populateRelatedDataforNode(Node &node);
+    bool validateCacheEntryForNode(const CacheEntry &cacheEntry);
+    QString dataSection(int type, const QVariantMap &data) const;
+    ContentItemInterface * contentItemFromData(const QVariantMap &data, QObject *parent = 0) const;
+    QNetworkReply * getRequest(const QString &objectIdentifier, const QString &extraPath,
+                               const QStringList &whichFields, const QVariantMap &extraData);
+    QNetworkReply * postRequest(const QString &objectIdentifier, const QString &extraPath,
+                                const QVariantMap &data, const QVariantMap &extraData);
+    QNetworkReply * deleteRequest(const QString &objectIdentifier, const QString &extraPath,
+                                  const QVariantMap &extraData);
+    virtual void handleFinished(Node &node, QNetworkReply *reply);
+
 private:
-    inline bool tryAddCacheEntryFromData(const QVariantMap &relatedData, const QString &requestPath,
-                                         int type, const QString &typeName, QList<CacheEntry> &list,
+    bool startSecondPartOfNodeDataLoading(const Node &node);
+    void finishSecondPartOfNodeDataLoading(Node &node, const QVariantMap &responseData);
+    inline bool tryAddCacheEntryFromData(NodePrivate::Status nodeStatus,
+                                         const QVariantMap &relatedData,
+                                         const QString &requestPath, int type,
+                                         const QString &typeName, QList<CacheEntry> &list,
                                          QVariantMap &nodeExtra);
-    bool performRelatedDataRequest(const QString &identifier,
-                                   const QList<FilterInterface *> &filters,
-                                   const RequestFieldsMap &extra = RequestFieldsMap());
+    bool performRelatedDataRequest(Node &node, const QString &identifier,
+                                   const QList<FilterInterface *> &filters);
     inline QString createField(int type, const QString &connection,
                                const RequestFieldsMap &requestFiledsMap);
     Q_DECLARE_PUBLIC(FacebookInterface)

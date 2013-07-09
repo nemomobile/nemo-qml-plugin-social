@@ -52,7 +52,7 @@ class FacebookUserPictureInterfacePrivate;
 class FacebookUserPictureInterface: public ContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QUrl source READ source NOTIFY sourceChanged)
+    Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
     Q_PROPERTY(bool isSilhouette READ isSilhouette NOTIFY isSilhouetteChanged)
 public:
     explicit FacebookUserPictureInterface(QObject *parent = 0);
@@ -60,10 +60,10 @@ public:
     // Overrides.
     int type() const;
     // Accessors
-    QUrl source() const;
+    QUrl url() const;
     bool isSilhouette() const;
 Q_SIGNALS:
-    void sourceChanged();
+    void urlChanged();
     void isSilhouetteChanged();
 private:
     Q_DECLARE_PRIVATE(FacebookUserPictureInterface)

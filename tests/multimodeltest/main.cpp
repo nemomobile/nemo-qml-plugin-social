@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
+ * Copyright (C) 2013 Lucien XU <sfietkonstantin@free.fr>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -12,9 +12,9 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * Neither the name of Nemo Mobile nor the names of its contributors
- *     may be used to endorse or promote products derived from this
- *     software without specific prior written permission.
+ *   * The names of its contributors may not be used to endorse or promote 
+ *     products derived from this software without specific prior written 
+ *     permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,40 +27,39 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
- */
+ */ 
 
-#ifndef CONTENTITEMINTERFACE_P_H
-#define CONTENTITEMINTERFACE_P_H
+#define ENABLE_TESTS
 
-#include <QtCore/QVariantMap>
+#include <QtCore/QTimer>
+#include <QtTest/QtTest>
+#include <QtTest/QSignalSpy>
+#include <socialnetworkinterface.h>
+#include <socialnetworkinterface_p.h>
+#include <contentitemtypefilterinterface.h>
 
-class SocialNetworkInterface;
-class ContentItemInterface;
-class ContentItemInterfacePrivate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class MultiModelTest: public QObject
 {
-public:
-    explicit ContentItemInterfacePrivate(ContentItemInterface *q);
-    virtual ~ContentItemInterfacePrivate();
-
-    QVariantMap data() const;
-    void setData(const QVariantMap &data);
-
-    virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-    virtual void initializationComplete();
-
-    // helper api - parse network reply data into QVariantMap
-    // TODO: This method should be put in a header containing useful functions, and maybe inlined
-    static QVariantMap parseReplyData(const QByteArray &replyData, bool *ok);
-
-    SocialNetworkInterface *socialNetworkInterface;
-    bool isInitialized;
-protected:
-    ContentItemInterface * const q_ptr;
-private:
-    // Slots
-    void socialNetworkInitializedChangedHandler();
-    Q_DECLARE_PUBLIC(ContentItemInterface)
-    QVariantMap m_data;
+    Q_OBJECT
+private slots:
+//    void
 };
 
-#endif // CONTENTITEMINTERFACE_P_H
+QTEST_MAIN(MultiModelTest)
+
+#include "main.moc"
