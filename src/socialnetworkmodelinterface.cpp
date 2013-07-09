@@ -455,6 +455,28 @@ void SocialNetworkModelInterface::setNodeIdentifier(const QString &nodeIdentifie
     }
 }
 
+/*!
+    \qmlmethod QObject *SocialNetworkModel::relatedItem(int index)
+    Returns the ContentItem which is related to the node from the given
+    \a index of the model data.  This is identical to calling
+    \c data() for the given model index and specifying the \c contentItem
+    role.
+
+    \note Although this function will always return a pointer to a
+    ContentItem, the return type of the function is QObject *, so that
+    this function can be used via QMetaObject::invokeMethod().
+*/
+QObject * SocialNetworkModelInterface::relatedItem(int index) const
+{
+    QVariant itemVariant = data(QAbstractListModel::index(index),
+                                SocialNetworkInterface::ContentItemRole);
+    if (!itemVariant.isValid()) {
+        return 0;
+    }
+    return itemVariant.value<ContentItemInterface*>();
+}
+
+
 void SocialNetworkModelInterface::populate()
 {
     Q_D(SocialNetworkModelInterface);

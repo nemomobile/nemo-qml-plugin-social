@@ -109,6 +109,8 @@ public:
     void setSocialNetwork(SocialNetworkInterface *socialNetwork);
     void setNodeIdentifier(const QString &nodeIdentifier);
 
+    Q_INVOKABLE QObject * relatedItem(int index) const;
+
 public Q_SLOTS:
     void populate();
     void repopulate();
