@@ -246,8 +246,9 @@ protected:
     CacheEntry createCacheEntry(const QVariantMap &data, const QString &nodeIdentifier = QString());
 private:
     // Used by NSMI
-    void addModel(SocialNetworkModelInterface *model, const QString &identifier,
+    void populate(SocialNetworkModelInterface *model, const QString &identifier,
                   const QList<FilterInterface *> &filters, bool reload = false);
+    void addModel(SocialNetworkModelInterface *model);
     void removeModel(SocialNetworkModelInterface *model);
     void loadNext(SocialNetworkModelInterface *model);
     void loadPrevious(SocialNetworkModelInterface *model);
@@ -268,6 +269,7 @@ private:
     inline static SocialNetworkInterface::Status correspondingStatus(NodePrivate::Status status);
     Node getOrCreateNode(const QString &identifier, const QSet<FilterInterface *> &filters);
     Node getNode(const QString &identifier, const QSet<FilterInterface *> &filters);
+    void checkDoomedNodes();
     void checkCacheEntryRefcount(const CacheEntry &entry);
     void deleteNode(const Node &node);
 

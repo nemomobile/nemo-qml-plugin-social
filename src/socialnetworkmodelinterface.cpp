@@ -436,7 +436,12 @@ void SocialNetworkModelInterface::setSocialNetwork(SocialNetworkInterface *socia
 {
     Q_D(SocialNetworkModelInterface);
     if (d->socialNetwork != socialNetwork) {
+        if (d->socialNetwork) {
+            d->socialNetwork->d_func()->removeModel(this);
+        }
+
         d->socialNetwork = socialNetwork;
+        d->socialNetwork->d_func()->addModel(this);
         emit socialNetworkChanged();
     }
 }
@@ -458,7 +463,7 @@ void SocialNetworkModelInterface::populate()
         return;
     }
 
-    d->socialNetwork->d_func()->addModel(this, d->nodeIdentifier, d->filters);
+    d->socialNetwork->d_func()->populate(this, d->nodeIdentifier, d->filters);
 }
 
 void SocialNetworkModelInterface::repopulate()
@@ -469,7 +474,7 @@ void SocialNetworkModelInterface::repopulate()
         return;
     }
 
-    d->socialNetwork->d_func()->addModel(this, d->nodeIdentifier, d->filters, true);
+    d->socialNetwork->d_func()->populate(this, d->nodeIdentifier, d->filters, true);
 }
 
 void SocialNetworkModelInterface::loadNext()
