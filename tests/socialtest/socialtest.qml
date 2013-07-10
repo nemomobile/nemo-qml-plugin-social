@@ -194,7 +194,7 @@ Item {
                     if (model.which == -1) {
                         Qt.quit()
                     } else if (model.which == -2) {
-                        if(portraitModel.status == Facebook.Initializing) {
+                        if(!portraitModel.retrieved) {
                             portraitModel.populate()
                             root.whichActive = -1
                         } else {
@@ -290,6 +290,7 @@ Item {
 
     SocialNetworkModel {
         id: portraitModel
+        property bool retrieved: false
         function displayPortraitUrl() {
             console.debug("User picture: " + portraitModel.node.picture.url)
         }
@@ -301,6 +302,7 @@ Item {
             if (status == Facebook.Idle) {
                 displayPortraitUrl()
                 root.whichActive = 0
+                portraitModel.retrieved = true
             }
         }
     }

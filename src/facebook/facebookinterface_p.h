@@ -57,8 +57,6 @@ public:
     QString accessToken;
     QString currentUserIdentifier;
 
-    bool loadingSecondPartOfNodeDataRunning;
-
     QUrl requestUrl(const QString &objectId, const QString &extraPath,
                     const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply * uploadImage(const QString &objectId, const QString &extraPath,
@@ -104,6 +102,7 @@ protected:
     virtual void handleFinished(Node &node, QNetworkReply *reply);
 
 private:
+    void setCurrentUserIdentifier(const QString &meId);
     bool startSecondPartOfNodeDataLoading(const Node &node);
     void finishSecondPartOfNodeDataLoading(Node &node, const QVariantMap &responseData);
     inline bool tryAddCacheEntryFromData(NodePrivate::Status nodeStatus,
@@ -111,8 +110,6 @@ private:
                                          const QString &requestPath, int type,
                                          const QString &typeName, QList<CacheEntry> &list,
                                          QVariantMap &nodeExtra);
-    bool performRelatedDataRequest(Node &node, const QString &identifier,
-                                   const QList<FilterInterface *> &filters);
     inline QString createField(int type, const QString &connection,
                                const RequestFieldsMap &requestFiledsMap);
     Q_DECLARE_PUBLIC(FacebookInterface)

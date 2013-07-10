@@ -244,6 +244,9 @@ protected:
     void updateModelNode(Node &node);
     void updateModelRelatedData(Node &node, const QList<CacheEntry> &relatedData);
     CacheEntry createCacheEntry(const QVariantMap &data, const QString &nodeIdentifier = QString());
+
+    // Aliases map
+    QMap<QString, QString> aliases;
 private:
     // Used by NSMI
     void populate(SocialNetworkModelInterface *model, const QString &identifier,
@@ -265,7 +268,7 @@ private:
 
 
     // Implementation details
-    inline static bool matches(const Node &node, SocialNetworkModelInterface *model);
+    inline bool matches(const Node &node, SocialNetworkModelInterface *model);
     inline static SocialNetworkInterface::Status correspondingStatus(NodePrivate::Status status);
     Node getOrCreateNode(const QString &identifier, const QSet<FilterInterface *> &filters);
     Node getNode(const QString &identifier, const QSet<FilterInterface *> &filters);

@@ -58,7 +58,10 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " photos in this album"
+        text: model.node == null ? "... Loading ..."
+              : "There are "  + model.node.count + " photos in this album"
+              + "\nComments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
+              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
     }
 
     Button {

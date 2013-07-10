@@ -56,6 +56,11 @@
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS         QLatin1String("previous")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT             QLatin1String("next")
 #define FACEBOOK_ONTOLOGY_METADATA_DATA                    QLatin1String("data")
+#define FACEBOOK_ONTOLOGY_METADATA_SUMMARY                 QLatin1String("summary")
+#define FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT              QLatin1String("total_count")
+
+// Used to indicate that we are in the second phase
+#define FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE             QLatin1String("second_phase")
 // >>> metadata
 
 // <<< connections

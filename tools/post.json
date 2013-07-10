@@ -168,6 +168,20 @@
             "custom": true,
             "is_ontology": false,
             "doc": "Whether the post has been liked by the current user."
+        },
+        {
+            "name": "likes_count",
+            "type": "int",
+            "custom": true,
+            "is_ontology": false,
+            "doc": "The number of likes on this post."
+        },
+        {
+            "name": "comments_count",
+            "type": "int",
+            "custom": true,
+            "is_ontology": false,
+            "doc": "The number of likes on this post."
         }
     ],
     "methods": [

@@ -46,6 +46,8 @@ public:
     FacebookObjectReferenceInterface *from;
     FacebookAlbumInterface::AlbumType albumType;
     bool liked;
+    int likesCount;
+    int commentsCount;
 private:
     Q_DECLARE_PUBLIC(FacebookAlbumInterface)
 };

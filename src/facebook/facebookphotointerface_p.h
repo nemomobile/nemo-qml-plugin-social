@@ -49,6 +49,8 @@ public:
     QList<FacebookNameTagInterface *> nameTags;
     QList<FacebookPhotoImageInterface *> images;
     bool liked;
+    int likesCount;
+    int commentsCount;
 private:
     Q_DECLARE_PUBLIC(FacebookPhotoInterface)
     static void tags_append(QDeclarativeListProperty<FacebookPhotoTagInterface> *list,

@@ -46,7 +46,7 @@ public:
 
     SocialNetworkInterface *socialNetwork;
     QString nodeIdentifier;
-    IdentifiableContentItemInterface *item;
+    IdentifiableContentItemInterface *node;
     bool hasPrevious;
     bool hasNext;
     QList<CacheEntry> modelData;
@@ -71,7 +71,7 @@ private:
     void resort();
 
     // Methods for SNI
-    void setItem(IdentifiableContentItemInterface *newNode);
+    void setNode(IdentifiableContentItemInterface *newNode);
     void clean();
     void setData(const QList<CacheEntry> &data);
     void prependData(const QList<CacheEntry> &data);

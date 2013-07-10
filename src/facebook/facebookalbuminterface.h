@@ -60,6 +60,8 @@ class FacebookAlbumInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
     Q_PROPERTY(bool canUpload READ canUpload NOTIFY canUploadChanged)
     Q_PROPERTY(bool liked READ liked NOTIFY likedChanged)
+    Q_PROPERTY(int likesCount READ likesCount NOTIFY likesCountChanged)
+    Q_PROPERTY(int commentsCount READ commentsCount NOTIFY commentsCountChanged)
 public:
     enum AlbumType {
         Album,
@@ -98,6 +100,8 @@ public:
     QString updatedTime() const;
     bool canUpload() const;
     bool liked() const;
+    int likesCount() const;
+    int commentsCount() const;
 Q_SIGNALS:
     void fromChanged();
     void nameChanged();
@@ -111,6 +115,8 @@ Q_SIGNALS:
     void updatedTimeChanged();
     void canUploadChanged();
     void likedChanged();
+    void likesCountChanged();
+    void commentsCountChanged();
 private:
     Q_DECLARE_PRIVATE(FacebookAlbumInterface)
 };
