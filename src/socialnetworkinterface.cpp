@@ -1342,7 +1342,6 @@ Node SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
 Node SocialNetworkInterfacePrivate::getNode(const QString &identifier,
                                             const QSet<FilterInterface *> &filters)
 {
-    Q_Q(SocialNetworkInterface);
     Node node (identifier, filters);
     int index = nodes.indexOf(node);
     if (index == -1) {

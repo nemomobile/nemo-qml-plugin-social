@@ -63,6 +63,7 @@
 #include <QtDebug>
 
 #define FACEBOOK_ME QLatin1String("me")
+#define GETTING_ME_KEY QLatin1String("getting_me")
 
 // TODO XXX We need to implement a "metadata" filter, that is used to detect type
 // of elements that we don't know. That metadata filter will simply enable &metadata=1
@@ -363,6 +364,18 @@ void FacebookInterfacePrivate::updateCurrentUserIdentifierHandler(bool isError,
 
 void FacebookInterfacePrivate::populateDataForNode(Node &node)
 {
+    // We are trying to get the current user identifier at the same time
+    // Of cause, we do that if we are not already getting the "me" as a node
+    if (currentUserIdentifier == FACEBOOK_ME && node.identifier() != FACEBOOK_ME) {
+        QVariantMap extraInfo;
+        extraInfo.insert(GETTING_ME_KEY, QVariant::fromValue(true));
+        node.setExtraInfo(extraInfo);
+        QVariantMap extra;
+        extra.insert(QLatin1String("ids"), QString("%1,%2").arg(FACEBOOK_ME, node.identifier()));
+        setReply(node, getRequest(QString(), QString(), QStringList(), extra));
+        return;
+    }
+
     setReply(node, getRequest(node.identifier(), QString(), QStringList(), QVariantMap()));
 }
 
@@ -581,7 +594,6 @@ void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
         return;
     }
 
-
     QByteArray replyData = reply->readAll();
     QUrl requestUrl = reply->request().url();
     deleteReply(reply);
@@ -618,12 +630,35 @@ void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
             if (loadingSecondPartOfNodeDataRunning) {
                 finishSecondPartOfNodeDataLoading(node, responseData);
             } else {
+                if (node.extraInfo().contains(GETTING_ME_KEY)) {
+                    Q_Q(FacebookInterface);
+                    // In the case of getting me, we should split into two different objects
+                    QVariantMap objectData = responseData.value(node.identifier()).toMap();
+                    QVariantMap meData = responseData.value(FACEBOOK_ME).toMap();
+
+                    // Change the identifier if needed
+                    QString meId = meData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+                    if (currentUserIdentifier != meId && !meId.isEmpty()) {
+                        currentUserIdentifier = meId;
+                        emit q->currentUserIdentifierChanged();
+                    }
+                    responseData = objectData;
+                }
 
                 // Create a cache entry associated to the retrieved data
                 QString identifier;
                 if (responseData.contains(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER)) {
                     identifier = responseData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
                 }
+
+                if (node.identifier() == FACEBOOK_ME) {
+                    if (currentUserIdentifier != identifier) {
+                        Q_Q(FacebookInterface);
+                        currentUserIdentifier = identifier;
+                        emit q->currentUserIdentifierChanged();
+                    }
+                }
+
                 CacheEntry cacheEntry = createCacheEntry(responseData, identifier);
                 node.setCacheEntry(cacheEntry);
                 updateModelNode(node);
@@ -1189,23 +1224,6 @@ QString FacebookInterface::currentUserIdentifier() const
     Q_D(const FacebookInterface);
     // returns the object identifier associated with the "me" node, if loaded.
     return d->currentUserIdentifier;
-}
-
-/*! \internal */
-void FacebookInterface::updateCurrentUserIdentifier()
-{
-    Q_D(FacebookInterface);
-    if (d->accessToken.isEmpty()) {
-        return;
-    }
-
-    QVariantMap queryItems;
-    queryItems.insert(QLatin1String("access_token"), d->accessToken);
-    queryItems.insert(QLatin1String("fields"), QLatin1String("id"));
-    arbitraryRequest(SocialNetworkInterface::GetRequest, QLatin1String("https://graph.facebook.com/me"),
-                     queryItems);
-    connect(this, SIGNAL(arbitraryRequestResponseReceived(bool,QVariantMap)),
-            this, SLOT(updateCurrentUserIdentifierHandler(bool,QVariantMap)));
 }
 
 /*! \internal */
