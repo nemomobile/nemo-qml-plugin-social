@@ -121,6 +121,9 @@ Item {
     Facebook {
         id: facebook
         accessToken: root.accessToken
+        onCurrentUserIdentifierChanged: {
+            console.debug("Current user identifier: " + currentUserIdentifier)
+        }
     }
 
     ContentItemTypeFilter {
@@ -171,6 +174,11 @@ Item {
                 which: -3
             }
             ListElement {
+                text: "Test getting \"me\""
+                which: -4
+            }
+
+            ListElement {
                 text: "Quit"
                 which: -1
             }
@@ -192,7 +200,7 @@ Item {
                         } else {
                             portraitModel.displayPortraitUrl()
                         }
-                    }  else if(model.which == -3) {
+                    } else if(model.which == -3) {
                         if (user.identifier == "me") {
                             user.displayUser()
                             return
@@ -200,6 +208,11 @@ Item {
 
                         root.whichActive = -3
                         user.identifier = "me"
+                    } else if(model.which == -4) {
+                        if (!nsuffysModel.retrieved) {
+                            root.whichActive = -4
+                            nsuffysModel.populate()
+                        }
                     } else {
                         makeActive(model.which, facebook.currentUserIdentifier)
                     }
@@ -304,6 +317,20 @@ Item {
         onStatusChanged: {
             if (status == Facebook.Idle) {
                 displayUser()
+                root.whichActive = 0
+            }
+        }
+    }
+
+    SocialNetworkModel {
+        id: nsuffysModel
+        property bool retrieved: false
+        socialNetwork: facebook
+        nodeIdentifier: "1069515276"
+        onNodeChanged: {
+            if (node != null) {
+                console.debug("Test user retrieved: " + nsuffysModel.node.name)
+                nsuffysModel.retrieved = true
                 root.whichActive = 0
             }
         }

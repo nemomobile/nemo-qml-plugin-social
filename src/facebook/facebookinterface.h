@@ -100,7 +100,6 @@ Q_SIGNALS:
     void currentUserIdentifierChanged();
     // private API for all Facebook adapters to use
 private:
-    void updateCurrentUserIdentifier();
     FacebookObjectReferenceInterface *objectReference(QObject *parent, int type,
                                                       QString identifier, QString name);
     QVariantMap facebookContentItemData(ContentItemInterface *contentItem);
