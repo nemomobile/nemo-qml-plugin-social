@@ -98,9 +98,6 @@ public:
 Q_SIGNALS:
     void accessTokenChanged();
     void currentUserIdentifierChanged();
-public:
-    Q_INVOKABLE void loadNextRelatedData();
-    Q_INVOKABLE void loadPreviousRelatedData();
     // private API for all Facebook adapters to use
 private:
     void updateCurrentUserIdentifier();
