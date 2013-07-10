@@ -42,7 +42,7 @@ SocialNetworkModelInterfacePrivate::SocialNetworkModelInterfacePrivate(SocialNet
     : status(SocialNetworkInterface::Initializing)
     , error(SocialNetworkInterface::NoError)
     , socialNetwork(0)
-    , item(0), hasPrevious(false), hasNext(false)
+    , node(0), hasPrevious(false), hasNext(false)
     , resortUpdatePosted(false)
     , q_ptr(q)
 {
@@ -164,11 +164,11 @@ void SocialNetworkModelInterfacePrivate::resort()
     emit q->dataChanged(q->index(0), q->index(modelData.count() - 1));
 }
 
-void SocialNetworkModelInterfacePrivate::setItem(IdentifiableContentItemInterface *newNode)
+void SocialNetworkModelInterfacePrivate::setNode(IdentifiableContentItemInterface *newNode)
 {
     Q_Q(SocialNetworkModelInterface);
-    if (item != newNode) {
-        item = newNode;
+    if (node != newNode) {
+        node = newNode;
         emit q->nodeChanged();
     }
 }
@@ -384,7 +384,7 @@ QString SocialNetworkModelInterface::nodeIdentifier() const
 IdentifiableContentItemInterface * SocialNetworkModelInterface::node() const
 {
     Q_D(const SocialNetworkModelInterface);
-    return d->item;
+    return d->node;
 }
 
 bool SocialNetworkModelInterface::hasPrevious() const

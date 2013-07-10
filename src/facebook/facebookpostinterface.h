@@ -82,6 +82,8 @@ class FacebookPostInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(bool hidden READ hidden NOTIFY hiddenChanged)
     Q_PROPERTY(QString statusType READ statusType NOTIFY statusTypeChanged)
     Q_PROPERTY(bool liked READ liked NOTIFY likedChanged)
+    Q_PROPERTY(int likesCount READ likesCount NOTIFY likesCountChanged)
+    Q_PROPERTY(int commentsCount READ commentsCount NOTIFY commentsCountChanged)
 public:
     explicit FacebookPostInterface(QObject *parent = 0);
 
@@ -122,6 +124,8 @@ public:
     bool hidden() const;
     QString statusType() const;
     bool liked() const;
+    int likesCount() const;
+    int commentsCount() const;
 Q_SIGNALS:
     void fromChanged();
     void toChanged();
@@ -148,6 +152,8 @@ Q_SIGNALS:
     void hiddenChanged();
     void statusTypeChanged();
     void likedChanged();
+    void likesCountChanged();
+    void commentsCountChanged();
 private:
     Q_DECLARE_PRIVATE(FacebookPostInterface)
 };

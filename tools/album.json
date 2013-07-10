@@ -67,6 +67,20 @@
             "custom": true,
             "is_ontology": false,
             "doc": "Whether the album has been liked by the current user."
+        },
+        {
+            "name": "likes_count",
+            "type": "int",
+            "custom": true,
+            "is_ontology": false,
+            "doc": "The number of likes on this album."
+        },
+        {
+            "name": "comments_count",
+            "type": "int",
+            "custom": true,
+            "is_ontology": false,
+            "doc": "The number of likes on this album."
         }
     ],
     "methods": [

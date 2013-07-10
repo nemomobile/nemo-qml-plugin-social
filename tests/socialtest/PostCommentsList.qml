@@ -35,8 +35,14 @@ import org.nemomobile.social 1.0
 Item {
     id: root
     anchors.fill: parent
+    property string currentIdentifier
     signal backClicked
     function populate(nodeId) {
+        if (currentIdentifier == nodeId) {
+            model.repopulate()
+            return
+        }
+
         model.nodeIdentifier = nodeId
         model.populate()
         view.positionViewAtBeginning()
@@ -52,7 +58,9 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "There are " + model.count + " comments on this post"
+        text: model.node == null ? "... Loading ..."
+              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
+              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
     }
 
     Button {
@@ -74,8 +82,9 @@ Item {
         delegate: Item {
             id: commentDelegate
             width: parent.width
-            height: childrenRect.height + 20
+            height: column.height + 20
             Column {
+                id: column
                 anchors.left: parent.left; anchors.leftMargin: 10
                 anchors.right: parent.right; anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter

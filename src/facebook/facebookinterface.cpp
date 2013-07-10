@@ -64,6 +64,7 @@
 
 #define FACEBOOK_ME QLatin1String("me")
 #define GETTING_ME_KEY QLatin1String("getting_me")
+#define PERFORM_SECOND_PART QLatin1String("perform_second_part")
 
 // TODO XXX We need to implement a "metadata" filter, that is used to detect type
 // of elements that we don't know. That metadata filter will simply enable &metadata=1
@@ -89,7 +90,6 @@ QVariant FACEBOOK_DEBUG_VALUE_STRING_FROM_DATA(const QString &key, const QVarian
 FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
     : SocialNetworkInterfacePrivate(q)
     , currentUserIdentifier(FACEBOOK_ME)
-    , loadingSecondPartOfNodeDataRunning(false)
 {
 }
 
@@ -242,20 +242,23 @@ int FacebookInterfacePrivate::detectTypeFromData(const QVariantMap &data) const
 
     qWarning() << Q_FUNC_INFO << "No type information available in object metadata - "\
                                  "attempting to heuristically detect type";
-    if (data.value(FACEBOOK_ONTOLOGY_COMMENT_MESSAGE).isValid()
-        && data.value(FACEBOOK_ONTOLOGY_COMMENT_LIKECOUNT).isValid())
+    if (data.contains(FACEBOOK_ONTOLOGY_COMMENT_MESSAGE)
+        && data.contains(FACEBOOK_ONTOLOGY_COMMENT_LIKECOUNT)) {
         return FacebookInterface::Comment;
-    else if (data.value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).isValid()
-             && data.value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).isValid())
+    } else if (data.contains(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY)
+             && data.contains(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD)) {
         return FacebookInterface::Album;
-    else if (data.value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).isValid()
-             && data.value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).isValid())
+    } else if (data.contains(FACEBOOK_ONTOLOGY_PHOTO_WIDTH)
+             && data.contains(FACEBOOK_ONTOLOGY_PHOTO_SOURCE)) {
         return FacebookInterface::Photo;
-    else if (data.value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).isValid()
-             || data.value(FACEBOOK_ONTOLOGY_USER_GENDER).isValid())
+    } else if (data.contains(FACEBOOK_ONTOLOGY_USER_FIRSTNAME)
+             || data.contains(FACEBOOK_ONTOLOGY_USER_GENDER)) {
         return FacebookInterface::User;
-    else if (data.value(FACEBOOK_ONTOLOGY_POST_ACTIONS).isValid() && data.value(FACEBOOK_ONTOLOGY_POST_POSTTYPE).isValid())
+    } else if ((data.contains(FACEBOOK_ONTOLOGY_POST_ACTIONS)
+              && data.contains(FACEBOOK_ONTOLOGY_POST_POSTTYPE))
+             || data.contains(FACEBOOK_ONTOLOGY_POST_STORY)) {
         return FacebookInterface::Post;
+    }
 
     qWarning() << Q_FUNC_INFO << "Unable to heuristically detect type!";
     foreach (const QString &datakey, data.keys())
@@ -268,6 +271,17 @@ void FacebookInterfacePrivate::handlePopulateRelatedData(Node &node,
                                                          const QVariantMap &relatedData,
                                                          const QUrl &requestUrl)
 {
+    // We first grab an update of the current user (if UserPicture is requested)
+    if (relatedData.keys().contains(FACEBOOK_ONTOLOGY_USER_PICTURE)) {
+        QVariantMap pictureData = relatedData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap();
+        // Merge with current object
+        QVariantMap data = node.cacheEntry().data();
+        data.insert(FACEBOOK_ONTOLOGY_USER_PICTURE, pictureData);
+        node.cacheEntry().setData(data);
+        updateModelNode(node);
+    }
+
+
     // We receive the related data and transform it into ContentItems.
     // Finally, we populate the cache for the node and update the internal model data.
     QList<CacheEntry> relatedContent;
@@ -381,17 +395,219 @@ void FacebookInterfacePrivate::populateDataForNode(Node &node)
 
 void FacebookInterfacePrivate::populateRelatedDataforNode(Node &node)
 {
-    if (!performRelatedDataRequest(node, node.identifier(), node.filters().toList())) {
-        setError(node, SocialNetworkInterface::DataUpdateError,
-                 QLatin1String("Cannot perform related data request"));
+    const QString &identifier = node.identifier();
+    const QSet<FilterInterface *> &filters = node.filters();
+
+
+    QList<ContentItemTypeFilterInterface *> realFilters;
+    foreach (FilterInterface *filter, filters) {
+        ContentItemTypeFilterInterface *contentItemTypeFilter
+                = qobject_cast<ContentItemTypeFilterInterface*>(filter);
+        if (!contentItemTypeFilter) {
+            qWarning() << Q_FUNC_INFO
+                       << "The Facebook adapter only supports ContentItemType filters";
+            continue;
+        }
+
+        realFilters.append(contentItemTypeFilter);
     }
+
+    if (realFilters.isEmpty()) {
+        // An empty filter should not create an error
+        // Actually, nothing should be loaded in the node and
+        // the request should be terminated
+        setStatus(node, NodePrivate::Idle);
+        return;
+    }
+
+    // Notifications is a tough one as well. It cannot be queried via fields expansion
+    // so if notifications is passed in the list of filters, it is ignored if
+    // there are other filters, and queried only if it is the only one.
+
+    // Extra should map the type to some extra fields to add. These fields will
+    // be added to field expansion (or, in case of notifications, to normal
+    // graph query)
+
+    QList<int> connectionTypes;
+    RequestFieldsMap connectionFields;
+
+    // Create paging request
+    RequestFieldsMap requestFieldsMap;
+    switch (node.status()) {
+        case NodePrivate::LoadingRelatedDataAppending: {
+            QVariantMap extraMap = node.extraInfo();
+
+            foreach (QString key, extraMap.keys()) {
+                int keyInteger = key.toInt();
+                QVariantMap entries
+                        = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toMap();
+
+                foreach(QString entryKey, entries.keys()) {
+                    StringPair pair (entryKey, entries.value(entryKey).toString());
+                    requestFieldsMap.insert(keyInteger, pair);
+                }
+            }
+        }
+        break;
+        case NodePrivate::LoadingRelatedDataPrepending: {
+            QVariantMap extraMap = node.extraInfo();
+
+            foreach (QString key, extraMap.keys()) {
+                int keyInteger = key.toInt();
+                QVariantMap entries
+                        = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toMap();
+
+                foreach(QString entryKey, entries.keys()) {
+                    StringPair pair (entryKey, entries.value(entryKey).toString());
+                    requestFieldsMap.insert(keyInteger, pair);
+                }
+            }
+        }
+        break;
+        default: break;
+    }
+
+    foreach (ContentItemTypeFilterInterface *filter, realFilters) {
+        // We ignore also all redundant filters
+        int type = filter->type();
+        if (!connectionTypes.contains(type)) {
+            connectionTypes.append(type);
+            if (!filter->whichFields().isEmpty()) {
+                StringPair fieldsEntry (QLatin1String("fields"), filter->whichFields().join(","));
+                connectionFields.insert(type, fieldsEntry);
+            }
+            if (filter->limit() > 0) {
+                StringPair limitEntry (QLatin1String("limit"), QString::number(filter->limit()));
+                connectionFields.insert(type, limitEntry);
+            }
+
+            if (requestFieldsMap.contains(type)) {
+                QList<QPair<QString, QString> > extraValues = requestFieldsMap.values(type);
+                QList<QPair<QString, QString> >::Iterator i;
+                for (i = extraValues.begin(); i != extraValues.end(); i++) {
+                    connectionFields.insert(type, *i);
+                }
+            }
+        }
+    }
+
+    // Check if we have notifications
+    if (connectionTypes.contains(FacebookInterface::Notification)) {
+        if (connectionTypes.count() == 1) {
+            QVariantMap extraData;
+            extraData.insert(QLatin1String("include_read"), 1);
+            QList<QPair<QString, QString> > extraValues
+                    = connectionFields.values(FacebookInterface::Notification);
+            QList<QPair<QString, QString> >::Iterator i;
+            for (i = extraValues.begin(); i != extraValues.end(); i++) {
+                extraData.insert(i->first, i->second);
+            }
+
+            setReply(node, getRequest(identifier, FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS,
+                                      QStringList(), extraData));
+            return;
+        } else {
+            qWarning() << Q_FUNC_INFO << "Notifications should not be requested with other filters";
+            connectionTypes.removeAll(FacebookInterface::Notification);
+            connectionFields.remove(FacebookInterface::Notification);
+        }
+    }
+
+    // generate appropriate query string, using the Field Expansion query syntax of the Facebook OpenGraph API
+    // eg: with currentNode = Photo; connectionTypes == comments,likes,tags; whichFields = id,name; limit = 10:
+    // GET https://graph.facebook.com/<photo_id>/fields=comments.limit(10).fields(id,name),likes.limit(10).fields(id,name),tags.fields(id,name).limit(10)
+
+    // XXX TODO: in the future, each of the Facebook-specific IdentifiableContentItemType classes should
+    // provide private helper functions for the FacebookInterface to build the appropriate query.
+    // e.g: QString FacebookAlbumInterface::relatedDataQuery(types, limits, whichfields);
+    // That way we can provide "special case" code for every type in a neat, modular fashion.
+    // generic query
+    QStringList fields;
+
+    foreach (int typeInteger, connectionTypes) {
+        FacebookInterface::ContentItemType type
+                = static_cast<FacebookInterface::ContentItemType>(typeInteger);
+        switch (type) {
+            case FacebookInterface::Like: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES,
+                                          connectionFields));
+            }
+            break;
+            case FacebookInterface::PhotoTag: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS,
+                                          connectionFields));
+            }
+            break;
+            case FacebookInterface::UserPicture: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_PICTURE,
+                                          connectionFields));
+            }
+            break;
+            case FacebookInterface::Location: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_LOCATIONS,
+                                          connectionFields));
+            }
+            break; // not supported?
+            case FacebookInterface::Comment: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS,
+                                          connectionFields));
+            }
+            break;
+            case FacebookInterface::User: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS,
+                                          connectionFields));
+            }
+            break; // subscriptions etc?
+            case FacebookInterface::Album: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS,
+                                          connectionFields));
+            }
+            break;
+            case FacebookInterface::Photo: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS,
+                                          connectionFields));
+            }
+            break;
+            case FacebookInterface::Event: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_EVENTS,
+                                          connectionFields));
+            }
+            break;
+            case FacebookInterface::Post: {
+                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_FEED,
+                                          connectionFields));
+            }
+            break;
+            default: {
+                qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter";
+            }
+            break;
+        }
+    }
+
+    setReply(node, getRequest(identifier, QString(), fields, QVariantMap()));
 }
 
 bool FacebookInterfacePrivate::validateCacheEntryForNode(const CacheEntry &cacheEntry)
 {
-    Q_UNUSED(cacheEntry)
-    // Case of friends loaded from the friendlist
-    // TODO XXX ^
+    // If the item has not been created yet, we might
+    // need to be sure to have it created by reloading it
+    const IdentifiableContentItemInterface *item = cacheEntry.identifiableItem();
+    if (!item) {
+        return false;
+    }
+
+    switch (cacheEntry.identifiableItem()->type()) {
+        case FacebookInterface::Album:
+        //case FacebookInterface::Comment: // TODO Please check
+        case FacebookInterface::Photo:
+        case FacebookInterface::Post: {
+            return cacheEntry.data().contains(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE);
+        }
+        break;
+        // TODO Case of friends loaded from the friendlist
+        default: break;
+    }
     return true;
 }
 
@@ -627,21 +843,17 @@ void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
 
     switch (node.status()) {
         case NodePrivate::LoadingNodeData:{
-            if (loadingSecondPartOfNodeDataRunning) {
+            if (node.extraInfo().contains(PERFORM_SECOND_PART)) {
                 finishSecondPartOfNodeDataLoading(node, responseData);
             } else {
                 if (node.extraInfo().contains(GETTING_ME_KEY)) {
-                    Q_Q(FacebookInterface);
                     // In the case of getting me, we should split into two different objects
                     QVariantMap objectData = responseData.value(node.identifier()).toMap();
                     QVariantMap meData = responseData.value(FACEBOOK_ME).toMap();
 
                     // Change the identifier if needed
                     QString meId = meData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
-                    if (currentUserIdentifier != meId && !meId.isEmpty()) {
-                        currentUserIdentifier = meId;
-                        emit q->currentUserIdentifierChanged();
-                    }
+                    setCurrentUserIdentifier(meId);
                     responseData = objectData;
                 }
 
@@ -652,19 +864,18 @@ void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
                 }
 
                 if (node.identifier() == FACEBOOK_ME) {
-                    if (currentUserIdentifier != identifier) {
-                        Q_Q(FacebookInterface);
-                        currentUserIdentifier = identifier;
-                        emit q->currentUserIdentifierChanged();
-                    }
+                    setCurrentUserIdentifier(identifier);
                 }
 
                 CacheEntry cacheEntry = createCacheEntry(responseData, identifier);
                 node.setCacheEntry(cacheEntry);
                 updateModelNode(node);
 
-                // Manage specific cases (aka User + UserPicture)
+                // Manage specific cases (likes / comments count for example)
                 if (startSecondPartOfNodeDataLoading(node)) {
+                    QVariantMap extraInfo = node.extraInfo();
+                    extraInfo.insert(PERFORM_SECOND_PART, QVariant::fromValue(true));
+                    node.setExtraInfo(extraInfo);
                     return;
                 }
             }
@@ -678,7 +889,11 @@ void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
         case NodePrivate::LoadingRelatedDataReplacing:
         case NodePrivate::LoadingRelatedDataPrepending:
         case NodePrivate::LoadingRelatedDataAppending: {
-            loadingSecondPartOfNodeDataRunning = false;
+            if (node.extraInfo().contains(PERFORM_SECOND_PART)) {
+                QVariantMap extraInfo = node.extraInfo();
+                extraInfo.remove(PERFORM_SECOND_PART);
+                node.setExtraInfo(extraInfo);
+            }
             handlePopulateRelatedData(node, responseData, requestUrl);
         }
         break;
@@ -687,33 +902,37 @@ void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
     }
 }
 
+void FacebookInterfacePrivate::setCurrentUserIdentifier(const QString &meId)
+{
+    Q_Q(FacebookInterface);
+    if (currentUserIdentifier != meId) {
+        currentUserIdentifier = meId;
+        aliases.insert(FACEBOOK_ME, meId);
+        aliases.insert(meId, FACEBOOK_ME);
+        emit q->currentUserIdentifierChanged();
+    }
+}
+
 bool FacebookInterfacePrivate::startSecondPartOfNodeDataLoading(const Node &node)
 {
-    if (node.cacheEntry().identifiableItem()->type() == FacebookInterface::User) {
-        bool hasUserPictureFilter = false;
-        foreach (FilterInterface *filter, node.filters()) {
-            ContentItemTypeFilterInterface * contentItemFilter
-                    = qobject_cast<ContentItemTypeFilterInterface *>(filter);
-            if (!contentItemFilter) {
-                continue;
-            }
-
-            if (contentItemFilter->type() == FacebookInterface::UserPicture) {
-                hasUserPictureFilter = true;
-                break;
-            }
-        }
-
-        if (hasUserPictureFilter) {
-            // We should perform an additional step
-            // to load the picture associated to the user
+    switch (node.cacheEntry().identifiableItem()->type()) {
+        case FacebookInterface::Album:
+        //case FacebookInterface::Comment: // TODO Please check
+        case FacebookInterface::Photo:
+        case FacebookInterface::Post: {
+            QString field = QLatin1String("%1.%3(1),%2.%3(1)");
+            field = field.arg(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES,
+                              FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS,
+                              FACEBOOK_ONTOLOGY_CONNECTIONS_SUMMARY);
             QStringList whichFields;
-            whichFields.append(FACEBOOK_ONTOLOGY_USER_PICTURE);
+            whichFields.append(field);
             setReply(node, getRequest(node.identifier(), QString(), whichFields, QVariantMap()));
-            loadingSecondPartOfNodeDataRunning = true;
             return true;
         }
+        break;
+        default: break;
     }
+
     return false;
 }
 
@@ -723,15 +942,21 @@ void FacebookInterfacePrivate::finishSecondPartOfNodeDataLoading(Node &node,
     // Merge the response data that we got to the old
     // one and recreate a newer item
     QVariantMap data = node.cacheEntry().data();
+    // We add this marker because we have to make the item know that we
+    // are performing a second population part, and that the data
+    // that is retrieved is correct
 
     foreach (const QString &key, responseData.keys()) {
         data.insert(key, responseData.value(key));
     }
+    data.insert(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE, QVariant::fromValue(true));
 
     node.cacheEntry().setData(data);
     updateModelNode(node);
 
-    loadingSecondPartOfNodeDataRunning = false;
+    QVariantMap extraInfo = node.extraInfo();
+    extraInfo.remove(PERFORM_SECOND_PART);
+    node.setExtraInfo(extraInfo);
 }
 
 bool FacebookInterfacePrivate::tryAddCacheEntryFromData(NodePrivate::Status nodeStatus,
@@ -900,197 +1125,6 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(NodePrivate::Status node
         }
     }
 
-    return true;
-}
-
-bool FacebookInterfacePrivate::performRelatedDataRequest(Node &node, const QString &identifier,
-                                                         const QList<FilterInterface *> &filters)
-{
-
-    if (filters.isEmpty()) {
-        // An empty filter should not create an error
-        // Actually, nothing should be loaded in the node and
-        // the request should be terminated
-        setStatus(node, NodePrivate::Idle);
-        return true;
-    }
-
-    // Notifications is a tough one. It cannot be queried via fields expansion
-    // so if notifications is passed in the list of filters, it is ignored if
-    // there are other filters, and queried only if it is the only one.
-
-    // Extra should map the type to some extra fields to add. These fields will
-    // be added to field expansion (or, in case of notifications, to normal
-    // graph query)
-
-    QList<int> connectionTypes;
-    RequestFieldsMap connectionFields;
-
-    // Create paging request
-    RequestFieldsMap requestFieldsMap;
-    switch (node.status()) {
-        case NodePrivate::LoadingRelatedDataAppending: {
-            QVariantMap extraMap = node.extraInfo();
-
-            foreach (QString key, extraMap.keys()) {
-                int keyInteger = key.toInt();
-                QVariantMap entries
-                        = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toMap();
-
-                foreach(QString entryKey, entries.keys()) {
-                    StringPair pair (entryKey, entries.value(entryKey).toString());
-                    requestFieldsMap.insert(keyInteger, pair);
-                }
-            }
-        }
-        break;
-        case NodePrivate::LoadingRelatedDataPrepending: {
-            QVariantMap extraMap = node.extraInfo();
-
-            foreach (QString key, extraMap.keys()) {
-                int keyInteger = key.toInt();
-                QVariantMap entries
-                        = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toMap();
-
-                foreach(QString entryKey, entries.keys()) {
-                    StringPair pair (entryKey, entries.value(entryKey).toString());
-                    requestFieldsMap.insert(keyInteger, pair);
-                }
-            }
-        }
-        break;
-        default: break;
-    }
-
-    foreach (FilterInterface *filter, filters) {
-        ContentItemTypeFilterInterface *contentItemTypeFilter
-                = qobject_cast<ContentItemTypeFilterInterface*>(filter);
-        if (!contentItemTypeFilter) {
-            qWarning() << Q_FUNC_INFO
-                       << "The Facebook adapter only supports ContentItemType filters";
-            continue;
-        }
-
-        // We ignore also all redundant filters
-        int type = contentItemTypeFilter->type();
-        if (!connectionTypes.contains(type)) {
-            connectionTypes.append(type);
-            if (!contentItemTypeFilter->whichFields().isEmpty()) {
-                StringPair fieldsEntry (QLatin1String("fields"),
-                                        contentItemTypeFilter->whichFields().join(","));
-                connectionFields.insert(type, fieldsEntry);
-            }
-            if (contentItemTypeFilter->limit() > 0) {
-                StringPair limitEntry (QLatin1String("limit"),
-                                       QString::number(contentItemTypeFilter->limit()));
-                connectionFields.insert(type, limitEntry);
-            }
-
-            if (requestFieldsMap.contains(type)) {
-                QList<QPair<QString, QString> > extraValues = requestFieldsMap.values(type);
-                QList<QPair<QString, QString> >::Iterator i;
-                for (i = extraValues.begin(); i != extraValues.end(); i++) {
-                    connectionFields.insert(type, *i);
-                }
-            }
-        }
-    }
-
-    // Check if we have notifications
-    if (connectionTypes.contains(FacebookInterface::Notification)) {
-        if (connectionTypes.count() == 1) {
-            QVariantMap extraData;
-            extraData.insert(QLatin1String("include_read"), 1);
-            QList<QPair<QString, QString> > extraValues
-                    = connectionFields.values(FacebookInterface::Notification);
-            QList<QPair<QString, QString> >::Iterator i;
-            for (i = extraValues.begin(); i != extraValues.end(); i++) {
-                extraData.insert(i->first, i->second);
-            }
-
-            setReply(node, getRequest(identifier, FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS,
-                                      QStringList(), extraData));
-            return true;
-        } else {
-            qWarning() << Q_FUNC_INFO << "Notifications should not be requested with other filters";
-            connectionTypes.removeAll(FacebookInterface::Notification);
-            connectionFields.remove(FacebookInterface::Notification);
-        }
-    }
-
-    // generate appropriate query string, using the Field Expansion query syntax of the Facebook OpenGraph API
-    // eg: with currentNode = Photo; connectionTypes == comments,likes,tags; whichFields = id,name; limit = 10:
-    // GET https://graph.facebook.com/<photo_id>/fields=comments.limit(10).fields(id,name),likes.limit(10).fields(id,name),tags.fields(id,name).limit(10)
-
-    // XXX TODO: in the future, each of the Facebook-specific IdentifiableContentItemType classes should
-    // provide private helper functions for the FacebookInterface to build the appropriate query.
-    // e.g: QString FacebookAlbumInterface::relatedDataQuery(types, limits, whichfields);
-    // That way we can provide "special case" code for every type in a neat, modular fashion.
-    // generic query
-    QStringList fields;
-
-    foreach (int typeInteger, connectionTypes) {
-        FacebookInterface::ContentItemType type
-                = static_cast<FacebookInterface::ContentItemType>(typeInteger);
-        switch (type) {
-            case FacebookInterface::Like: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES,
-                                          connectionFields));
-            }
-            break;
-            case FacebookInterface::PhotoTag: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS,
-                                          connectionFields));
-            }
-            break;
-            case FacebookInterface::UserPicture: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_PICTURE,
-                                          connectionFields));
-            }
-            break;
-            case FacebookInterface::Location: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_LOCATIONS,
-                                          connectionFields));
-            }
-            break; // not supported?
-            case FacebookInterface::Comment: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS,
-                                          connectionFields));
-            }
-            break;
-            case FacebookInterface::User: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS,
-                                          connectionFields));
-            }
-            break; // subscriptions etc?
-            case FacebookInterface::Album: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS,
-                                          connectionFields));
-            }
-            break;
-            case FacebookInterface::Photo: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS,
-                                          connectionFields));
-            }
-            break;
-            case FacebookInterface::Event: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_EVENTS,
-                                          connectionFields));
-            }
-            break;
-            case FacebookInterface::Post: {
-                fields.append(createField(typeInteger, FACEBOOK_ONTOLOGY_CONNECTIONS_FEED,
-                                          connectionFields));
-            }
-            break;
-            default: {
-                qWarning() << Q_FUNC_INFO << "Invalid content item type specified in filter";
-            }
-            break;
-        }
-    }
-
-    setReply(node, getRequest(identifier, QString(), fields, QVariantMap()));
     return true;
 }
 

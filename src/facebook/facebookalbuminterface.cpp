@@ -43,6 +43,8 @@ FacebookAlbumInterfacePrivate::FacebookAlbumInterfacePrivate(FacebookAlbumInterf
     , from(0)
     , albumType(FacebookAlbumInterface::Normal)
     , liked(false)
+    , likesCount(-1)
+    , commentsCount(-1)
 // >>> custom
 {
 }
@@ -204,14 +206,27 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         emit q->albumTypeChanged();
     }
 
+    // Check if we are in the second phase (getting info about likes and comments)
+    bool isSecondPhase = newData.contains(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE);
+
     // Check if the user liked this album
     QString currentUserIdentifier
             = qobject_cast<FacebookInterface*>(q->socialNetwork())->currentUserIdentifier();
     bool newLiked = false;
+    int newLikesCount = isSecondPhase ? 0 : -1;
     QVariant likes = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
     if (!likes.isNull()) {
         QVariantMap likesMap = likes.toMap();
         QVariantList data = likesMap.value(FACEBOOK_ONTOLOGY_METADATA_DATA).toList();
+
+        // Get summary
+        QVariantMap summary = likesMap.value(FACEBOOK_ONTOLOGY_METADATA_SUMMARY).toMap();
+        bool ok;
+        int castedLikesCount = summary.value(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT).toInt(&ok);
+        if (ok) {
+            newLikesCount = castedLikesCount;
+        }
+
         foreach (QVariant dataEntry, data) {
             QVariant idVariant
                     = dataEntry.toMap().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER);
@@ -224,6 +239,31 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     if (liked != newLiked) {
         liked = newLiked;
         emit q->likedChanged();
+    }
+
+    if (likesCount != newLikesCount) {
+        likesCount = newLikesCount;
+        emit q->likesCountChanged();
+    }
+
+    // Check infos about comments
+    int newCommentsCount = isSecondPhase ? 0 : -1;
+    QVariant comments = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS);
+    if (!comments.isNull()) {
+        QVariantMap commentsMap = comments.toMap();
+
+        // Get summary
+        QVariantMap summary = commentsMap.value(FACEBOOK_ONTOLOGY_METADATA_SUMMARY).toMap();
+        bool ok;
+        int castedCommentCount = summary.value(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT).toInt(&ok);
+        if (ok) {
+            newCommentsCount = castedCommentCount;
+        }
+    }
+
+    if (commentsCount != newCommentsCount) {
+        commentsCount = newCommentsCount;
+        emit q->commentsCountChanged();
     }
 // >>> emitPropertyChangeSignals
 
@@ -662,5 +702,25 @@ bool FacebookAlbumInterface::liked() const
 {
     Q_D(const FacebookAlbumInterface);
     return d->liked;
+}
+
+/*!
+    \qmlproperty int FacebookAlbum::likesCount
+    The number of likes on this photo.
+*/
+int FacebookAlbumInterface::likesCount() const
+{
+    Q_D(const FacebookAlbumInterface);
+    return d->likesCount;
+}
+
+/*!
+    \qmlproperty int FacebookAlbum::commentsCount
+    The number of likes on this photo.
+*/
+int FacebookAlbumInterface::commentsCount() const
+{
+    Q_D(const FacebookAlbumInterface);
+    return d->commentsCount;
 }
 
