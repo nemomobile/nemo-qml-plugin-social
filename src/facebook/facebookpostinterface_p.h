@@ -53,6 +53,8 @@ public:
     QList<FacebookObjectReferenceInterface *> withTags;
     FacebookObjectReferenceInterface *application;
     bool liked;
+    int likesCount;
+    int commentsCount;
 private:
     Q_DECLARE_PUBLIC(FacebookPostInterface)
     static void to_append(QDeclarativeListProperty<FacebookObjectReferenceInterface> *list,

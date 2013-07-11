@@ -75,6 +75,8 @@ class FacebookPhotoInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
     Q_PROPERTY(int position READ position NOTIFY positionChanged)
     Q_PROPERTY(bool liked READ liked NOTIFY likedChanged)
+    Q_PROPERTY(int likesCount READ likesCount NOTIFY likesCountChanged)
+    Q_PROPERTY(int commentsCount READ commentsCount NOTIFY commentsCountChanged)
 public:
     explicit FacebookPhotoInterface(QObject *parent = 0);
 
@@ -111,6 +113,8 @@ public:
     QString updatedTime() const;
     int position() const;
     bool liked() const;
+    int likesCount() const;
+    int commentsCount() const;
 Q_SIGNALS:
     void albumIdentifierChanged();
     void fromChanged();
@@ -129,6 +133,8 @@ Q_SIGNALS:
     void updatedTimeChanged();
     void positionChanged();
     void likedChanged();
+    void likesCountChanged();
+    void commentsCountChanged();
 private:
     Q_DECLARE_PRIVATE(FacebookPhotoInterface)
 };

@@ -60,7 +60,9 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "There are " + model.count + " comments on this photo"
+        text: model.node == null ? "... Loading ..."
+              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
+              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
     }
 
     Column {

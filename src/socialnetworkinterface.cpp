@@ -878,12 +878,20 @@ void SocialNetworkInterfacePrivate::updateModelNode(Node &node)
 {
     Q_Q(SocialNetworkInterface);
     // If the current node is not created
-    if (!node.cacheEntry().identifiableItem()
+    if (!node.cacheEntry().item()
         && !node.cacheEntry().data().isEmpty()) {
-        ContentItemInterface *item = contentItemFromData(node.cacheEntry().data(), q);
+        QVariantMap data = node.cacheEntry().data();
+
+        ContentItemInterface *item = createItem(node.cacheEntry());
+        // Update the type of the data if needed
+        if (!data.contains(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE)) {
+            data.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, item->type());
+            node.cacheEntry().setData(data);
+        }
+
         // Update the cache.
         node.cacheEntry().setItem(item);
-    } else if (node.cacheEntry().identifiableItem()
+    } else if (node.cacheEntry().item()
                && !node.cacheEntry().data().isEmpty()) {
         // Update the item
         ContentItemInterface *item = node.cacheEntry().item();
@@ -894,7 +902,7 @@ void SocialNetworkInterfacePrivate::updateModelNode(Node &node)
     IdentifiableContentItemInterface *item = node.cacheEntry().identifiableItem();
     foreach (SocialNetworkModelInterface *model, models) {
         if (matches(node, model)) {
-            model->d_func()->setItem(item);
+            model->d_func()->setNode(item);
             model->d_func()->clean();
         }
     }
@@ -947,19 +955,13 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node &node,
 CacheEntry SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &data,
                                                            const QString &identifier)
 {
-    Q_Q(SocialNetworkInterface);
     // Check if there is already a cached entry that corresponds
     if (!identifier.isEmpty()) {
         if (cache.contains(identifier)) {
             CacheEntry cacheEntry = cache.value(identifier);
 
             // Set the new data in the CacheEntry
-            // and recreate the item if needed
             cacheEntry.setData(data);
-            if (cacheEntry.item()) {
-                cacheEntry.deleteItem();
-                cacheEntry.setItem(contentItemFromData(data, q));
-            }
             return cache.value(identifier);
         }
     }
@@ -1003,8 +1005,10 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     checkDoomedNodes();
 
     // If the node is already loaded, and we didn't ask for a reload,
-    // we should not do anything else
+    // we should just set the nodes
     if (node.status() == NodePrivate::Idle && !reload) {
+        model->d_func()->setNode(node.cacheEntry().identifiableItem());
+        model->d_func()->setData(node.relatedData());
         return;
     }
 
@@ -1016,7 +1020,7 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     // If the node is already being loaded and that we called reload
     // we should not perform a reload
     if (loading && reload) {
-        qWarning() << Q_FUNC_INFO << "Cannot reload a node when it is reloading";
+        qWarning() << Q_FUNC_INFO << "Cannot reload a node when it is loading";
         return;
     }
 
@@ -1024,7 +1028,7 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     // set the loaded data, and set the status to idle
     // before leaving.
     if (loading) {
-        model->d_func()->setItem(node.cacheEntry().identifiableItem());
+        model->d_func()->setNode(node.cacheEntry().identifiableItem());
         model->d_func()->setData(node.relatedData());
         model->d_func()->setStatus(correspondingStatus(node.status()));
         return;
@@ -1053,9 +1057,10 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     // Set the status of all nodes to be Busy (should be only one here)
     // and cleans the model
     setStatus(node, status);
+
     foreach (SocialNetworkModelInterface *model, models) {
         if (matches(node, model)) {
-            model->d_func()->setItem(newItem);
+            model->d_func()->setNode(newItem);
             model->d_func()->clean();
         }
     }
@@ -1261,7 +1266,12 @@ bool SocialNetworkInterfacePrivate::matches(const Node &node, SocialNetworkModel
     // First compare what is the less costly
     // and use the QSet's O(1) cost to be
     // slight more efficient (?)
-    if (node.identifier() != model->nodeIdentifier()) {
+
+    QString nodeIdentifier = node.identifier();
+    QString aliasedIdentifier = aliases.value(nodeIdentifier);
+    QString modelIdentifier = model->nodeIdentifier();
+
+    if (nodeIdentifier != modelIdentifier && aliasedIdentifier != modelIdentifier) {
         return false;
     }
 
