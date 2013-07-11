@@ -48,6 +48,10 @@ SocialNetworkModelInterfacePrivate::SocialNetworkModelInterfacePrivate(SocialNet
 {
 }
 
+SocialNetworkModelInterfacePrivate::~SocialNetworkModelInterfacePrivate()
+{
+}
+
 void SocialNetworkModelInterfacePrivate::init()
 {
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)

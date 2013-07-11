@@ -673,8 +673,19 @@ SocialNetworkInterfacePrivate::SocialNetworkInterfacePrivate(SocialNetworkInterf
 
 SocialNetworkInterfacePrivate::~SocialNetworkInterfacePrivate()
 {
+    // We should say to all models that we are being destroyed
+    foreach (SocialNetworkModelInterface *model, models) {
+        model->d_func()->setNode(0);
+        model->d_func()->clean();
+    }
+
+    // Remove all nodes
+    foreach (Node node, nodes) {
+        deleteNode(node);
+    }
+
     // Remove all cache entries.
-    nodes.clear();
+    cache.clear();
 
     // Remove all replies
     foreach (QNetworkReply *reply, replyToNodeMap.keys()) {
@@ -1394,6 +1405,8 @@ void SocialNetworkInterfacePrivate::checkDoomedNodes()
 void SocialNetworkInterfacePrivate::checkCacheEntryRefcount(const CacheEntry &entry)
 {
     if (cache.contains(entry.identifier()) && entry.refcount() == 0) {
+        CacheEntry modifiableEntry = entry;
+        modifiableEntry.deleteItem();
         cache.remove(entry.identifier());
     }
 }
@@ -1435,6 +1448,8 @@ void SocialNetworkInterfacePrivate::deleteNode(const Node &node)
     foreach (CacheEntry entry, modifiableNode.relatedData()) {
         checkCacheEntryRefcount(entry);
     }
+
+    nodes.removeAt(index);
 }
 
 //----------------------------------------------------
