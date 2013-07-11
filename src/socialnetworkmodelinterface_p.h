@@ -39,6 +39,7 @@ class SocialNetworkModelInterfacePrivate
 {
 public:
     SocialNetworkModelInterfacePrivate(SocialNetworkModelInterface *q);
+    virtual ~SocialNetworkModelInterfacePrivate();
 
     SocialNetworkInterface::Status status;
     SocialNetworkInterface::ErrorType error;
