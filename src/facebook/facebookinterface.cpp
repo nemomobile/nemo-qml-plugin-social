@@ -915,6 +915,12 @@ void FacebookInterfacePrivate::setCurrentUserIdentifier(const QString &meId)
 
 bool FacebookInterfacePrivate::startSecondPartOfNodeDataLoading(const Node &node)
 {
+    // It can be possible to get some race condition, that
+    // the identifiable item got destroyed somehow during the loading
+    if (!node.cacheEntry().identifiableItem()) {
+        return true;
+    }
+
     switch (node.cacheEntry().identifiableItem()->type()) {
         case FacebookInterface::Album:
         //case FacebookInterface::Comment: // TODO Please check
