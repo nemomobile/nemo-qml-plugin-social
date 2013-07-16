@@ -233,6 +233,9 @@
 // TODO XXX: CacheEntry::ref and deref should be made private and friend with some classes
 // to prevent misuse.
 
+// TODO XXX: We should document the contentItemFromData method, to use the saved type inside
+// data to create the item.
+
 CacheEntryPrivate::CacheEntryPrivate()
     : QSharedData()
 {
@@ -534,7 +537,7 @@ void Node::setError(SocialNetworkInterface::ErrorType error, const QString &erro
 
 ArbitraryRequestHandler::ArbitraryRequestHandler(QNetworkAccessManager *networkAccessManager,
                                                  SocialNetworkInterface *parent)
-    : QObject(parent), networkAccessManager(networkAccessManager), reply(0), isError(false)
+    : QObject(parent), networkAccessManager(networkAccessManager), reply(0)
 {
 }
 
@@ -605,20 +608,20 @@ bool ArbitraryRequestHandler::request(SocialNetworkInterface::RequestType reques
 void ArbitraryRequestHandler::finishedHandler()
 {
     QByteArray replyData;
+    bool success = false;
     if (reply) {
+        success = (reply->error() == QNetworkReply::NoError);
         replyData = reply->readAll();
         reply->deleteLater();
         reply = 0;
     }
 
     QVariantMap responseData;
-    bool errorOccurred = isError;
-    if (isError) {
+    if (!success) {
         // note that errors to arbitrary requests don't cause the SocialNetwork
         // to transition to the Error state.  They are unrelated to the model.
         responseData.insert(QLatin1String("error"), errorMessage);
         errorMessage = QString();
-        isError = false;
     } else {
         bool ok = false;
         QVariantMap parsedData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
@@ -629,13 +632,12 @@ void ArbitraryRequestHandler::finishedHandler()
         }
     }
 
-    emit arbitraryRequestResponseReceived(errorOccurred, responseData);
+    emit arbitraryRequestResponseReceived(success, responseData);
 }
 
 void ArbitraryRequestHandler::errorHandler(QNetworkReply::NetworkError networkError)
 {
     errorMessage = networkErrorString(networkError);
-    isError = true;
 }
 
 void ArbitraryRequestHandler::sslErrorsHandler(const QList<QSslError> &sslErrors)
@@ -648,8 +650,6 @@ void ArbitraryRequestHandler::sslErrorsHandler(const QList<QSslError> &sslErrors
             errorMessage += sslError.errorString() + QLatin1String("; ");
         errorMessage.chop(2);
     }
-
-    isError = true;
 }
 
 
@@ -721,6 +721,7 @@ QString SocialNetworkInterfacePrivate::dataSection(int type, const QVariantMap &
     return QString();
 }
 
+// TODO: document the fact that you are expected to have the type set when calling this method
 ContentItemInterface * SocialNetworkInterfacePrivate::contentItemFromData(const QVariantMap &data,
                                                                           QObject *parent) const
 {
@@ -891,14 +892,11 @@ void SocialNetworkInterfacePrivate::updateModelNode(Node &node)
     // If the current node is not created
     if (!node.cacheEntry().item()
         && !node.cacheEntry().data().isEmpty()) {
-        QVariantMap data = node.cacheEntry().data();
 
+        // Beware, we suppose that data already contains the type
+        // as createItem should make use of the type inside the data
+        // to build the item
         ContentItemInterface *item = createItem(node.cacheEntry());
-        // Update the type of the data if needed
-        if (!data.contains(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE)) {
-            data.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, item->type());
-            node.cacheEntry().setData(data);
-        }
 
         // Update the cache.
         node.cacheEntry().setItem(item);

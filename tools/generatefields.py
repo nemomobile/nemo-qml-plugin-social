@@ -1,3 +1,4 @@
+#!/bin/python
 # Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
 #
 # You may use this file under the terms of the BSD license as follows:
@@ -27,37 +28,27 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 
+import argparse
+import minipatcher
+import structure
+import formattingtools
+
+def generate(structure_file):
+
+    struct = structure.extract(structure_file)
+    keysList = []
+
+    for property in struct.rawProperties:
+        keysList.append(property)
+    print ",".join(keysList)
+
+# Main
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Test')
+    parser.add_argument('structure_file', metavar='structure_file', type=str,
+                        help="""Input Facebook object structure file (JSON)""")
+    args = parser.parse_args()
+    structure_file = args.structure_file
+    generate(structure_file)
 
 
-def include(property):
-    type = property.type
-    if type in ["int", "float", "double"]:
-        return None
-    if type in ["QString", "QVariant", "QUrl", "QVariantMap"]:
-        return "<QtCore/" + type + ">"
-    if property.isPointer or property.isList:
-        return "\"" + type.lower() + ".h\""
-
-def convert(type, line):
-    if type in ["int", "float", "double"]:
-        data = "QString numberString = " + line + ".toString();\n"
-        data += "bool ok;\n"
-        data += type + " number = numberString.to" + type[0].upper() + type[1:]
-        data += "(&ok);\n"
-        data += "if (ok) {\n"
-        data += "    return number;\n"
-        data += "}\n"
-        if type == "int":
-            data += "return -1;"
-        else:
-            data += "return 0.;"
-        return data
-    if type == "bool":
-        return "return " + line + ".toString() == QLatin1String(\"true\");"
-    if type in ["QString"]:
-        return "return " + line + ".to" + type[1].upper() + type[2:] + "();"
-    if type == "QUrl":
-        return "return QUrl::fromEncoded(" + line + ".toString().toLocal8Bit());"
-    if type == "QVariantMap":
-        return "return " + line + ".toMap();"
-    return ""

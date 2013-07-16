@@ -37,6 +37,7 @@ Item {
     anchors.fill: parent
     signal backClicked
     signal postClicked(string postId)
+    property alias filters: model.filters
     function populate(nodeId) {
         model.nodeIdentifier = nodeId
         model.populate()
@@ -46,11 +47,6 @@ Item {
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Post
-            }
-        ]
     }
 
     Text {

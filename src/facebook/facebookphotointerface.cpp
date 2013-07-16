@@ -140,8 +140,6 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
                                                               const QVariantMap &newData)
 {
     Q_Q(FacebookPhotoInterface);
-    QVariant oldAlbumIdentifier = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER);
-    QVariant newAlbumIdentifier = newData.value(FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER);
     QVariant oldName = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_NAME);
     QVariant newName = newData.value(FACEBOOK_ONTOLOGY_PHOTO_NAME);
     QVariant oldIcon = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_ICON);
@@ -162,11 +160,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     QVariant newCreatedTime = newData.value(FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME);
     QVariant oldUpdatedTime = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME);
     QVariant newUpdatedTime = newData.value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME);
-    QVariant oldPosition = oldData.value(FACEBOOK_ONTOLOGY_PHOTO_POSITION);
-    QVariant newPosition = newData.value(FACEBOOK_ONTOLOGY_PHOTO_POSITION);
 
-    if (newAlbumIdentifier != oldAlbumIdentifier)
-        emit q->albumIdentifierChanged();
     if (newName != oldName)
         emit q->nameChanged();
     if (newIcon != oldIcon)
@@ -187,8 +181,6 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         emit q->createdTimeChanged();
     if (newUpdatedTime != oldUpdatedTime)
         emit q->updatedTimeChanged();
-    if (newPosition != oldPosition)
-        emit q->positionChanged();
 
 // <<< emitPropertyChangeSignals
     QVariantMap oldFromMap = oldData.value(FACEBOOK_ONTOLOGY_ALBUM_FROM).toMap();
@@ -892,18 +884,6 @@ bool FacebookPhotoInterface::removeComment(const QString &commentIdentifier)
 }
 
 /*!
-    \qmlproperty QString FacebookPhoto::albumIdentifier
-    Holds the identifier of the album to which this photo belongs.
-    Note: this property is currently not implemented.
-    XXX TODO: implement this.
-*/
-QString FacebookPhotoInterface::albumIdentifier() const
-{
-    Q_D(const FacebookPhotoInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER).toString();
-}
-
-/*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookPhoto::from
     Holds a reference to the user or profile which uploaded this photo.
 */
@@ -958,7 +938,7 @@ QDeclarativeListProperty<FacebookNameTagInterface> FacebookPhotoInterface::nameT
 QUrl FacebookPhotoInterface::icon() const
 {
     Q_D(const FacebookPhotoInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toString().toLocal8Bit());
 }
 
 /*!
@@ -968,7 +948,7 @@ QUrl FacebookPhotoInterface::icon() const
 QUrl FacebookPhotoInterface::picture() const
 {
     Q_D(const FacebookPhotoInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toString().toLocal8Bit());
 }
 
 /*!
@@ -978,7 +958,7 @@ QUrl FacebookPhotoInterface::picture() const
 QUrl FacebookPhotoInterface::source() const
 {
     Q_D(const FacebookPhotoInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toString().toLocal8Bit());
 }
 
 /*!
@@ -1036,7 +1016,7 @@ QDeclarativeListProperty<FacebookPhotoImageInterface> FacebookPhotoInterface::im
 QUrl FacebookPhotoInterface::link() const
 {
     Q_D(const FacebookPhotoInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -1069,22 +1049,6 @@ QString FacebookPhotoInterface::updatedTime() const
 {
     Q_D(const FacebookPhotoInterface);
     return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME).toString();
-}
-
-/*!
-    \qmlproperty int FacebookPhoto::position
-    Holds the position of the photo within the album.
-*/
-int FacebookPhotoInterface::position() const
-{
-    Q_D(const FacebookPhotoInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_POSITION).toString();
-    bool ok;
-    int number = numberString.toInt(&ok);
-    if (ok) {
-        return number;
-    }
-    return -1;
 }
 
 /*!

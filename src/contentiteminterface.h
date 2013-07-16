@@ -75,7 +75,7 @@ class ContentItemInterface : public QObject, public QDeclarativeParserStatus
                NOTIFY socialNetworkChanged)
     Q_PROPERTY(int type READ type CONSTANT)
     Q_PROPERTY(QVariantMap data READ data NOTIFY dataChanged)
-    Q_PROPERTY(bool isIdentifiable READ isIdentifiable CONSTANT)
+    Q_PROPERTY(bool identifiable READ isIdentifiable CONSTANT)
 
 public:
     explicit ContentItemInterface(QObject *parent = 0);

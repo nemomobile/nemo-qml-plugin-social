@@ -52,24 +52,6 @@ class ContentItemInterface;
 class FacebookInterfacePrivate : public SocialNetworkInterfacePrivate
 {
 public:
-    explicit FacebookInterfacePrivate(FacebookInterface *q);
-
-    QString accessToken;
-    QString currentUserIdentifier;
-
-    QUrl requestUrl(const QString &objectId, const QString &extraPath,
-                    const QStringList &whichFields, const QVariantMap &extraData);
-    QNetworkReply * uploadImage(const QString &objectId, const QString &extraPath,
-                                const QVariantMap &data, const QVariantMap &extraData);
-
-    int detectTypeFromData(const QVariantMap &data) const;
-    void handlePopulateRelatedData(Node &node, const QVariantMap &relatedData,
-                                   const QUrl &requestUrl);
-
-    // Slots
-    void updateCurrentUserIdentifierHandler(bool isError, const QVariantMap &data);
-
-public:
     // the following is for identifiable content item "actions"
     enum FacebookAction {
         NoAction = 0,
@@ -86,6 +68,11 @@ public:
         UploadAlbumAction,
         DeleteAlbumAction
     };
+
+    explicit FacebookInterfacePrivate(FacebookInterface *q);
+
+    QString accessToken;
+    QString currentUserIdentifier;
 protected:
     // Reimplemented
     void populateDataForNode(Node &node);
@@ -102,9 +89,16 @@ protected:
     virtual void handleFinished(Node &node, QNetworkReply *reply);
 
 private:
+    QUrl requestUrl(const QString &objectId, const QString &extraPath,
+                    const QStringList &whichFields, const QVariantMap &extraData);
+    QNetworkReply * uploadImage(const QString &objectId, const QString &extraPath,
+                                const QVariantMap &data, const QVariantMap &extraData);
+    void handlePopulateNode(Node &node, const QVariantMap &responseData);
+    void handlePopulateRelatedData(Node &node, const QVariantMap &relatedData,
+                                   const QUrl &requestUrl);
     void setCurrentUserIdentifier(const QString &meId);
-    bool startSecondPartOfNodeDataLoading(const Node &node);
-    void finishSecondPartOfNodeDataLoading(Node &node, const QVariantMap &responseData);
+    bool checkNodeType(Node &node);
+    bool checkIfNeedAdditionalLoading(Node &node);
     inline bool tryAddCacheEntryFromData(NodePrivate::Status nodeStatus,
                                          const QVariantMap &relatedData,
                                          const QString &requestPath, int type,

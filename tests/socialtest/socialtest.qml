@@ -114,6 +114,9 @@ Item {
                 page2.backClicked.connect(root.backHome)
             }
             break
+        case 11:
+            homeList.populate(nodeId)
+             break
         }
         whichActive = which
     }
@@ -141,6 +144,10 @@ Item {
         visible: whichActive == 0
         anchors.fill: parent
         model: ListModel {
+            ListElement {
+                text: "Show home feed"
+                which: 11
+            }
             ListElement {
                 text: "Show posts"
                 which: 7
@@ -226,6 +233,22 @@ Item {
         visible: whichActive == 7
         onBackClicked: back(0)
         onPostClicked: makeActive(8, postId)
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Post
+            }
+        ]
+    }
+
+    PostList {
+        id: homeList
+        visible: whichActive == 11
+        onBackClicked: back(0)
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Home
+            }
+        ]
     }
 
     PostCommentsList {
@@ -337,5 +360,4 @@ Item {
             }
         }
     }
-
 }

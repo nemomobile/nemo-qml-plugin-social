@@ -608,7 +608,7 @@ QString FacebookAlbumInterface::description() const
 QUrl FacebookAlbumInterface::link() const
 {
     Q_D(const FacebookAlbumInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -618,7 +618,7 @@ QUrl FacebookAlbumInterface::link() const
 QUrl FacebookAlbumInterface::coverPhoto() const
 {
     Q_D(const FacebookAlbumInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString().toLocal8Bit());
 }
 
 /*!
@@ -706,7 +706,7 @@ bool FacebookAlbumInterface::liked() const
 
 /*!
     \qmlproperty int FacebookAlbum::likesCount
-    The number of likes on this photo.
+    The number of likes on this album.
 */
 int FacebookAlbumInterface::likesCount() const
 {
@@ -716,7 +716,7 @@ int FacebookAlbumInterface::likesCount() const
 
 /*!
     \qmlproperty int FacebookAlbum::commentsCount
-    The number of likes on this photo.
+    The number of likes on this album.
 */
 int FacebookAlbumInterface::commentsCount() const
 {

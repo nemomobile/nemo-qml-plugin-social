@@ -187,9 +187,8 @@ public:
     QNetworkAccessManager *networkAccessManager;
     QNetworkReply *reply;
     QString errorMessage;
-    bool isError;
 signals:
-    void arbitraryRequestResponseReceived(bool isError, const QVariantMap &data);
+    void arbitraryRequestResponseReceived(bool success, const QVariantMap &data);
 
 public Q_SLOTS:
     void finishedHandler();

@@ -94,7 +94,7 @@ int FacebookUserPictureInterface::type() const
 QUrl FacebookUserPictureInterface::url() const
 {
     Q_D(const FacebookUserPictureInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_URL).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_URL).toString().toLocal8Bit());
 }
 
 /*!

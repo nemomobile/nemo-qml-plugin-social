@@ -289,7 +289,7 @@ QString FacebookNotificationInterface::title() const
 QUrl FacebookNotificationInterface::link() const
 {
     Q_D(const FacebookNotificationInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_LINK).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_LINK).toString().toLocal8Bit());
 }
 
 /*!
