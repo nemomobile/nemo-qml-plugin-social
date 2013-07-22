@@ -5,11 +5,6 @@
     "extra_private_p": "int pendingTagToRemoveIndex;",
     "properties": [
         {
-            "name": "album_id",
-            "type": "QString",
-            "doc": "Holds the identifier of the album to which this photo belongs.\nNote: this property is currently not implemented.\nXXX TODO: implement this."
-        },
-        {
             "name": "from",
             "type": "FacebookObjectReferenceInterface",
             "doc": "Holds a reference to the user or profile which uploaded this photo.",
@@ -82,11 +77,6 @@
             "name": "updated_time",
             "type": "QString",
             "doc": "Holds the last-update time of the photo in an ISO8601-formatted string."
-        },
-        {
-            "name": "position",
-            "type": "int",
-            "doc": "Holds the position of the photo within the album."
         },
         {
             "name": "liked",

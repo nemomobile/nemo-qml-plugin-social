@@ -70,6 +70,7 @@
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS               QLatin1String("photos")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS                 QLatin1String("tags")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_FEED                 QLatin1String("feed")
+#define FACEBOOK_ONTOLOGY_CONNECTIONS_HOME                 QLatin1String("home")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS              QLatin1String("friends")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS        QLatin1String("notifications")
 #define FACEBOOK_ONTOLOGY_CONNECTIONS_PICTURE              QLatin1String("picture")
@@ -108,7 +109,6 @@
 
 // <<< photo
 #define FACEBOOK_ONTOLOGY_PHOTO                            QLatin1String("photo")
-#define FACEBOOK_ONTOLOGY_PHOTO_ALBUMIDENTIFIER            QLatin1String("album_id")
 #define FACEBOOK_ONTOLOGY_PHOTO_FROM                       QLatin1String("from")
 #define FACEBOOK_ONTOLOGY_PHOTO_TAGS                       QLatin1String("tags")
 #define FACEBOOK_ONTOLOGY_PHOTO_NAME                       QLatin1String("name")
@@ -123,7 +123,6 @@
 #define FACEBOOK_ONTOLOGY_PHOTO_PLACE                      QLatin1String("place")
 #define FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME                QLatin1String("created_time")
 #define FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME                QLatin1String("updated_time")
-#define FACEBOOK_ONTOLOGY_PHOTO_POSITION                   QLatin1String("position")
 // >>> photo
 
 // <<< picture
@@ -168,10 +167,10 @@
 #define FACEBOOK_ONTOLOGY_USER_GENDER                      QLatin1String("gender")
 #define FACEBOOK_ONTOLOGY_USER_LOCALE                      QLatin1String("locale")
 #define FACEBOOK_ONTOLOGY_USER_LINK                        QLatin1String("link")
-#define FACEBOOK_ONTOLOGY_USER_USERNAME                    QLatin1String("user_name")
+#define FACEBOOK_ONTOLOGY_USER_USERNAME                    QLatin1String("username")
 #define FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER        QLatin1String("third_party_id")
 #define FACEBOOK_ONTOLOGY_USER_INSTALLED                   QLatin1String("installed")
-#define FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET              QLatin1String("timezone_offset")
+#define FACEBOOK_ONTOLOGY_USER_TIMEZONE                    QLatin1String("timezone")
 #define FACEBOOK_ONTOLOGY_USER_UPDATEDTIME                 QLatin1String("updated_time")
 #define FACEBOOK_ONTOLOGY_USER_VERIFIED                    QLatin1String("verified")
 #define FACEBOOK_ONTOLOGY_USER_BIO                         QLatin1String("bio")

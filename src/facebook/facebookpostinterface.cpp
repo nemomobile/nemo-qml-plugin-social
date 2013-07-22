@@ -901,7 +901,7 @@ QDeclarativeListProperty<FacebookNameTagInterface> FacebookPostInterface::messag
 QUrl FacebookPostInterface::picture() const
 {
     Q_D(const FacebookPostInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_POST_PICTURE).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_POST_PICTURE).toString().toLocal8Bit());
 }
 
 /*!
@@ -911,7 +911,7 @@ QUrl FacebookPostInterface::picture() const
 QUrl FacebookPostInterface::link() const
 {
     Q_D(const FacebookPostInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_POST_LINK).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_POST_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -951,7 +951,7 @@ QString FacebookPostInterface::description() const
 QUrl FacebookPostInterface::source() const
 {
     Q_D(const FacebookPostInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_POST_SOURCE).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_POST_SOURCE).toString().toLocal8Bit());
 }
 
 /*!
@@ -975,7 +975,7 @@ QDeclarativeListProperty<FacebookPostPropertyInterface> FacebookPostInterface::p
 QUrl FacebookPostInterface::icon() const
 {
     Q_D(const FacebookPostInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_POST_ICON).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_POST_ICON).toString().toLocal8Bit());
 }
 
 /*!

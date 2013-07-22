@@ -66,6 +66,7 @@ class FacebookObject:
         self.doc = ""
         self.ontologyProperties = []
         self.interfaceProperties = []
+        self.rawProperties = []
         self.methods = []
         self.extraPublic = ""
         self.extraProtected = ""
@@ -139,6 +140,7 @@ def extract(file):
         property.doc = propertyAttributes["doc"]
         if property.isOntology:
             object.ontologyProperties.append(property)
+            object.rawProperties.append(propertyAttributes["name"])
         if property.isInterfaceProperty:
             object.interfaceProperties.append(property)
 

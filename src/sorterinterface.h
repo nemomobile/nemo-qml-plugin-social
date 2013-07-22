@@ -43,8 +43,7 @@ class SorterInterface : public QObject
 public:
     explicit SorterInterface(QObject *parent = 0);
     virtual ~SorterInterface();
-    Q_INVOKABLE virtual bool firstLessThanSecond(const QVariantMap &first,
-                                                 const QVariantMap &second) const;
+    virtual bool firstLessThanSecond(const QVariantMap &first, const QVariantMap &second) const;
 };
 
 #endif // SORTERINTERFACE_H

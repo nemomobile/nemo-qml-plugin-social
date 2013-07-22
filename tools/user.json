@@ -42,9 +42,9 @@
             "doc": "Holds a link to the profile of the user."
         },
         {
-            "name": "user_name",
+            "name": "username",
             "type": "QString",
-            "doc": "Holds the userName of the user."
+            "doc": "Holds the username of the user."
         },
         {
             "name": "third_party_id",
@@ -57,9 +57,9 @@
             "doc": "Whether the user has installed the application associated with\nthe access token which made the request to the Facebook service."
         },
         {
-            "name": "timezone_offset",
+            "name": "timezone",
             "type": "float",
-            "doc": "Holds the timezone offset of the user."
+            "doc": "Holds the timezone of the user."
         },
         {
             "name": "updated_time",
