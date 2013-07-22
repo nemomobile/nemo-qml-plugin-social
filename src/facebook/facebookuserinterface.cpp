@@ -152,14 +152,14 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
     QVariant newLocale = newData.value(FACEBOOK_ONTOLOGY_USER_LOCALE);
     QVariant oldLink = oldData.value(FACEBOOK_ONTOLOGY_USER_LINK);
     QVariant newLink = newData.value(FACEBOOK_ONTOLOGY_USER_LINK);
-    QVariant oldUserName = oldData.value(FACEBOOK_ONTOLOGY_USER_USERNAME);
-    QVariant newUserName = newData.value(FACEBOOK_ONTOLOGY_USER_USERNAME);
+    QVariant oldUsername = oldData.value(FACEBOOK_ONTOLOGY_USER_USERNAME);
+    QVariant newUsername = newData.value(FACEBOOK_ONTOLOGY_USER_USERNAME);
     QVariant oldThirdPartyIdentifier = oldData.value(FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER);
     QVariant newThirdPartyIdentifier = newData.value(FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER);
     QVariant oldInstalled = oldData.value(FACEBOOK_ONTOLOGY_USER_INSTALLED);
     QVariant newInstalled = newData.value(FACEBOOK_ONTOLOGY_USER_INSTALLED);
-    QVariant oldTimezoneOffset = oldData.value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET);
-    QVariant newTimezoneOffset = newData.value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET);
+    QVariant oldTimezone = oldData.value(FACEBOOK_ONTOLOGY_USER_TIMEZONE);
+    QVariant newTimezone = newData.value(FACEBOOK_ONTOLOGY_USER_TIMEZONE);
     QVariant oldUpdatedTime = oldData.value(FACEBOOK_ONTOLOGY_USER_UPDATEDTIME);
     QVariant newUpdatedTime = newData.value(FACEBOOK_ONTOLOGY_USER_UPDATEDTIME);
     QVariant oldVerified = oldData.value(FACEBOOK_ONTOLOGY_USER_VERIFIED);
@@ -191,14 +191,14 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         emit q->localeChanged();
     if (newLink != oldLink)
         emit q->linkChanged();
-    if (newUserName != oldUserName)
-        emit q->userNameChanged();
+    if (newUsername != oldUsername)
+        emit q->usernameChanged();
     if (newThirdPartyIdentifier != oldThirdPartyIdentifier)
         emit q->thirdPartyIdentifierChanged();
     if (newInstalled != oldInstalled)
         emit q->installedChanged();
-    if (newTimezoneOffset != oldTimezoneOffset)
-        emit q->timezoneOffsetChanged();
+    if (newTimezone != oldTimezone)
+        emit q->timezoneChanged();
     if (newUpdatedTime != oldUpdatedTime)
         emit q->updatedTimeChanged();
     if (newVerified != oldVerified)
@@ -638,14 +638,14 @@ QString FacebookUserInterface::locale() const
 QUrl FacebookUserInterface::link() const
 {
     Q_D(const FacebookUserInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_USER_LINK).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_USER_LINK).toString().toLocal8Bit());
 }
 
 /*!
-    \qmlproperty QString FacebookUser::userName
-    Holds the userName of the user.
+    \qmlproperty QString FacebookUser::username
+    Holds the username of the user.
 */
-QString FacebookUserInterface::userName() const
+QString FacebookUserInterface::username() const
 {
     Q_D(const FacebookUserInterface);
     return d->data().value(FACEBOOK_ONTOLOGY_USER_USERNAME).toString();
@@ -673,13 +673,13 @@ bool FacebookUserInterface::installed() const
 }
 
 /*!
-    \qmlproperty float FacebookUser::timezoneOffset
-    Holds the timezone offset of the user.
+    \qmlproperty float FacebookUser::timezone
+    Holds the timezone of the user.
 */
-float FacebookUserInterface::timezoneOffset() const
+float FacebookUserInterface::timezone() const
 {
     Q_D(const FacebookUserInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_USER_TIMEZONEOFFSET).toString();
+    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_USER_TIMEZONE).toString();
     bool ok;
     float number = numberString.toFloat(&ok);
     if (ok) {
@@ -847,6 +847,6 @@ FacebookObjectReferenceInterface * FacebookUserInterface::significantOther() con
 QUrl FacebookUserInterface::website() const
 {
     Q_D(const FacebookUserInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_USER_WEBSITE).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_USER_WEBSITE).toString().toLocal8Bit());
 }
 

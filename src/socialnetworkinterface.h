@@ -124,7 +124,7 @@ public:
                                       const QVariantMap &queryItems = QVariantMap(),
                                       const QString &postData = QString());
 Q_SIGNALS:
-    void arbitraryRequestResponseReceived(bool isError, const QVariantMap &data);
+    void arbitraryRequestResponseReceived(bool success, const QVariantMap &data);
     void initializedChanged();
 
 protected:

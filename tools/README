@@ -249,12 +249,26 @@ a JSON string. doctojson.py makes that conversion easier. It can be used to conv
 documentation to JSON strings. 
 
 You should write the documentation inside a plain text file. Running doctojson.py on it
-will return it in a one line JSON formatted string.
+will write it into the provided JSON file, as a JSON formatted string.
 
-Usage: doctojson.py [-h] doc_file
-Example: doctojson.py album.doc
+Usage: doctojson.py [-h] doc_file json_file
+Example: doctojson.py album.doc album.json
 
 (Remark: this is a quick hack, and there might be way better methods out there)
+
+=== Generating fields ====
+
+Facebook have that painful behaviour that some fields have to be specifically
+queried with ?fields=xxxxx, but when this field is queried, other fields that
+are usually queried by default, are not queried anymore.
+
+generatefields.py is used to create fields by reading description JSON file, and
+outputting a field that Facebook understands, and that includes everything. It is
+printed as a long string of comma-separated fields, that are the fields to select.
+
+Usage: generatefields.py [-h] json_file
+Example: generatefields.py album.json
+
 
 == Future work ==
 

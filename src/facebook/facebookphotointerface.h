@@ -40,9 +40,9 @@
 #else
 #include <QtDeclarative/QDeclarativeListProperty>
 #endif
-#include <QtCore/QString>
 #include "facebookobjectreferenceinterface.h"
 #include "facebookphototaginterface.h"
+#include <QtCore/QString>
 #include "facebooknametaginterface.h"
 #include <QtCore/QUrl>
 #include "facebookphotoimageinterface.h"
@@ -58,7 +58,6 @@ class FacebookPhotoInterfacePrivate;
 class FacebookPhotoInterface: public IdentifiableContentItemInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString albumIdentifier READ albumIdentifier NOTIFY albumIdentifierChanged)
     Q_PROPERTY(FacebookObjectReferenceInterface * from READ from NOTIFY fromChanged)
     Q_PROPERTY(QDeclarativeListProperty<FacebookPhotoTagInterface> tags READ tags NOTIFY tagsChanged)
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
@@ -73,7 +72,6 @@ class FacebookPhotoInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(QVariantMap place READ place NOTIFY placeChanged)
     Q_PROPERTY(QString createdTime READ createdTime NOTIFY createdTimeChanged)
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
-    Q_PROPERTY(int position READ position NOTIFY positionChanged)
     Q_PROPERTY(bool liked READ liked NOTIFY likedChanged)
     Q_PROPERTY(int likesCount READ likesCount NOTIFY likesCountChanged)
     Q_PROPERTY(int commentsCount READ commentsCount NOTIFY commentsCountChanged)
@@ -96,7 +94,6 @@ public:
     Q_INVOKABLE bool removeComment(const QString &commentIdentifier);
 
     // Accessors
-    QString albumIdentifier() const;
     FacebookObjectReferenceInterface * from() const;
     QDeclarativeListProperty<FacebookPhotoTagInterface> tags();
     QString name() const;
@@ -111,12 +108,10 @@ public:
     QVariantMap place() const;
     QString createdTime() const;
     QString updatedTime() const;
-    int position() const;
     bool liked() const;
     int likesCount() const;
     int commentsCount() const;
 Q_SIGNALS:
-    void albumIdentifierChanged();
     void fromChanged();
     void tagsChanged();
     void nameChanged();
@@ -131,7 +126,6 @@ Q_SIGNALS:
     void placeChanged();
     void createdTimeChanged();
     void updatedTimeChanged();
-    void positionChanged();
     void likedChanged();
     void likesCountChanged();
     void commentsCountChanged();

@@ -57,10 +57,10 @@ class FacebookUserInterface: public IdentifiableContentItemInterface
     Q_PROPERTY(FacebookUserInterface::Gender gender READ gender NOTIFY genderChanged)
     Q_PROPERTY(QString locale READ locale NOTIFY localeChanged)
     Q_PROPERTY(QUrl link READ link NOTIFY linkChanged)
-    Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
+    Q_PROPERTY(QString username READ username NOTIFY usernameChanged)
     Q_PROPERTY(QString thirdPartyIdentifier READ thirdPartyIdentifier NOTIFY thirdPartyIdentifierChanged)
     Q_PROPERTY(bool installed READ installed NOTIFY installedChanged)
-    Q_PROPERTY(float timezoneOffset READ timezoneOffset NOTIFY timezoneOffsetChanged)
+    Q_PROPERTY(float timezone READ timezone NOTIFY timezoneChanged)
     Q_PROPERTY(QString updatedTime READ updatedTime NOTIFY updatedTimeChanged)
     Q_PROPERTY(bool verified READ verified NOTIFY verifiedChanged)
     Q_PROPERTY(QString bio READ bio NOTIFY bioChanged)
@@ -123,10 +123,10 @@ public:
     FacebookUserInterface::Gender gender() const;
     QString locale() const;
     QUrl link() const;
-    QString userName() const;
+    QString username() const;
     QString thirdPartyIdentifier() const;
     bool installed() const;
-    float timezoneOffset() const;
+    float timezone() const;
     QString updatedTime() const;
     bool verified() const;
     QString bio() const;
@@ -151,10 +151,10 @@ Q_SIGNALS:
     void genderChanged();
     void localeChanged();
     void linkChanged();
-    void userNameChanged();
+    void usernameChanged();
     void thirdPartyIdentifierChanged();
     void installedChanged();
-    void timezoneOffsetChanged();
+    void timezoneChanged();
     void updatedTimeChanged();
     void verifiedChanged();
     void bioChanged();

@@ -98,7 +98,7 @@ int FacebookPhotoImageInterface::type() const
 QUrl FacebookPhotoImageInterface::source() const
 {
     Q_D(const FacebookPhotoImageInterface);
-    return QUrl(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGE_SOURCE).toString());
+    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGE_SOURCE).toString().toLocal8Bit());
 }
 
 /*!

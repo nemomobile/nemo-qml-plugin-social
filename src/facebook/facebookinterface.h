@@ -114,7 +114,6 @@ private:
 
 private:
     Q_DECLARE_PRIVATE(FacebookInterface)
-    Q_PRIVATE_SLOT(d_func(), void updateCurrentUserIdentifierHandler(bool, const QVariantMap&))
 };
 
 #endif // FACEBOOKINTERFACE_H
