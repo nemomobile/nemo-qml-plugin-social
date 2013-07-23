@@ -34,13 +34,22 @@ import QtQuick 1.1
 Rectangle {
     id: container
     signal clicked()
+    signal rightClicked()
+
     width: 200
     height: 60
     color: !mouseArea.pressed ? "white" : "#DCDCDC"
 
     MouseArea {
         id: mouseArea
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         anchors.fill: parent
-        onClicked: container.clicked()
+        onClicked: {
+            if (mouse.button == Qt.LeftButton) {
+                container.clicked()
+            } else {
+                container.rightClicked()
+            }
+        }
     }
 }

@@ -114,6 +114,8 @@ public:
     Q_INVOKABLE bool removePhoto(const QString &photoIdentifier);
     Q_INVOKABLE bool uploadAlbum(const QString &name, const QString &message = QString(), const QVariantMap &privacy = QVariantMap());
     Q_INVOKABLE bool removeAlbum(const QString &albumIdentifier);
+    Q_INVOKABLE bool uploadStatus(const QString &message);
+    Q_INVOKABLE bool removeStatus(const QString &statusIdentifier);
 
     // Accessors
     QString name() const;
