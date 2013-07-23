@@ -167,7 +167,7 @@
                     "is_reference": true
                 }
             ],
-            "doc": "Initiates a \"post photo\" operation on the user.  The photo will\nbe loaded from the local filesystem and uploaded to Facebook with\nits caption set to the given \\a message. It will be uploaded to\nthe default album of the user.\n\nIf the network request was started successfully, the function\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded photo.\n"
+            "doc": "Initiates a \"post photo\" operation on the user.  The photo will\nbe loaded from the local filesystem and uploaded to Facebook with\nits caption set to the given \\a message. It will be uploaded to\nthe default album of the user.\n\nIf the network request was started successfully, the function\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded photo."
         },
         {
             "name": "removePhoto",
@@ -218,6 +218,30 @@
                 }
             ],
             "doc": "Initiates a \"delete album\" operation on the album specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+        },
+        {
+            "name": "uploadStatus",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "message",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": "Initiates a \"post status\" operation on the user.  The status\nwill contain the message provided by \\a message, and will be\nposted as a status update.\n\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded status."
+        },
+        {
+            "name": "removeStatus",
+            "parameters": [
+                {
+                    "type": "QString",
+                    "name": "statusIdentifier",
+                    "is_const": true,
+                    "is_reference": true
+                }
+            ],
+            "doc": "Initiates a \"delete status\" operation on the status specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the user will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
         }
     ]
 }

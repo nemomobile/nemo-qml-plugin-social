@@ -85,6 +85,10 @@ Item {
             width: view.width
             height: column.height + 20
             onClicked: container.postClicked(model.contentItem.identifier)
+            onRightClicked: {
+                menuContainer.postIdentifier = model.contentItem.identifier
+                menuContainer.visible = true
+            }
             Column {
                 id: column
                 property string message: model.contentItem.message
@@ -105,4 +109,48 @@ Item {
             }
         }
     }
+
+    Item {
+        id: menuContainer
+        anchors.fill: parent
+        property string postIdentifier
+        property bool loading: false
+        visible: false
+
+        Connections {
+            target: model.node
+            onStatusChanged: {
+                if (model.node.status == Facebook.Idle) {
+                    menuContainer.loading = false
+                    menuContainer.visible = false
+                    model.repopulate()
+                }
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: "grey"
+            opacity: 0.5
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: menuContainer.visible
+            onClicked: menuContainer.visible = false
+        }
+
+        Column {
+            anchors.centerIn: parent
+            Button {
+                enabled: menuContainer.visible && !menuContainer.loading
+                text: "Remove"
+                onClicked: {
+                    menuContainer.loading = true
+                    model.node.removeStatus(menuContainer.postIdentifier)
+                }
+            }
+        }
+    } 
+
 }

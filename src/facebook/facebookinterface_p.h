@@ -66,7 +66,9 @@ public:
         UploadPhotoAction,
         DeletePhotoAction,
         UploadAlbumAction,
-        DeleteAlbumAction
+        DeleteAlbumAction,
+        UploadPostAction,
+        DeletePostAction
     };
 
     explicit FacebookInterfacePrivate(FacebookInterface *q);

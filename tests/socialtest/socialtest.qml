@@ -184,7 +184,10 @@ Item {
                 text: "Test getting \"me\""
                 which: -4
             }
-
+            ListElement {
+                text: "Test posting something"
+                which: -5
+            }
             ListElement {
                 text: "Quit"
                 which: -1
@@ -203,7 +206,7 @@ Item {
                     } else if (model.which == -2) {
                         if(!portraitModel.retrieved) {
                             portraitModel.populate()
-                            root.whichActive = -1
+                            root.whichActive = -2
                         } else {
                             portraitModel.displayPortraitUrl()
                         }
@@ -212,7 +215,6 @@ Item {
                             user.displayUser()
                             return
                         }
-
                         root.whichActive = -3
                         user.identifier = "me"
                     } else if(model.which == -4) {
@@ -220,6 +222,14 @@ Item {
                             root.whichActive = -4
                             nsuffysModel.populate()
                         }
+                    } else if (model.which == -5) {
+                        if (postingUser.identifier == "me" || postingUser.status != Facebook.Idle) {
+                            console.debug("Please retrieve the current user first")
+                            return
+                        }
+                        root.whichActive = -5
+                        postingUser.posting = true
+                        postingUser.uploadStatus("Hello everybody ! How are you ?")
                     } else {
                         makeActive(model.which, facebook.currentUserIdentifier)
                     }
@@ -357,6 +367,19 @@ Item {
                 console.debug("Test user retrieved: " + nsuffysModel.node.name)
                 nsuffysModel.retrieved = true
                 root.whichActive = 0
+            }
+        }
+    }
+
+    FacebookUser {
+        id: postingUser
+        socialNetwork: facebook
+        property bool posting: false
+        identifier: facebook.currentUserIdentifier
+        onStatusChanged: {
+            if (status == Facebook.Idle && posting) {
+                root.whichActive = 0
+                posting = false
             }
         }
     }

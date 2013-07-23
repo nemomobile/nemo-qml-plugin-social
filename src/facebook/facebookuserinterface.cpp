@@ -83,6 +83,7 @@ void FacebookUserInterfacePrivate::finishedHandler()
         responseData.insert("response", replyData);
 
     switch (action) {
+        case FacebookInterfacePrivate::DeletePostAction: // flow down
         case FacebookInterfacePrivate::DeletePhotoAction: // flow down.
         case FacebookInterfacePrivate::DeleteAlbumAction: {
             if (replyData == QString(QLatin1String("true"))) {
@@ -101,14 +102,13 @@ void FacebookUserInterfacePrivate::finishedHandler()
         }
         break;
 
+        case FacebookInterfacePrivate::UploadPostAction: // flow down
         case FacebookInterfacePrivate::UploadPhotoAction: // flow down.
         case FacebookInterfacePrivate::UploadAlbumAction: {
             if (!ok || responseData.value("id").toString().isEmpty()) {
                 // failed.
                 error = SocialNetworkInterface::RequestError;
-                errorMessage = action == FacebookInterfacePrivate::UploadAlbumAction
-                    ? QLatin1String("Album: add album request failed")
-                    : QLatin1String("Album: add photo request failed");
+                errorMessage = QLatin1String("User: request failed");
                 status = SocialNetworkInterface::Error;
                 emit q->statusChanged();
                 emit q->errorChanged();
@@ -455,8 +455,7 @@ bool FacebookUserInterface::reload(const QStringList &whichFields)
     
     Once the network request completes, the \c responseReceived()
     signal will be emitted.  The \c data parameter of the signal
-    will contain the \c id of the newly uploaded photo.
-    */
+    will contain the \c id of the newly uploaded photo.*/
 
 bool FacebookUserInterface::uploadPhoto(const QUrl &source, const QString &message)
 {
@@ -569,6 +568,74 @@ bool FacebookUserInterface::removeAlbum(const QString &albumIdentifier)
     d->connectFinishedAndErrors();
     return true;
 // >>> removeAlbum
+}
+/*!
+    \qmlmethod bool FacebookUser::uploadStatus(const QString &message)
+    Initiates a "post status" operation on the user.  The status
+    will contain the message provided by \a message, and will be
+    posted as a status update.
+    
+    will return true and the status of the user will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded status.*/
+
+bool FacebookUserInterface::uploadStatus(const QString &message)
+{
+// <<< uploadStatus
+    Q_D(FacebookUserInterface);
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork());
+    if (!facebook) {
+        qWarning() << Q_FUNC_INFO << "Please set Facebook as the socialNetwork";
+        return false;
+    }
+
+
+    if (identifier() != facebook->currentUserIdentifier()) {
+        qWarning() << Q_FUNC_INFO
+                   << "Please the currentUserIdentifier of Facebook as an identifier for this user";
+        return false;
+    }
+
+    QVariantMap postData;
+    postData.insert(FACEBOOK_ONTOLOGY_POST_MESSAGE, message);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Post, identifier(),
+                                  FACEBOOK_ONTOLOGY_CONNECTIONS_FEED, QStringList(), postData);
+
+    if (!requestMade)
+        return false;
+
+    d->action = FacebookInterfacePrivate::UploadPostAction;
+    d->connectFinishedAndErrors();
+    return true;
+// >>> uploadStatus
+}
+/*!
+    \qmlmethod bool FacebookUser::removeStatus(const QString &statusIdentifier)
+    Initiates a "delete status" operation on the status specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the user will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookUserInterface::removeStatus(const QString &statusIdentifier)
+{
+// <<< removeStatus
+    Q_D(FacebookUserInterface);
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Delete, statusIdentifier);
+
+    if (!requestMade)
+        return false;
+
+    d->action = FacebookInterfacePrivate::DeletePostAction;
+    d->connectFinishedAndErrors();
+    return true;
+// >>> removeStatus
 }
 
 /*!
