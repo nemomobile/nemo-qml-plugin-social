@@ -237,6 +237,8 @@ void IdentifiableContentItemInterfacePrivate::finishedHandler()
 
 void IdentifiableContentItemInterfacePrivate::removeHandler()
 {
+    // TODO: this handler might not be very suited
+
     Q_Q(IdentifiableContentItemInterface);
     if (!reply()) {
         // if an error occurred, it might have been deleted by the error handler.
@@ -310,6 +312,8 @@ void IdentifiableContentItemInterfacePrivate::reloadHandler()
         emit q->errorChanged();
         emit q->errorMessageChanged();
         emit q->responseReceived(responseData);
+
+        qDebug() << replyData;
     }
 }
 

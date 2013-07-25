@@ -36,74 +36,82 @@ Item {
     id: container
     anchors.fill: parent
     signal backClicked
+    property alias filters: socialNetworkModel.filters
+    property color backgroundColor
+    property color linkColor
+    property color sidebarBorderColor
+    property color profileSidebarFillColor
+    property color profileTextColor
+
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
-        view.positionViewAtBeginning()
+        if (socialNetworkModel.nodeIdentifier != nodeId) {
+            model.clear()
+            socialNetworkModel.nodeIdentifier = nodeId
+            socialNetworkModel.populate()
+            return
+        }
+
+        if (model.count == 0) {
+            socialNetworkModel.nodeIdentifier = nodeId
+            socialNetworkModel.populate()
+        }
     }
 
     SocialNetworkModel {
-        id: model
-        socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.User
-                limit: 50
+        id: socialNetworkModel
+        socialNetwork: twitter
+        nodeType: Twitter.User
+        onStatusChanged: {
+            if (status == SocialNetwork.Idle) {
+                model.append({"name": "profile_background_color",
+                              "color": socialNetworkModel.node.profileBackgroundColor})
+                model.append({"name": "profile_link_color",
+                              "color": socialNetworkModel.node.profileLinkColor})
+                model.append({"name": "profile_sidebar_border_color",
+                              "color": socialNetworkModel.node.profileSidebarBorderColor})
+                model.append({"name": "profile_sidebar_fill_color",
+                              "color": socialNetworkModel.node.profileSidebarFillColor})
+                model.append({"name": "profile_text_color",
+                              "color": socialNetworkModel.node.profileTextColor})
             }
-        ]
+        }
     }
 
-    Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " friends"
-    }
-
-    Button {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
+    ListModel {
+        id: model
     }
 
     ListView {
         id: view
         clip: true
-        anchors.top: topLabel.bottom
+        anchors.top: parent.top
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
         model: model
-        footer: Item {
-            width: view.width
-            height: column.height
-            Column {
-                id: column
-                anchors.left: parent.left; anchors.right: parent.right
-                Button {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Reload"
-                    onClicked: model.repopulate()
-                }
-                Button {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: model.hasNext ? "Load more" : "Cannot load more"
-                    onClicked: model.loadNext()
-                }
-            }
-
-        }
-
-        delegate: Item {
+        delegate: Rectangle {
             width: view.width
             height: 50
+            color: model.color
+
+            Rectangle {
+                anchors.fill: text
+                color: "white"
+            }
 
             Text {
+                id: text
                 anchors.centerIn: parent
-                text: model.contentItem.name
+                text: model.name
             }
         }
+    }
+
+    TwitterButton {
+        id: backButton
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: "Back"
+        onClicked: container.backClicked()
     }
 }

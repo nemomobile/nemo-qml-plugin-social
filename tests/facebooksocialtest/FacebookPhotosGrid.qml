@@ -36,11 +36,7 @@ Item {
     id: container
     anchors.fill: parent
     signal backClicked
-
-    Connections {
-        target: root
-        onWhichActiveChanged: container.visible = (root.whichActive == 6)
-    }
+    signal photoClicked(string photoId)
 
     function populate(nodeId) {
         model.nodeIdentifier = nodeId
@@ -51,52 +47,51 @@ Item {
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [ friendsFilter ]
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Photo
+            }
+        ]
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " friends"
+        text: model.node == null ? "... Loading ..."
+              : "There are "  + model.node.count + " photos in this album"
+              + "\nComments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
+              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
     }
 
-    Button {
+    FacebookButton {
         id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Back"
-        onClicked: {
-            container.backClicked()
-            container.destroy()
-        }
+        onClicked: container.backClicked()
     }
 
-    ListView {
+    GridView {
         id: view
         clip: true
         anchors.top: topLabel.bottom
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
+        cellWidth: width / 4
+        cellHeight: cellWidth
         model: model
-        footer: Item {
-            width: view.width
-            height: childrenRect.height
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: model.hasNext ? "Load more" : "Cannot load more"
-                onClicked: model.loadNext()
-            }
-        }
-
-        delegate: Item {
-            width: view.width
-            height: 50
-
-            Text {
-                anchors.centerIn: parent
-                text: model.contentItem.name
+        delegate: MouseArea {
+            id: photoDelegate
+            onClicked: container.photoClicked(model.contentItem.identifier)
+            width: view.cellWidth
+            height: view.cellHeight
+            clip: true
+            Image {
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectCrop
+                source: model.contentItem.picture
             }
         }
     }

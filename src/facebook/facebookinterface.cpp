@@ -454,19 +454,12 @@ QNetworkReply * FacebookInterfacePrivate::deleteRequest(const QString &objectIde
 
 void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
 {
-    if (!reply) {
-        // if an error occurred, it might have been deleted by the error handler.
-        qWarning() << Q_FUNC_INFO << "network request finished but no reply!";
-        return;
-    }
-
     QByteArray replyData = reply->readAll();
     QUrl requestUrl = reply->request().url();
     deleteReply(reply);
     bool ok = false;
     QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok) {
-        responseData.insert("response", replyData);
         setError(node, SocialNetworkInterface::RequestError,
                  QLatin1String("Error populating node: response is invalid. "\
                                "Perhaps the requested object id was incorrect?  Response: ")

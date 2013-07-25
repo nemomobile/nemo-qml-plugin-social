@@ -29,14 +29,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-import QtQuick 1.1
+#ifndef TWITTERUSERINTERFACE_P_H
+#define TWITTERUSERINTERFACE_P_H
 
-ButtonBackground {
-    id: container
-    property alias text: text.text
+#include "twitteruserinterface.h"
+#include "twitterinterface_p.h"
+#include "identifiablecontentiteminterface_p.h"
 
-    Text {
-        id: text
-        anchors.centerIn: parent
-    }
-}
+class TwitterUserInterfacePrivate: public IdentifiableContentItemInterfacePrivate
+{
+public:
+    explicit TwitterUserInterfacePrivate(TwitterUserInterface *q);
+    void finishedHandler();
+    void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+    TwitterInterfacePrivate::TwitterAction action;
+private:
+    Q_DECLARE_PUBLIC(TwitterUserInterface)
+};
+
+#endif // TWITTERUSERINTERFACE_P_H

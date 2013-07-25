@@ -30,69 +30,53 @@
  */
 
 import QtQuick 1.1
-import org.nemomobile.social 1.0
 
 Item {
     id: container
-    anchors.fill: parent
-    signal backClicked
-    function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
-        view.positionViewAtBeginning()
+    width: 300
+    height: 600
+
+    Item {
+        anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+        height: container.height / 2
+
+        Web {
+            id: web
+            anchors.fill: parent
+        }
     }
 
-    SocialNetworkModel {
-        id: model
-        socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Notification
-            }
-        ]
+    Item {
+        anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
+        height: container.height / 2
+
+        Rectangle {
+            anchors.fill: input
+            color: "#CCCCCC"
+        }
+        TextInput {
+            id: input
+            height: 50
+            anchors.left: parent.left; anchors.right: parent.right
+            font.pixelSize: 50
+            validator: IntValidator{bottom: 0; top: 9999999}
+            onTextChanged: tokenRequestHandler.pin = text
+        }
+
+        TwitterButton {
+            anchors.top: input.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "Continue login"
+            onClicked: tokenRequestHandler.continueRequest()
+        }
+
     }
 
-    Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " notifications"
-    }
 
-    Button {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
-    }
-
-    ListView {
-        id: view
-        clip: true
-        anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        model: model
-        delegate: Item {
-            width: view.width
-            height: column.height + 20
-            Column {
-                id: column
-                anchors.left: parent.left; anchors.leftMargin: 10
-                anchors.right: parent.right; anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-
-                Text {
-                    text: "From: " + model.contentItem.from.objectName
-                }
-                Text {
-                    anchors.left: parent.left; anchors.right: parent.right
-                    wrapMode: Text.WordWrap
-                    text: "Title: " + model.contentItem.title
-                }
-            }
+    Connections {
+        target: tokenRequestHandler
+        onSendAuthorize: {
+            web.url = url
         }
     }
 }

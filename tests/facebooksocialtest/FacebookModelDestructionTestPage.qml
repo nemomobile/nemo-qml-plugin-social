@@ -36,7 +36,11 @@ Item {
     id: container
     anchors.fill: parent
     signal backClicked
-    signal albumClicked(string albumId)
+
+    Connections {
+        target: root
+        onWhichActiveChanged: container.visible = (root.whichActive == 6)
+    }
 
     function populate(nodeId) {
         model.nodeIdentifier = nodeId
@@ -47,29 +51,26 @@ Item {
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Album
-                limit: 10
-            }
-        ]
+        filters: [ friendsFilter ]
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + model.count + " albums"
+        text: "You have " + model.count + " friends"
     }
 
-    Button {
+    FacebookButton {
         id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Back"
-        onClicked: container.backClicked()
+        onClicked: {
+            container.backClicked()
+            container.destroy()
+        }
     }
-
 
     ListView {
         id: view
@@ -82,28 +83,20 @@ Item {
         footer: Item {
             width: view.width
             height: childrenRect.height
-            Button {
+            FacebookButton {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: model.hasNext ? "Load more" : "Cannot load more"
                 onClicked: model.loadNext()
             }
         }
-        delegate: ButtonBackground {
-            width: view.width
-            height: column.height + 20
-            onClicked: container.albumClicked(model.contentItem.identifier)
-            Column {
-                id: column
-                anchors.left: parent.left; anchors.leftMargin: 10
-                anchors.right: parent.right; anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
 
-                Text {
-                    text: "Name: " + model.contentItem.name
-                }
-                Text {
-                    text: "Count: " + model.contentItem.count
-                }
+        delegate: Item {
+            width: view.width
+            height: 50
+
+            Text {
+                anchors.centerIn: parent
+                text: model.contentItem.name
             }
         }
     }

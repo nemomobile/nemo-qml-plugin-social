@@ -65,6 +65,7 @@ class SocialNetworkModelInterface: public QAbstractListModel, public QDeclarativ
                NOTIFY socialNetworkChanged)
     Q_PROPERTY(QString nodeIdentifier READ nodeIdentifier WRITE setNodeIdentifier
                NOTIFY nodeIdentifierChanged)
+    Q_PROPERTY(int nodeType READ nodeType WRITE setNodeType NOTIFY nodeTypeChanged)
     Q_PROPERTY(IdentifiableContentItemInterface *node READ node NOTIFY nodeChanged)
     Q_PROPERTY(bool hasPrevious READ hasPrevious NOTIFY hasPreviousChanged)
     Q_PROPERTY(bool hasNext READ hasNext NOTIFY hasNextChanged)
@@ -98,6 +99,7 @@ public:
 
     SocialNetworkInterface * socialNetwork() const;
     QString nodeIdentifier() const;
+    int nodeType() const;
     IdentifiableContentItemInterface *node() const;
     bool hasPrevious() const;
     bool hasNext() const;
@@ -108,6 +110,7 @@ public:
     // Property mutators.
     void setSocialNetwork(SocialNetworkInterface *socialNetwork);
     void setNodeIdentifier(const QString &nodeIdentifier);
+    void setNodeType(int nodeType);
 
     Q_INVOKABLE QObject * relatedItem(int index) const;
 
@@ -124,6 +127,7 @@ Q_SIGNALS:
     void errorMessageChanged();
     void socialNetworkChanged();
     void nodeIdentifierChanged();
+    void nodeTypeChanged();
     void nodeChanged();
     void hasPreviousChanged();
     void hasNextChanged();

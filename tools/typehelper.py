@@ -33,8 +33,10 @@ def include(property):
     type = property.type
     if type in ["int", "float", "double"]:
         return None
-    if type in ["QString", "QVariant", "QUrl", "QVariantMap"]:
+    if type in ["QString", "QVariant", "QUrl", "QVariantMap", "QDateTime"]:
         return "<QtCore/" + type + ">"
+    if type in ["QColor"]:
+        return "<QtGui/" + type + ">"
     if property.isPointer or property.isList:
         return "\"" + type.lower() + ".h\""
 
@@ -60,4 +62,13 @@ def convert(type, line):
         return "return QUrl::fromEncoded(" + line + ".toString().toLocal8Bit());"
     if type == "QVariantMap":
         return "return " + line + ".toMap();"
+    if type == "QColor":
+        data = "QString color = " + line + ".toString();\n"
+        data += "if (color.startsWith(\"#\")) {\n"
+        data += "    return QColor(color);\n"
+        data += "} else {\n"
+        data += "    color.prepend(\"#\");\n"
+        data += "    return QColor(color);\n"
+        data += "}"
+        return data
     return ""
