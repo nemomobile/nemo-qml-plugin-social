@@ -63,6 +63,12 @@
 
 #include "facebook/facebooklikeinterface.h"
 
+// twitter implementation headers
+#include "twitter/twitterinterface.h"
+#include "twitter/twitteruserinterface.h"
+#include "twitter/twittertweetinterface.h"
+
+
 class Q_DECL_EXPORT NemoSocialPlugin : public QDeclarativeExtensionPlugin
 {
     Q_OBJECT
@@ -85,6 +91,8 @@ public:
 
         // these types are actually uncreatable, but are not marked as such, in order
         // to allow users to specify properties of those types.
+        // TODO: we will need to set them as uncreatable one day
+
         qmlRegisterType<SocialNetworkInterface>(uri, 1, 0, "SocialNetwork");
         qmlRegisterType<ContentItemInterface>(uri, 1, 0, "ContentItem");
         qmlRegisterType<IdentifiableContentItemInterface>(uri, 1, 0, "IdentifiableContentItem");
@@ -113,6 +121,11 @@ public:
         qmlRegisterType<FacebookPostPropertyInterface>(uri, 1, 0, "FacebookPostProperty");
         qmlRegisterType<FacebookUserCoverInterface>(uri, 1, 0, "FacebookUserCover");
         qmlRegisterType<FacebookUserPictureInterface>(uri, 1, 0, "FacebookUserPicture");
+
+        // creatable types from the twitter implementation
+        qmlRegisterType<TwitterInterface>(uri, 1, 0, "Twitter");
+        qmlRegisterType<TwitterUserInterface>(uri, 1, 0, "TwitterUser");
+        qmlRegisterType<TwitterTweetInterface>(uri, 1, 0, "TwitterTweet");
     }
 };
 

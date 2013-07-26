@@ -1,2 +1,3 @@
 TEMPLATE = subdirs
-SUBDIRS += socialtest #snitest multimodeltest
+SUBDIRS += facebooksocialtest twittersocialtest
+#SUBDIRS +=  snitest multimodeltest

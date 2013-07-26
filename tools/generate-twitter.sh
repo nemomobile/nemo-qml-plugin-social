@@ -28,39 +28,41 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 
-# Regenerate all the Facebook*Interface based on the .json
+# Regenerate all the Twitter*Interface based on the .json
 # files that are provided.
 
 # Move the ontology file
-mv ../src/facebook/facebookontology_p.h .
+mv ../src/twitter/twitterontology_p.h .
+mv twitter/*.json .
 
 for file in `ls -1 *.json`; do
     # Generate ontologies
-    ./ontology-writer.py facebookontology_p.h $file
+    ./ontology-writer.py twitterontology_p.h $file Twitter
    
-    headerfile=facebook${file/.json/}interface.h
-    sourcefile=facebook${file/.json/}interface.cpp
-    privatefile=facebook${file/.json/}interface_p.h
+    headerfile=twitter${file/.json/}interface.h
+    sourcefile=twitter${file/.json/}interface.cpp
+    privatefile=twitter${file/.json/}interface_p.h
     
     
     # Move source and header files
-    mv ../src/facebook/$headerfile .
-    mv ../src/facebook/$sourcefile .
-    if [ -f ../src/facebook/$privatefile ]
+    mv ../src/twitter/$headerfile .
+    mv ../src/twitter/$sourcefile .
+    if [ -f ../src/twitter/$privatefile ]
     then
-        mv ../src/facebook/$privatefile .
+        mv ../src/twitter/$privatefile .
     fi
     
-    ./interface-writer.py $file
+    ./interface-writer.py $file Twitter
     
     # Move the files back
-    mv $headerfile ../src/facebook/
-    mv $sourcefile ../src/facebook/
+    mv $headerfile ../src/twitter/
+    mv $sourcefile ../src/twitter/
     
     if [ -f $privatefile ]
     then
-        mv $privatefile ../src/facebook/
+        mv $privatefile ../src/twitter/
     fi
 done
 
-mv facebookontology_p.h ../src/facebook/
+mv *.json twitter/
+mv twitterontology_p.h ../src/twitter/

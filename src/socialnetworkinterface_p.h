@@ -119,6 +119,10 @@ struct NodePrivate: public QSharedData
     // The identifier associated to the node
     // It might be different from the one associated to the cache entry
     QString identifier;
+    // The type associated to the node
+    // Could be used (or not), depending on the social network
+    // Should be set to SocialNetworkInterface::Unknown if not used
+    int type;
     // The filters associated to the node
     QSet<FilterInterface *> filters;
     // A cache entry that describes the node
@@ -142,13 +146,14 @@ class Node
 {
 public:
     explicit Node();
-    explicit Node(const QString &identifier, const QSet<FilterInterface *> &filters);
+    explicit Node(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
     Node(const Node &other);
     virtual ~Node();
     bool operator==(const Node &other) const;
     bool operator!=(const Node &other) const;
     bool isNull() const;
     QString identifier() const;
+    int type() const;
     QSet<FilterInterface *> filters() const;
     CacheEntry cacheEntry() const;
     void setCacheEntry(const CacheEntry &cacheEntry);
@@ -227,6 +232,10 @@ protected:
                                           const QVariantMap &extraData);
     friend class IdentifiableContentItemInterfacePrivate;
 
+    // Function to guess the type, implement if needed
+    virtual int guessType(const QString &identifier, int type,
+                          const QSet<FilterInterface *> &filters);
+
     // Handlers, implement if needed
     virtual void handleFinished(Node &node, QNetworkReply *reply);
     virtual void handleError(Node &node, QNetworkReply *reply,
@@ -242,13 +251,14 @@ protected:
     void deleteReply(QNetworkReply *reply);
     void updateModelNode(Node &node);
     void updateModelRelatedData(Node &node, const QList<CacheEntry> &relatedData);
+    void updateModelHavePreviousAndNext(Node &node, bool havePrevious, bool haveNext);
     CacheEntry createCacheEntry(const QVariantMap &data, const QString &nodeIdentifier = QString());
 
     // Aliases map
     QMap<QString, QString> aliases;
 private:
     // Used by NSMI
-    void populate(SocialNetworkModelInterface *model, const QString &identifier,
+    void populate(SocialNetworkModelInterface *model, const QString &identifier, int type,
                   const QList<FilterInterface *> &filters, bool reload = false);
     void addModel(SocialNetworkModelInterface *model);
     void removeModel(SocialNetworkModelInterface *model);
@@ -267,10 +277,12 @@ private:
 
 
     // Implementation details
+    inline bool matches(const QString &identifier, int type, const QSet<FilterInterface *> &filters,
+                        SocialNetworkModelInterface *model);
     inline bool matches(const Node &node, SocialNetworkModelInterface *model);
     inline static SocialNetworkInterface::Status correspondingStatus(NodePrivate::Status status);
-    Node getOrCreateNode(const QString &identifier, const QSet<FilterInterface *> &filters);
-    Node getNode(const QString &identifier, const QSet<FilterInterface *> &filters);
+    Node getOrCreateNode(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
+    Node getNode(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
     void checkDoomedNodes();
     void checkCacheEntryRefcount(const CacheEntry &entry);
     void deleteNode(const Node &node);

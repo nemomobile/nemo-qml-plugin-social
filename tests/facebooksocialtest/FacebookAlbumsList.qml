@@ -36,47 +36,40 @@ Item {
     id: container
     anchors.fill: parent
     signal backClicked
-
-    Connections {
-        target: root
-        onWhichActiveChanged: {
-            container.visible = (root.whichActive == 10)
-        }
-    }
+    signal albumClicked(string albumId)
 
     function populate(nodeId) {
-        filterDestructionTestModel.nodeIdentifier = nodeId
-        filterDestructionTestModel.filters = [testFilter]
-        filterDestructionTestModel.populate()
+        model.nodeIdentifier = nodeId
+        model.populate()
         view.positionViewAtBeginning()
     }
 
-    ContentItemTypeFilter {
-        id: testFilter
-        type: Facebook.User
+    SocialNetworkModel {
+        id: model
+        socialNetwork: facebook
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Album
+                limit: 10
+            }
+        ]
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "You have " + filterDestructionTestModel.count + " friends"
+        text: "You have " + model.count + " albums"
     }
 
-    Button {
+    FacebookButton {
         id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Back"
-        onClicked: {
-            container.backClicked()
-            // If we do not destroy the filter first, we might go into a race
-            // conditin in Qt 5 where the delegates are destroyed twice, and
-            // leads into a segfault :(
-            testFilter.destroy()
-            container.destroy()
-        }
+        onClicked: container.backClicked()
     }
+
 
     ListView {
         id: view
@@ -85,24 +78,32 @@ Item {
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
-        model: filterDestructionTestModel
+        model: model
         footer: Item {
             width: view.width
             height: childrenRect.height
-            Button {
+            FacebookButton {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: filterDestructionTestModel.hasNext ? "Load more" : "Cannot load more"
-                onClicked: filterDestructionTestModel.loadNext()
+                text: model.hasNext ? "Load more" : "Cannot load more"
+                onClicked: model.loadNext()
             }
         }
-
-        delegate: Item {
+        delegate: FacebookButtonBackground {
             width: view.width
-            height: 50
+            height: column.height + 20
+            onClicked: container.albumClicked(model.contentItem.identifier)
+            Column {
+                id: column
+                anchors.left: parent.left; anchors.leftMargin: 10
+                anchors.right: parent.right; anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
 
-            Text {
-                anchors.centerIn: parent
-                text: model.contentItem.name
+                Text {
+                    text: "Name: " + model.contentItem.name
+                }
+                Text {
+                    text: "Count: " + model.contentItem.count
+                }
             }
         }
     }

@@ -47,6 +47,7 @@ public:
 
     SocialNetworkInterface *socialNetwork;
     QString nodeIdentifier;
+    int nodeType;
     IdentifiableContentItemInterface *node;
     bool hasPrevious;
     bool hasNext;

@@ -29,12 +29,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKINTERFACE_P_H
-#define FACEBOOKINTERFACE_P_H
+#ifndef TWITTERINTERFACE_P_H
+#define TWITTERINTERFACE_P_H
 
 #include "socialnetworkinterface.h"
 #include "socialnetworkinterface_p.h"
-#include "facebookinterface.h"
+#include "twitterinterface.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QVariantMap>
@@ -44,35 +44,52 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QSslError>
 
-typedef QPair<QString, QString> StringPair;
-typedef QMultiMap<int, StringPair> RequestFieldsMap;
-
 class ContentItemInterface;
 
-class FacebookInterfacePrivate : public SocialNetworkInterfacePrivate
+struct RequestInfo
+{
+    QString objectIdentifier;
+    QString extraPath;
+    QStringList whichFields;
+    QVariantMap extraData;
+    QVariantMap postedData;
+};
+
+class TwitterInterfacePrivate : public SocialNetworkInterfacePrivate
 {
 public:
-    // the following is for identifiable content item "actions"
-    enum FacebookAction {
-        NoAction = 0,
-        RemoveAction,
-        ReloadAction,
-        LikeAction,
-        DeleteLikeAction,
-        TagAction,
-        DeleteTagAction,
-        UploadCommentAction,
-        DeleteCommentAction,
-        UploadPhotoAction,
-        DeletePhotoAction,
-        UploadAlbumAction,
-        DeleteAlbumAction
-    };
+    explicit TwitterInterfacePrivate(TwitterInterface *q);
 
-    explicit FacebookInterfacePrivate(FacebookInterface *q);
-
-    QString accessToken;
+    QString oauthToken;
+    QString oauthTokenSecret;
+    QString consumerKey;
+    QString consumerSecret;
     QString currentUserIdentifier;
+
+    QNetworkRequest networkRequest(const QString &extraPath, const QVariantMap &extraData,
+                                   const QByteArray &requestMethod,
+                                   const QVariantMap &postData = QVariantMap());
+
+    int detectTypeFromData(const QVariantMap &data) const;
+    void handlePopulateRelatedData(Node &node, const QVariant &relatedData,
+                                   const QUrl &requestUrl);
+
+    // Requests
+    static RequestInfo requestUserInfo(const QString &identifier);
+    static RequestInfo requestTweetInfo(const QString &identifier, bool trimUser = false,
+                                        bool includeMyRetweet = false, bool includeEntities = true);
+
+public:
+    // the following is for identifiable content item "actions"
+    enum TwitterAction {
+        NoAction = 0,
+        FollowAction,
+        UnfollowAction,
+        TweetAction,
+        RetweetAction,
+        FavoriteAction,
+        UnfavoriteAction
+    };
 protected:
     // Reimplemented
     void populateDataForNode(Node &node);
@@ -86,27 +103,13 @@ protected:
                                 const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply * deleteRequest(const QString &objectIdentifier, const QString &extraPath,
                                   const QVariantMap &extraData);
+    int guessType(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
     void handleFinished(Node &node, QNetworkReply *reply);
 
 private:
-    QUrl requestUrl(const QString &objectId, const QString &extraPath,
-                    const QStringList &whichFields, const QVariantMap &extraData);
-    QNetworkReply * uploadImage(const QString &objectId, const QString &extraPath,
-                                const QVariantMap &data, const QVariantMap &extraData);
-    void handlePopulateNode(Node &node, const QVariantMap &responseData);
-    void handlePopulateRelatedData(Node &node, const QVariantMap &relatedData,
-                                   const QUrl &requestUrl);
-    void setCurrentUserIdentifier(const QString &meId);
-    bool checkNodeType(Node &node);
-    bool checkIfNeedAdditionalLoading(Node &node);
-    inline bool tryAddCacheEntryFromData(NodePrivate::Status nodeStatus,
-                                         const QVariantMap &relatedData,
-                                         const QString &requestPath, int type,
-                                         const QString &typeName, QList<CacheEntry> &list,
-                                         QVariantMap &nodeExtra);
-    inline QString createField(int type, const QString &connection,
-                               const RequestFieldsMap &requestFiledsMap);
-    Q_DECLARE_PUBLIC(FacebookInterface)
+    bool performRelatedDataRequest(Node &node, const QString &identifier,
+                                   const QList<FilterInterface *> &filters);
+    Q_DECLARE_PUBLIC(TwitterInterface)
 };
 
-#endif // FACEBOOKINTERFACE_P_H
+#endif // TWITTERINTERFACE_P_H

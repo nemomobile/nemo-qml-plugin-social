@@ -29,39 +29,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef CONTENTITEMINTERFACE_P_H
-#define CONTENTITEMINTERFACE_P_H
+import QtQuick 1.1
+import QtWebKit 1.0
 
-#include <QtCore/QVariantMap>
+Flickable {
+    property alias url: webView.url
+    anchors.fill: parent
+    contentWidth: width
+    contentHeight: webView.height
+    clip: true
 
-class SocialNetworkInterface;
-class ContentItemInterface;
-class ContentItemInterfacePrivate
-{
-public:
-    explicit ContentItemInterfacePrivate(ContentItemInterface *q);
-    virtual ~ContentItemInterfacePrivate();
-
-    QVariantMap data() const;
-    void setData(const QVariantMap &data);
-
-    virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-    virtual void initializationComplete();
-
-    // helper api - parse network reply data into QVariantMap
-    // TODO: This method should be put in a header containing useful functions, and maybe inlined
-    static QVariant parseReplyDataVariant(const QByteArray &replyData, bool *ok);
-    static QVariantMap parseReplyData(const QByteArray &replyData, bool *ok);
-
-    SocialNetworkInterface *socialNetworkInterface;
-    bool isInitialized;
-protected:
-    ContentItemInterface * const q_ptr;
-private:
-    // Slots
-    void socialNetworkInitializedChangedHandler();
-    Q_DECLARE_PUBLIC(ContentItemInterface)
-    QVariantMap m_data;
-};
-
-#endif // CONTENTITEMINTERFACE_P_H
+    WebView {
+        id: webView
+        preferredWidth: parent.width
+    }
+}

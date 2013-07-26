@@ -33,11 +33,10 @@ import QtQuick 1.1
 import org.nemomobile.social 1.0
 
 Item {
-    id: container
+    id: root
     anchors.fill: parent
     signal backClicked
-    signal postClicked(string postId)
-    property alias filters: model.filters
+    signal showLikesClicked
     function populate(nodeId) {
         model.nodeIdentifier = nodeId
         model.populate()
@@ -47,59 +46,64 @@ Item {
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
+        filters: [ commentsFilter ]
+    }
+
+    Image {
+        id: backgroundImage
+        opacity: 0.4
+        anchors.fill: parent
+        source: model.node != null ? model.node.source : "" // full-size image url
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "There are " + model.count + " posts"
+        text: model.node == null ? "... Loading ..."
+              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
+              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
     }
 
-    Button {
-        id: backButton
+    Column {
+        id: buttons
+        FacebookButton {
+            text: "Likes"
+            onClicked: root.showLikesClicked()
+        }
+        FacebookButton {
+            text: "Back"
+            onClicked: root.backClicked()
+        }
+
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
     }
+
 
     ListView {
         id: view
         clip: true
         anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
+        anchors.bottom: buttons.top
         anchors.left: parent.left
         anchors.right: parent.right
         model: model
-        footer: Item {
-            width: view.width
-            height: childrenRect.height
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: model.hasNext ? "Load more" : "Cannot load more"
-                onClicked: model.loadNext()
-            }
-        }
-        delegate: ButtonBackground {
-            width: view.width
+        delegate: Item {
+            width: parent.width
             height: column.height + 20
-            onClicked: container.postClicked(model.contentItem.identifier)
             Column {
                 id: column
-                property string message: model.contentItem.message
-                property string story: model.contentItem.story
                 anchors.left: parent.left; anchors.leftMargin: 10
                 anchors.right: parent.right; anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
-                    text: "From: " + model.contentItem.from.objectName
+                    text: "From: " + contentItem.from.objectName
                 }
                 Text {
                     anchors.left: parent.left; anchors.right: parent.right
-                    text: column.message != "" ? column.message
-                                               : (column.story != "" ? column.story : "<No text>")
+                    text: "Message: " + contentItem.message
                     wrapMode: Text.WordWrap
                 }
             }

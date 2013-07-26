@@ -30,8 +30,8 @@
  */
 
 #include "facebookalbuminterface_p.h"
-#include "facebookontology_p.h"
 #include "facebookinterface.h"
+#include "facebookontology_p.h"
 // <<< include
 #include <QtCore/QDebug>
 // >>> include

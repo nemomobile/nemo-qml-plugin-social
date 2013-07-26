@@ -90,7 +90,7 @@ Item {
             photoCommentsList.populate(nodeId)
             break
         case 6:
-            var component1 = Qt.createComponent(Qt.resolvedUrl("ModelDestructionTestPage.qml"));
+            var component1 = Qt.createComponent(Qt.resolvedUrl("FacebookModelDestructionTestPage.qml"));
             if (component1.status == Component.Ready) {
                 var page1 = component1.createObject(root);
                 page1.populate(nodeId)
@@ -107,7 +107,7 @@ Item {
             likesList.populate(nodeId)
             break
         case 10:
-            var component2 = Qt.createComponent(Qt.resolvedUrl("FilterDestructionTestPage.qml"));
+            var component2 = Qt.createComponent(Qt.resolvedUrl("FacebookFilterDestructionTestPage.qml"));
             if (component2.status == Component.Ready) {
                 var page2 = component2.createObject(root);
                 page2.populate(nodeId)
@@ -194,7 +194,7 @@ Item {
         delegate: Item {
             width: main.width
             height: childrenRect.height
-            Button {
+            FacebookButton {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: model.text
                 onClicked: {
@@ -228,7 +228,7 @@ Item {
         }
     }
 
-    PostList {
+    FacebookPostList {
         id: postList
         visible: whichActive == 7
         onBackClicked: back(0)
@@ -251,32 +251,32 @@ Item {
         ]
     }
 
-    PostCommentsList {
+    FacebookPostCommentsList {
         id: postCommmentList
         visible: whichActive == 8
         onBackClicked: back(7)
     }
 
-    NotificationsList {
+    FacebookNotificationsList {
         id: notificationsList
         visible: whichActive == 1
         onBackClicked: back(0)
     }
 
-    FriendsList {
+    FacebookFriendsList {
         id: friendsList
         visible: whichActive == 2
         onBackClicked: back(0)
     }
 
-    AlbumsList {
+    FacebookAlbumsList {
         id: albumsList
         visible: whichActive == 3
         onBackClicked: back(0)
         onAlbumClicked: makeActive(4, albumId)
     }
 
-    PhotosGrid {
+    FacebookPhotosGrid {
         id: photosGrid
         visible: whichActive == 4
         onBackClicked: back(3)
@@ -286,7 +286,7 @@ Item {
         }
     }
 
-    PhotoCommentsList {
+    FacebookPhotoCommentsList {
         id: photoCommentsList
         property string photoId
         visible: whichActive == 5
@@ -294,7 +294,7 @@ Item {
         onShowLikesClicked: makeActive(9, photoId)
     }
 
-    LikesList {
+    FacebookLikesList {
         id: likesList
         visible: whichActive == 9
         onBackClicked: back(5)

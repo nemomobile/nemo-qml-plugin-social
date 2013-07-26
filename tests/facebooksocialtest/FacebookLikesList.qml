@@ -36,8 +36,6 @@ Item {
     id: container
     anchors.fill: parent
     signal backClicked
-    signal photoClicked(string photoId)
-
     function populate(nodeId) {
         model.nodeIdentifier = nodeId
         model.populate()
@@ -49,7 +47,7 @@ Item {
         socialNetwork: facebook
         filters: [
             ContentItemTypeFilter {
-                type: Facebook.Photo
+                type: Facebook.Like
             }
         ]
     }
@@ -58,13 +56,10 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model.node == null ? "... Loading ..."
-              : "There are "  + model.node.count + " photos in this album"
-              + "\nComments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
-              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
+        text: "There are " + model.count + " likes"
     }
 
-    Button {
+    FacebookButton {
         id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
@@ -72,26 +67,21 @@ Item {
         onClicked: container.backClicked()
     }
 
-    GridView {
+    ListView {
         id: view
         clip: true
         anchors.top: topLabel.bottom
         anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
-        cellWidth: width / 4
-        cellHeight: cellWidth
         model: model
-        delegate: MouseArea {
-            id: photoDelegate
-            onClicked: container.photoClicked(model.contentItem.identifier)
-            width: view.cellWidth
-            height: view.cellHeight
-            clip: true
-            Image {
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
-                source: model.contentItem.picture
+        delegate: Item {
+            width: view.width
+            height: 50
+
+            Text {
+                anchors.centerIn: parent
+                text: model.contentItem.userName
             }
         }
     }

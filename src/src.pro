@@ -47,5 +47,6 @@ HEADERS += \
     $$PWD/socialnetworkmodelinterface_p.h
 
 include(facebook/facebook.pri)
+include(twitter/twitter.pri)
 
 OTHER_FILES += qmldir social.qdoc social.qdocconf

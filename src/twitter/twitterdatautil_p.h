@@ -29,39 +29,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef CONTENTITEMINTERFACE_P_H
-#define CONTENTITEMINTERFACE_P_H
+#ifndef TWITTERDATAUTIL_P_H
+#define TWITTERDATAUTIL_P_H
 
-#include <QtCore/QVariantMap>
+#include <QtCore/QVariant>
+#include <QtCore/QString>
+#include <QtCore/QByteArray>
+#include <QtCore/QPair>
+#include <QtCore/QList>
 
-class SocialNetworkInterface;
-class ContentItemInterface;
-class ContentItemInterfacePrivate
-{
+class TwitterDataUtil {
 public:
-    explicit ContentItemInterfacePrivate(ContentItemInterface *q);
-    virtual ~ContentItemInterfacePrivate();
-
-    QVariantMap data() const;
-    void setData(const QVariantMap &data);
-
-    virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-    virtual void initializationComplete();
-
-    // helper api - parse network reply data into QVariantMap
-    // TODO: This method should be put in a header containing useful functions, and maybe inlined
-    static QVariant parseReplyDataVariant(const QByteArray &replyData, bool *ok);
-    static QVariantMap parseReplyData(const QByteArray &replyData, bool *ok);
-
-    SocialNetworkInterface *socialNetworkInterface;
-    bool isInitialized;
-protected:
-    ContentItemInterface * const q_ptr;
-private:
-    // Slots
-    void socialNetworkInitializedChangedHandler();
-    Q_DECLARE_PUBLIC(ContentItemInterface)
-    QVariantMap m_data;
+    static QByteArray authorizationHeader(const QByteArray &oauthConsumerKey,
+                                          const QByteArray &oauthConsumerSecret,
+                                          const QByteArray &requestMethod,
+                                          const QByteArray &requestUrl,
+                                          const QList<QPair<QByteArray, QByteArray> > &parameters,
+                                          const QByteArray &oauthToken = QByteArray(),
+                                          const QByteArray &oauthTokenSecret = QByteArray(),
+                                          const QByteArray &oauthNonce = QByteArray(),
+                                          const QByteArray &oauthTimestamp = QByteArray());
+//    static QVariant parseReplyData(const QByteArray &replyData, bool *ok);
 };
 
-#endif // CONTENTITEMINTERFACE_P_H
+#endif // TWITTERDATAUTIL_P_H

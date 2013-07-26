@@ -375,7 +375,8 @@ void CacheEntry::deleteItem()
 }
 
 NodePrivate::NodePrivate()
-    : hasPrevious(false)
+    : type(SocialNetworkInterface::Unknown)
+    , hasPrevious(false)
     , hasNext(false)
     , status(Initializing)
 {
@@ -390,11 +391,12 @@ Node::Node()
 {
 }
 
-Node::Node(const QString &identifier, const QSet<FilterInterface *> &filters)
+Node::Node(const QString &identifier, int type, const QSet<FilterInterface *> &filters)
     : d_ptr(new NodePrivate())
 {
     Q_D(Node);
     d->identifier = identifier;
+    d->type = type;
     d->filters = filters;
     d->cacheEntry = CacheEntry();
 }
@@ -429,6 +431,12 @@ QString Node::identifier() const
 {
     Q_D(const Node);
     return d->identifier;
+}
+
+int Node::type() const
+{
+    Q_D(const Node);
+    return d->type;
 }
 
 QSet<FilterInterface *> Node::filters() const
@@ -793,6 +801,36 @@ QNetworkReply * SocialNetworkInterfacePrivate::deleteRequest(const QString &obje
     return 0;
 }
 
+/*
+    Depending on the implementation of SocialNetwork, this method
+    could be reimplemented in order for the SocialNetwork class to guess
+    the type property (SocialNetworkModelInterface::nodeType) that should
+    be set.
+
+    An example is with Twitter, where this type property is mandatory, while
+    sometimes useless. If an user requests a list of tweets, we automatically
+    knows that the type refers to an user, because the "tweet" connection
+    can only relates to an user. In TwitterInterface, this method is then
+    implemented to automatically return TwitterInterface::User when the
+    filter contains a filter that is used to request tweets.
+
+    This method is also used to automatically sets the nodeType property
+    of SocialNetworkModel, saving the user to set it.
+
+    Guessing type can be done with the identifier, the type the user set (that
+    should most of the time be SocialNetworkInterface::Unknown) and the
+    list of filters that is used (ie the 3 properties of a
+    SocialNetworkModelInterface)
+*/
+int SocialNetworkInterfacePrivate::guessType(const QString &identifier, int type,
+                                             const QSet<FilterInterface *> &filters)
+{
+    Q_UNUSED(identifier)
+    Q_UNUSED(type)
+    Q_UNUSED(filters)
+    return -1;
+}
+
 void SocialNetworkInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
 {
     Q_UNUSED(node)
@@ -934,6 +972,7 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node &node,
         case NodePrivate::LoadingRelatedDataPrepending: {
             QList<CacheEntry> data = relatedData;
             data.append(node.relatedData());
+            node.setRelatedData(data);
             foreach (SocialNetworkModelInterface *model, models) {
                 if (matches(node, model)) {
                     model->d_func()->prependData(relatedData);
@@ -944,6 +983,7 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node &node,
         case NodePrivate::LoadingRelatedDataAppending: {
             QList<CacheEntry> data = node.relatedData();
             data.append(relatedData);
+            node.setRelatedData(data);
             foreach (SocialNetworkModelInterface *model, models) {
                 if (matches(node, model)) {
                     model->d_func()->appendData(relatedData);
@@ -954,9 +994,16 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node &node,
         default: break;
     }
 
+
+}
+
+void SocialNetworkInterfacePrivate::updateModelHavePreviousAndNext(Node &node, bool havePrevious,
+                                                                   bool haveNext)
+{
+    node.setHavePreviousAndNext(havePrevious, haveNext);
     foreach (SocialNetworkModelInterface *model, models) {
         if (matches(node, model)) {
-            model->d_func()->setHavePreviousAndNext(node.hasPrevious(), node.hasNext());
+            model->d_func()->setHavePreviousAndNext(havePrevious, haveNext);
         }
     }
 }
@@ -986,6 +1033,7 @@ CacheEntry SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &da
 
 void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
                                              const QString &identifier,
+                                             int type,
                                              const QList<FilterInterface *> &filters, bool reload)
 {
     // Refuse when not initialized
@@ -1003,8 +1051,22 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
 
     QSet<FilterInterface *> filterSet = filters.toSet();
 
+    int guessedType = guessType(identifier, type, filterSet);
+    // If we guessed a nice type, we should update all models that old description
+    // and set the new type
+    if (guessedType != -1) {
+        foreach (SocialNetworkModelInterface *model, models) {
+            if (matches(identifier, type, filterSet, model)) {
+                model->setNodeType(guessedType);
+            }
+        }
+    } else {
+        guessedType = type;
+    }
+
+
     // Create or get the node from cache
-    Node node = getOrCreateNode(identifier, filterSet);
+    Node node = getOrCreateNode(identifier, guessedType, filterSet);
 
     // Purge the nodes if needed
     // This is needed if (eg) a model was associated to a Node,
@@ -1121,7 +1183,8 @@ void SocialNetworkInterfacePrivate::removeModel(SocialNetworkModelInterface *mod
 
 void SocialNetworkInterfacePrivate::loadNext(SocialNetworkModelInterface *model)
 {
-    Node node = getNode(model->nodeIdentifier(), model->d_func()->filters.toSet());
+    Node node = getNode(model->nodeIdentifier(), model->nodeType(),
+                        model->d_func()->filters.toSet());
     if (node.isNull()) {
         qWarning() << Q_FUNC_INFO << "The model is not loaded. Please call populate() first";
         return;
@@ -1133,7 +1196,8 @@ void SocialNetworkInterfacePrivate::loadNext(SocialNetworkModelInterface *model)
 
 void SocialNetworkInterfacePrivate::loadPrevious(SocialNetworkModelInterface *model)
 {
-    Node node = getNode(model->nodeIdentifier(), model->d_func()->filters.toSet());
+    Node node = getNode(model->nodeIdentifier(), model->nodeType(),
+                        model->d_func()->filters.toSet());
     if (node.isNull()) {
         qWarning() << Q_FUNC_INFO << "The model is not loaded. Please call populate() first";
         return;
@@ -1269,34 +1333,43 @@ void SocialNetworkInterfacePrivate::modelDestroyedHandler(QObject *object)
     removeModel(model);
 }
 
-bool SocialNetworkInterfacePrivate::matches(const Node &node, SocialNetworkModelInterface *model)
+bool SocialNetworkInterfacePrivate::matches(const QString &identifier, int type,
+                                            const QSet<FilterInterface *> &filters,
+                                            SocialNetworkModelInterface *model)
 {
     // Try to be economic on comparisons
     // First compare what is the less costly
     // and use the QSet's O(1) cost to be
     // slight more efficient (?)
 
-    QString nodeIdentifier = node.identifier();
-    QString aliasedIdentifier = aliases.value(nodeIdentifier);
+    QString aliasedIdentifier = aliases.value(identifier);
     QString modelIdentifier = model->nodeIdentifier();
 
-    if (nodeIdentifier != modelIdentifier && aliasedIdentifier != modelIdentifier) {
+    if (identifier != modelIdentifier && aliasedIdentifier != modelIdentifier) {
+        return false;
+    }
+
+    if (type != model->nodeType()) {
         return false;
     }
 
     QList<FilterInterface *> modelFilters = model->d_func()->filters;
-    QSet<FilterInterface *> nodeFilters = node.filters();
-    if (nodeFilters.count() != modelFilters.count()) {
+    if (filters.count() != modelFilters.count()) {
         return false;
     }
 
     foreach (FilterInterface *filter, modelFilters) {
-        if (!nodeFilters.contains(filter)) {
+        if (!filters.contains(filter)) {
             return false;
         }
     }
 
     return true;
+}
+
+bool SocialNetworkInterfacePrivate::matches(const Node &node, SocialNetworkModelInterface *model)
+{
+    return matches(node.identifier(), node.type(), node.filters(), model);
 }
 
 SocialNetworkInterface::Status SocialNetworkInterfacePrivate::correspondingStatus(NodePrivate::Status status)
@@ -1340,10 +1413,11 @@ SocialNetworkInterface::Status SocialNetworkInterfacePrivate::correspondingStatu
     node into the cache.
 */
 Node SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
+                                                    int type,
                                                     const QSet<FilterInterface *> &filters)
 {
     Q_Q(SocialNetworkInterface);
-    Node node (identifier, filters);
+    Node node (identifier, type, filters);
     int index = nodes.indexOf(node);
     if (index == -1) {
         // Connect to filter destruction handler
@@ -1358,10 +1432,10 @@ Node SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
     }
 }
 
-Node SocialNetworkInterfacePrivate::getNode(const QString &identifier,
+Node SocialNetworkInterfacePrivate::getNode(const QString &identifier, int type,
                                             const QSet<FilterInterface *> &filters)
 {
-    Node node (identifier, filters);
+    Node node (identifier, type, filters);
     int index = nodes.indexOf(node);
     if (index == -1) {
         return Node();

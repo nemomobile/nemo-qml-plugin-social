@@ -33,16 +33,10 @@ import QtQuick 1.1
 import org.nemomobile.social 1.0
 
 Item {
-    id: root
+    id: container
     anchors.fill: parent
-    property string currentIdentifier
     signal backClicked
     function populate(nodeId) {
-        if (currentIdentifier == nodeId) {
-            model.repopulate()
-            return
-        }
-
         model.nodeIdentifier = nodeId
         model.populate()
         view.positionViewAtBeginning()
@@ -51,24 +45,27 @@ Item {
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [ commentsFilter ]
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.User
+                limit: 50
+            }
+        ]
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model.node == null ? "... Loading ..."
-              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
-              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
+        text: "You have " + model.count + " friends"
     }
 
-    Button {
+    FacebookButton {
         id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Back"
-        onClicked: root.backClicked()
+        onClicked: container.backClicked()
     }
 
     ListView {
@@ -79,24 +76,32 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         model: model
-        delegate: Item {
-            id: commentDelegate
-            width: parent.width
-            height: column.height + 20
+        footer: Item {
+            width: view.width
+            height: column.height
             Column {
                 id: column
-                anchors.left: parent.left; anchors.leftMargin: 10
-                anchors.right: parent.right; anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left; anchors.right: parent.right
+                FacebookButton {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Reload"
+                    onClicked: model.repopulate()
+                }
+                FacebookButton {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: model.hasNext ? "Load more" : "Cannot load more"
+                    onClicked: model.loadNext()
+                }
+            }
+        }
 
-                Text {
-                    id: nameLabel
-                    text: "From: " + contentItem.from.objectName
-                }
-                Text {
-                    id: countLabel
-                    text: "Message: " + contentItem.message
-                }
+        delegate: Item {
+            width: view.width
+            height: 50
+
+            Text {
+                anchors.centerIn: parent
+                text: model.contentItem.name
             }
         }
     }

@@ -33,10 +33,9 @@ import QtQuick 1.1
 import org.nemomobile.social 1.0
 
 Item {
-    id: root
+    id: container
     anchors.fill: parent
     signal backClicked
-    signal showLikesClicked
     function populate(nodeId) {
         model.nodeIdentifier = nodeId
         model.populate()
@@ -46,51 +45,38 @@ Item {
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [ commentsFilter ]
-    }
-
-    Image {
-        id: backgroundImage
-        opacity: 0.4
-        anchors.fill: parent
-        source: model.node != null ? model.node.source : "" // full-size image url
+        filters: [
+            ContentItemTypeFilter {
+                type: Facebook.Notification
+            }
+        ]
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model.node == null ? "... Loading ..."
-              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
-              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
+        text: "You have " + model.count + " notifications"
     }
 
-    Column {
-        id: buttons
-        Button {
-            text: "Likes"
-            onClicked: root.showLikesClicked()
-        }
-        Button {
-            text: "Back"
-            onClicked: root.backClicked()
-        }
-
+    FacebookButton {
+        id: backButton
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
+        text: "Back"
+        onClicked: container.backClicked()
     }
-
 
     ListView {
         id: view
         clip: true
         anchors.top: topLabel.bottom
-        anchors.bottom: buttons.top
+        anchors.bottom: backButton.top
         anchors.left: parent.left
         anchors.right: parent.right
         model: model
         delegate: Item {
-            width: parent.width
+            width: view.width
             height: column.height + 20
             Column {
                 id: column
@@ -99,12 +85,12 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
-                    id: nameLabel
-                    text: "From: " + contentItem.from.objectName
+                    text: "From: " + model.contentItem.from.objectName
                 }
                 Text {
-                    id: countLabel
-                    text: "Message: " + contentItem.message
+                    anchors.left: parent.left; anchors.right: parent.right
+                    wrapMode: Text.WordWrap
+                    text: "Title: " + model.contentItem.title
                 }
             }
         }

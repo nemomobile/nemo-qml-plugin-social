@@ -25,13 +25,13 @@ int main(int argc, char *argv[])
     QDeclarativeView view;
 
     if (argc != 2) {
-        qWarning() << "usage: socialtest [facebook_access_token]";
+        qWarning() << "usage: facebooktest [facebook_access_token]";
         return 1;
     }
 
     // TODO: manage better the difference between desktop and device
     view.engine()->addImportPath(PLUGIN_PATH);
-    view.setSource(QUrl::fromLocalFile(QLatin1String("share/socialtest.qml")));
+    view.setSource(QUrl::fromLocalFile(QLatin1String("share/facebooksocialtest.qml")));
 
     if (view.status() == QDeclarativeView::Error) {
         qWarning() << "Unable to read main qml file";
