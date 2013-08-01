@@ -29,5 +29,6 @@ SubPackages:
           This package includes the unit tests.
 
       Files:
-           - /opt/tests/nemo-qml-plugins/social/socialtest
+           - /opt/tests/nemo-qml-plugins-qt5/social/facebooksocialtest
+           - /opt/tests/nemo-qml-plugins-qt5/social/twittersocialtest
            - /opt/tests/nemo-qml-plugins/social/share/*.qml
