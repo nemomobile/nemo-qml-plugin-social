@@ -41,6 +41,7 @@
 
 #include "twitteruserinterface.h"
 #include "twittertweetinterface.h"
+#include "twitterconversationfilterinterface.h"
 //#include "twitterplaceinterface.h"
 
 #include "util_p.h"
@@ -144,6 +145,8 @@ QNetworkRequest TwitterInterfacePrivate::networkRequest(const QString &extraPath
 
     QNetworkRequest request (url);
     request.setRawHeader(HEADER_AUTHORIZATION_KEY, header);
+
+    qDebug() << url;
     return request;
 }
 
@@ -154,6 +157,56 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
     // We receive the related data and transform it into ContentItems.
     // Finally, we populate the cache for the node and update the internal model data.
     CacheEntry::List relatedContent;
+
+
+    if (node->extraInfo().contains(TWITTER_ONTOLOGY_CONNECTION_CONVERSATION_KEY)) {
+        // We handle this part differently
+        // We build a map "twitter_id => CacheEntry" to store the interesting
+        // tweets and a map "parent_twitter_id" => list_of_tweet_ids"
+        // as the tree of replies.
+        QMap<QString, CacheEntry::Ptr> tweets;
+        QMap<QString, QList<QString> > tweetsTree;
+
+        // We might need to take in account the tree for old tweets as well
+        // TODO ^
+
+        QVariantList relatedDataList = relatedData.toList();
+        QString firstId;
+        if (!relatedDataList.isEmpty()) {
+            QVariantMap lastMap = relatedDataList.first().toMap();
+            firstId = lastMap.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
+        }
+
+        foreach (const QVariant &variant, relatedDataList) {
+            QVariantMap variantMap = variant.toMap();
+            QString identifier = variantMap.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
+            variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, TwitterInterface::Tweet);
+            variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, identifier);
+
+            CacheEntry::Ptr tweet = createCacheEntry(variantMap, identifier);
+            QString parentTweetId = tweet->data().value(TWITTER_ONTOLOGY_TWEET_INREPLYTOSTATUSIDENTIFIER).toString();
+            if (!parentTweetId.isEmpty()) {
+                tweets.insert(identifier, tweet);
+
+                if (!tweetsTree.contains(parentTweetId)) {
+                    tweetsTree.insert(parentTweetId, QList<QString>());
+                }
+
+                tweetsTree[parentTweetId].append(identifier);
+            }
+        }
+        makeConversationList(tweets, tweetsTree, node->identifier(), relatedContent);
+        updateModelRelatedData(node, relatedContent);
+        updateModelHavePreviousAndNext(node, false, true);
+        if (!firstId.isEmpty()) {
+            QVariantMap nodeExtra = node->extraInfo();
+            nodeExtra.insert(TWITTER_ONTOLOGY_METADATA_CONVERSATIONNEXT_CURSOR, firstId);
+            node->setExtraInfo(nodeExtra);
+        }
+        setStatus(node, NodePrivate::Idle);
+        return;
+    }
+
     QString requestPath = requestUrl.path();
 
     TwitterInterface::ContentItemType type = TwitterInterface::Unknown;
@@ -431,35 +484,48 @@ int TwitterInterfacePrivate::guessType(const QString &identifier, int type,
 
     // If we have filters, we are able to identify the type of node
     // We first cast filters to known filters
-    QList<ContentItemTypeFilterInterface *> castedFilters;
+    QList<ContentItemTypeFilterInterface *> contentTypeFilters;
+    QList<TwitterConversationFilterInterface *> conversationFilters;
 
     foreach (FilterInterface *filter, filters) {
         ContentItemTypeFilterInterface *contentItemTypeFilter
                 = qobject_cast<ContentItemTypeFilterInterface*>(filter);
-        if (!contentItemTypeFilter) {
-            qWarning() << "The Twitter adapter only supports ContentItemType filters";
+        TwitterConversationFilterInterface *conversationFilter
+                = qobject_cast<TwitterConversationFilterInterface *>(filter);
+        if (!contentItemTypeFilter && !conversationFilter) {
+            qWarning() << "The Twitter adapter only supports ContentItemType and TwitterConversationFilter filters";
         } else {
-            castedFilters.append(contentItemTypeFilter);
+            if (contentItemTypeFilter) {
+                contentTypeFilters.append(contentItemTypeFilter);
+            }
+            if (conversationFilter) {
+                conversationFilters.append(conversationFilter);
+            }
         }
     }
 
     // Get the type from the filter
-    if (castedFilters.count() != 1) {
+    if (contentTypeFilters.count() + conversationFilters.count() != 1) {
         return -1;
     }
 
     int guessedType = -1;
 
-    int filterType = castedFilters.first()->type();
-    switch (filterType) {
-        case TwitterInterface::Tweet:
-        case TwitterInterface::Home:
-        case TwitterInterface::Friends:
-        case TwitterInterface::Followers: {
-            guessedType = TwitterInterface::User;
+    if (!contentTypeFilters.isEmpty()) {
+        int filterType = contentTypeFilters.first()->type();
+        switch (filterType) {
+            case TwitterInterface::Tweet:
+            case TwitterInterface::Home:
+            case TwitterInterface::Friends:
+            case TwitterInterface::Followers: {
+                guessedType = TwitterInterface::User;
+            }
+            break;
+            default: break;
         }
-        break;
-        default: break;
+    }
+    if (!conversationFilters.isEmpty()) {
+        guessedType = TwitterInterface::Tweet;
     }
 
     return guessedType;
@@ -521,10 +587,12 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
     foreach (FilterInterface *filter, filters) {
         ContentItemTypeFilterInterface *contentItemTypeFilter
                 = qobject_cast<ContentItemTypeFilterInterface*>(filter);
-        if (!contentItemTypeFilter) {
-            qWarning() << "The Twitter adapter only supports ContentItemType filters";
+        TwitterConversationFilterInterface *conversationFilter
+                = qobject_cast<TwitterConversationFilterInterface*>(filter);
+        if (!contentItemTypeFilter && !conversationFilter) {
+            qWarning() << "The Twitter adapter only supports ContentItemType and TwitterConversationFilter filters";
         } else {
-            castedFilters.append(contentItemTypeFilter);
+            castedFilters.append(filter);
         }
     }
 
@@ -542,14 +610,34 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
                       "Others filters will be discarded";
     }
 
-    ContentItemTypeFilterInterface *filter
-            = qobject_cast<ContentItemTypeFilterInterface*>(castedFilters.first());
-
     // Build the query
     QString extraPath;
     QVariantMap extraData;
 
     QVariantMap nodeExtraInfo = node->extraInfo();
+
+    ContentItemTypeFilterInterface *filter
+            = qobject_cast<ContentItemTypeFilterInterface*>(castedFilters.first());
+
+    if (!filter) {
+        // TODO implement upstream support
+        QVariantMap extraInfo = node->extraInfo();
+        extraInfo.insert(TWITTER_ONTOLOGY_CONNECTION_CONVERSATION_KEY, true);
+        node->setExtraInfo(extraInfo);
+
+        extraPath = TWITTER_ONTOLOGY_CONNECTION_STATUSES_HOME_TIMELINE;
+        QString limitingIdentifier = identifier;
+        if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_CONVERSATIONNEXT_CURSOR)
+            && node->status() == NodePrivate::LoadingRelatedDataAppending) {
+            limitingIdentifier = nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_CONVERSATIONNEXT_CURSOR).toString();
+        }
+        qDebug() << identifier << limitingIdentifier;
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_SINCE_ID_KEY, limitingIdentifier);
+        extraData.insert(TWITTER_ONTOLOGY_CONNECTION_COUNT_KEY, 200);
+        setReply(node, getRequest(QString(), extraPath, QStringList(), extraData));
+        return true;
+    }
+
     // If we have cursors, we add them
     if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR)
         && node->status() == NodePrivate::LoadingRelatedDataAppending) {
@@ -619,6 +707,17 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
 
     setReply(node, getRequest(QString(), extraPath, QStringList(), extraData));
     return true;
+}
+
+void TwitterInterfacePrivate::makeConversationList(const QMap<QString, CacheEntry::Ptr> &tweets,
+                                                   const QMap<QString, QList<QString> > &tweetsTree,
+                                                   const QString &parent, CacheEntry::List &list)
+{
+    const QList<QString> children = tweetsTree.value(parent);
+    foreach (const QString &child, children) {
+        makeConversationList(tweets, tweetsTree, child, list);
+        list.prepend(tweets.value(child));
+    }
 }
 
 //----------------------------------------------------------

@@ -67,6 +67,7 @@
 #include "twitter/twitterinterface.h"
 #include "twitter/twitteruserinterface.h"
 #include "twitter/twittertweetinterface.h"
+#include "twitter/twitterconversationfilterinterface.h"
 
 
 class Q_DECL_EXPORT NemoSocialPlugin : public QDeclarativeExtensionPlugin
@@ -126,6 +127,7 @@ public:
         qmlRegisterType<TwitterInterface>(uri, 1, 0, "Twitter");
         qmlRegisterType<TwitterUserInterface>(uri, 1, 0, "TwitterUser");
         qmlRegisterType<TwitterTweetInterface>(uri, 1, 0, "TwitterTweet");
+        qmlRegisterType<TwitterConversationFilterInterface>(uri, 1, 0, "TwitterConversationFilter");
     }
 };
 

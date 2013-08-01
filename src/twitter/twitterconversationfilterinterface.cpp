@@ -29,40 +29,43 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef CONTENTITEMTYPEFILTERINTERFACE_H
-#define CONTENTITEMTYPEFILTERINTERFACE_H
+#include "twitterconversationfilterinterface.h"
 
-#include "filterinterface.h"
-#include <QtCore/QStringList>
-
-class ContentItemTypeFilterInterfacePrivate;
-class ContentItemTypeFilterInterface : public FilterInterface
+class TwitterConversationFilterInterfacePrivate
 {
-    Q_OBJECT
-    Q_PROPERTY(int type READ type WRITE setType NOTIFY typeChanged)
-    Q_PROPERTY(QStringList whichFields READ whichFields WRITE setWhichFields NOTIFY whichFieldsChanged)
-    Q_PROPERTY(int limit READ limit WRITE setLimit NOTIFY limitChanged)
-
 public:
-    explicit ContentItemTypeFilterInterface(QObject *parent = 0);
-    virtual ~ContentItemTypeFilterInterface();
-
-    // properties
-    int type() const;
-    QStringList whichFields() const;
-    int limit() const;
-    void setType(int type);
-    void setWhichFields(const QStringList &whichFields);
-    void setLimit(int limit);
-
-Q_SIGNALS:
-    void typeChanged();
-    void whichFieldsChanged();
-    void limitChanged();
-protected:
-    QScopedPointer<ContentItemTypeFilterInterfacePrivate> d_ptr;
-private:
-    Q_DECLARE_PRIVATE(ContentItemTypeFilterInterface)
+    TwitterConversationFilterInterfacePrivate();
+    TwitterConversationFilterInterface::Stream stream;
 };
 
-#endif // CONTENTITEMTYPEFILTERINTERFACE_H
+TwitterConversationFilterInterfacePrivate::TwitterConversationFilterInterfacePrivate():
+    stream(TwitterConversationFilterInterface::Downstream)
+{
+}
+
+
+// ------------------------------
+
+TwitterConversationFilterInterface::TwitterConversationFilterInterface(QObject *parent)
+    : FilterInterface(parent), d_ptr(new TwitterConversationFilterInterfacePrivate)
+{
+}
+
+TwitterConversationFilterInterface::~TwitterConversationFilterInterface()
+{
+}
+
+TwitterConversationFilterInterface::Stream TwitterConversationFilterInterface::stream() const
+{
+    Q_D(const TwitterConversationFilterInterface);
+    return d->stream;
+}
+
+void TwitterConversationFilterInterface::setStream(Stream stream)
+{
+    Q_D(TwitterConversationFilterInterface);
+    if (d->stream != stream) {
+        d->stream = stream;
+        emit streamChanged();
+    }
+}

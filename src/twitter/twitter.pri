@@ -5,6 +5,7 @@ HEADERS += \
     $$PWD/twitterdatautil_p.h \
     $$PWD/twitterinterface.h \
     $$PWD/twitterinterface_p.h \
+    $$PWD/twitterconversationfilterinterface.h \
     $$PWD/twitteruserinterface.h \
     $$PWD/twitteruserinterface_p.h \
     $$PWD/twittertweetinterface.h \
@@ -13,5 +14,6 @@ HEADERS += \
 SOURCES += \
     $$PWD/twitterdatautil.cpp \
     $$PWD/twitterinterface.cpp \
+    $$PWD/twitterconversationfilterinterface.cpp \
     $$PWD/twitteruserinterface.cpp \
     $$PWD/twittertweetinterface.cpp

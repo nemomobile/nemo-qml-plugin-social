@@ -884,6 +884,7 @@ void SocialNetworkInterfacePrivate::handleError(Node::Ptr node, QNetworkReply *r
 
     qWarning() << Q_FUNC_INFO << "Error: network error occurred:"
                << networkError << ":" << errorMessage;
+    qWarning() << Q_FUNC_INFO << "Content of the reply:" << reply->readAll();
 }
 
 void SocialNetworkInterfacePrivate::handleSslError(Node::Ptr node, QNetworkReply *reply,
