@@ -218,8 +218,8 @@ void IdentifiableContentItemInterfacePrivate::initializationComplete()
 void IdentifiableContentItemInterfacePrivate::connectFinishedAndErrors()
 {
     Q_Q(IdentifiableContentItemInterface);
-    QObject::connect(reply(), SIGNAL(finished()), q, SLOT(finishedHandler()));
     connectErrors();
+    QObject::connect(reply(), SIGNAL(finished()), q, SLOT(finishedHandler()));
 }
 
 void IdentifiableContentItemInterfacePrivate::connectErrors()
@@ -320,6 +320,8 @@ void IdentifiableContentItemInterfacePrivate::reloadHandler()
 void IdentifiableContentItemInterfacePrivate::errorHandler(QNetworkReply::NetworkError networkError)
 {
     Q_Q(IdentifiableContentItemInterface);
+    deleteReply();
+
     // TODO: This huge switch should be better, with QMetaEnum for example.
     // It should also be exported, in order to be used elsewhere
     errorMessage = networkErrorString(networkError);
