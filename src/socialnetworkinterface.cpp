@@ -237,7 +237,6 @@
 // data to create the item.
 
 CacheEntryPrivate::CacheEntryPrivate()
-    : QSharedData()
 {
     item = 0;
     refCount = 0;
@@ -249,6 +248,22 @@ CacheEntryPrivate::~CacheEntryPrivate()
         item->deleteLater();
         item = 0;
     }
+}
+
+CacheEntry::Ptr CacheEntry::create()
+{
+    return CacheEntry::Ptr(new CacheEntry());
+}
+
+CacheEntry::Ptr CacheEntry::create(const QVariantMap &data, ContentItemInterface *item)
+{
+    return CacheEntry::Ptr(new CacheEntry(data, item));
+}
+
+CacheEntry::Ptr CacheEntry::create(const QVariantMap &data, const QString &identifier,
+                                   ContentItemInterface *item)
+{
+    return CacheEntry::Ptr(new CacheEntry(data, identifier, item));
 }
 
 CacheEntry::CacheEntry()
@@ -272,11 +287,6 @@ CacheEntry::CacheEntry(const QVariantMap &data, const QString &identifier,
     d->data = data;
     d->identifier = identifier;
     d->item = item;
-}
-
-CacheEntry::CacheEntry(const CacheEntry &other)
-    : d_ptr(other.d_ptr)
-{
 }
 
 CacheEntry::~CacheEntry()
@@ -374,6 +384,17 @@ void CacheEntry::deleteItem()
     d->item = 0;
 }
 
+// This operator is used to compare the content of each CacheEntry
+// instead of comapring the value of the pointer. It is used for
+// caching. You usually want to retrieve one CacheEntry that have
+// already been created instead of creating a new one. So we compare
+// the content in order to find the entry using QList::contains or
+// QList::indexOf.
+bool operator==(CacheEntry::Ptr cacheEntry1, CacheEntry::Ptr cacheEntry2)
+{
+    return *(cacheEntry1.data()) == *(cacheEntry2.data());
+}
+
 NodePrivate::NodePrivate()
     : type(SocialNetworkInterface::Unknown)
     , hasPrevious(false)
@@ -384,6 +405,16 @@ NodePrivate::NodePrivate()
 
 NodePrivate::~NodePrivate()
 {
+}
+
+Node::Ptr Node::create()
+{
+    return Node::Ptr(new Node());
+}
+
+Node::Ptr Node::create(const QString &identifier, int type, const QSet<FilterInterface *> &filters)
+{
+    return Node::Ptr(new Node(identifier, type, filters));
 }
 
 Node::Node()
@@ -398,12 +429,7 @@ Node::Node(const QString &identifier, int type, const QSet<FilterInterface *> &f
     d->identifier = identifier;
     d->type = type;
     d->filters = filters;
-    d->cacheEntry = CacheEntry();
-}
-
-Node::Node(const Node &other):
-    d_ptr(other.d_ptr)
-{
+    d->cacheEntry = CacheEntry::Ptr();
 }
 
 Node::~Node()
@@ -445,39 +471,39 @@ QSet<FilterInterface *> Node::filters() const
     return d->filters;
 }
 
-CacheEntry Node::cacheEntry() const
+CacheEntry::Ptr Node::cacheEntry() const
 {
     Q_D(const Node);
     return d->cacheEntry;
 }
 
-void Node::setCacheEntry(const CacheEntry &cacheEntry)
+void Node::setCacheEntry(CacheEntry::Ptr cacheEntry)
 {
     Q_D(Node);
     if (!d->cacheEntry.isNull()) {
-        d->cacheEntry.deref();
+        d->cacheEntry->deref();
     }
     d->cacheEntry = cacheEntry;
-    d->cacheEntry.ref();
+    d->cacheEntry->ref();
 }
 
-QList<CacheEntry> Node::relatedData() const
+CacheEntry::List Node::relatedData() const
 {
     Q_D(const Node);
     return d->relatedData;
 }
 
-void Node::setRelatedData(const QList<CacheEntry> &relatedData)
+void Node::setRelatedData(const CacheEntry::List &relatedData)
 {
     Q_D(Node);
-    foreach (CacheEntry cacheEntry, d->relatedData) {
-        cacheEntry.deref();
+    foreach (CacheEntry::Ptr cacheEntry, d->relatedData) {
+        cacheEntry->deref();
     }
 
     d->relatedData = relatedData;
 
-    foreach (CacheEntry cacheEntry, d->relatedData) {
-        cacheEntry.ref();
+    foreach (CacheEntry::Ptr cacheEntry, d->relatedData) {
+        cacheEntry->ref();
     }
 }
 
@@ -522,6 +548,17 @@ void Node::setStatus(NodePrivate::Status status)
 {
     Q_D(Node);
     d->status = status;
+}
+
+// This operator is used to compare the content of each Node
+// instead of comapring the value of the pointer. It is used for
+// caching. You usually want to retrieve one Node that have
+// already been created instead of creating a new one. So we compare
+// the content in order to find the node using QList::contains or
+// QList::indexOf.
+bool operator==(Node::Ptr node1, Node::Ptr node2)
+{
+    return *(node1.data()) == *(node2.data());
 }
 
 SocialNetworkInterface::ErrorType Node::error() const
@@ -666,9 +703,9 @@ SorterFunctor::SorterFunctor(SorterInterface *sorter):
 {
 }
 
-bool SorterFunctor::operator()(const CacheEntry &first, const CacheEntry &second) const
+bool SorterFunctor::operator()(CacheEntry::ConstPtr first, CacheEntry::ConstPtr second) const
 {
-    return m_sorter->firstLessThanSecond(first.data(), second.data());
+    return m_sorter->firstLessThanSecond(first->data(), second->data());
 }
 
 SocialNetworkInterfacePrivate::SocialNetworkInterfacePrivate(SocialNetworkInterface *q)
@@ -688,7 +725,7 @@ SocialNetworkInterfacePrivate::~SocialNetworkInterfacePrivate()
     }
 
     // Remove all nodes
-    foreach (Node node, nodes) {
+    foreach (Node::Ptr node, nodes) {
         deleteNode(node);
     }
 
@@ -702,19 +739,19 @@ SocialNetworkInterfacePrivate::~SocialNetworkInterfacePrivate()
     replyToNodeMap.clear();
 }
 
-void SocialNetworkInterfacePrivate::populateDataForNode(Node &node)
+void SocialNetworkInterfacePrivate::populateDataForNode(Node::Ptr node)
 {
     Q_UNUSED(node)
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
 }
 
-void SocialNetworkInterfacePrivate::populateRelatedDataforNode(Node &node)
+void SocialNetworkInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
 {
     Q_UNUSED(node)
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
 }
 
-bool SocialNetworkInterfacePrivate::validateCacheEntryForNode(const CacheEntry &cacheEntry)
+bool SocialNetworkInterfacePrivate::validateCacheEntryForNode(CacheEntry::ConstPtr cacheEntry)
 {
     Q_UNUSED(cacheEntry)
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
@@ -831,14 +868,14 @@ int SocialNetworkInterfacePrivate::guessType(const QString &identifier, int type
     return -1;
 }
 
-void SocialNetworkInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
+void SocialNetworkInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *reply)
 {
     Q_UNUSED(node)
     Q_UNUSED(reply)
     qWarning() << Q_FUNC_INFO << "Error: this function MUST be implemented by derived types!";
 }
 
-void SocialNetworkInterfacePrivate::handleError(Node &node, QNetworkReply *reply,
+void SocialNetworkInterfacePrivate::handleError(Node::Ptr node, QNetworkReply *reply,
                                                 QNetworkReply::NetworkError networkError)
 {
     Q_UNUSED(reply)
@@ -849,7 +886,7 @@ void SocialNetworkInterfacePrivate::handleError(Node &node, QNetworkReply *reply
                << networkError << ":" << errorMessage;
 }
 
-void SocialNetworkInterfacePrivate::handleSslError(Node &node, QNetworkReply *reply,
+void SocialNetworkInterfacePrivate::handleSslError(Node::Ptr node, QNetworkReply *reply,
                                                    const QList<QSslError> &sslErrors)
 {
     Q_UNUSED(reply)
@@ -867,7 +904,7 @@ void SocialNetworkInterfacePrivate::handleSslError(Node &node, QNetworkReply *re
     qWarning() << Q_FUNC_INFO << "Error: SSL error occurred:" << errorMessage;
 }
 
-void SocialNetworkInterfacePrivate::setReply(const Node &node, QNetworkReply *reply)
+void SocialNetworkInterfacePrivate::setReply(Node::Ptr node, QNetworkReply *reply)
 {
     Q_Q(SocialNetworkInterface);
     if (!reply) {
@@ -882,9 +919,9 @@ void SocialNetworkInterfacePrivate::setReply(const Node &node, QNetworkReply *re
                      q, SLOT(sslErrorsHandler(QList<QSslError>)));
 }
 
-void SocialNetworkInterfacePrivate::setStatus(Node &node, NodePrivate::Status status)
+void SocialNetworkInterfacePrivate::setStatus(Node::Ptr node, NodePrivate::Status status)
 {
-    node.setStatus(status);
+    node->setStatus(status);
     SocialNetworkInterface::Status socialNetworkStatus = correspondingStatus(status);
 
     foreach (SocialNetworkModelInterface *model, models) {
@@ -894,12 +931,12 @@ void SocialNetworkInterfacePrivate::setStatus(Node &node, NodePrivate::Status st
     }
 }
 
-void SocialNetworkInterfacePrivate::setError(Node &node,
+void SocialNetworkInterfacePrivate::setError(Node::Ptr node,
                                              SocialNetworkInterface::ErrorType error,
                                              const QString &errorMessage)
 {
     setStatus(node, NodePrivate::Error);
-    node.setError(error, errorMessage);
+    node->setError(error, errorMessage);
     foreach (SocialNetworkModelInterface *model, models) {
         if (matches(node, model)) {
             model->d_func()->setStatus(SocialNetworkInterface::Error);
@@ -924,29 +961,29 @@ void SocialNetworkInterfacePrivate::deleteReply(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-void SocialNetworkInterfacePrivate::updateModelNode(Node &node)
+void SocialNetworkInterfacePrivate::updateModelNode(Node::Ptr node)
 {
     Q_Q(SocialNetworkInterface);
     // If the current node is not created
-    if (!node.cacheEntry().item()
-        && !node.cacheEntry().data().isEmpty()) {
+    if (!node->cacheEntry()->item()
+        && !node->cacheEntry()->data().isEmpty()) {
 
         // Beware, we suppose that data already contains the type
         // as createItem should make use of the type inside the data
         // to build the item
-        ContentItemInterface *item = createItem(node.cacheEntry());
+        ContentItemInterface *item = createItem(node->cacheEntry());
 
         // Update the cache.
-        node.cacheEntry().setItem(item);
-    } else if (node.cacheEntry().item()
-               && !node.cacheEntry().data().isEmpty()) {
+        node->cacheEntry()->setItem(item);
+    } else if (node->cacheEntry()->item()
+               && !node->cacheEntry()->data().isEmpty()) {
         // Update the item
-        ContentItemInterface *item = node.cacheEntry().item();
-        q->setContentItemData(item, node.cacheEntry().data());
+        ContentItemInterface *item = node->cacheEntry()->item();
+        q->setContentItemData(item, node->cacheEntry()->data());
     }
 
     // Update the node for each model
-    IdentifiableContentItemInterface *item = node.cacheEntry().identifiableItem();
+    IdentifiableContentItemInterface *item = node->cacheEntry()->identifiableItem();
     foreach (SocialNetworkModelInterface *model, models) {
         if (matches(node, model)) {
             model->d_func()->setNode(item);
@@ -955,13 +992,13 @@ void SocialNetworkInterfacePrivate::updateModelNode(Node &node)
     }
 }
 
-void SocialNetworkInterfacePrivate::updateModelRelatedData(Node &node,
-                                                           const QList<CacheEntry> &relatedData)
+void SocialNetworkInterfacePrivate::updateModelRelatedData(Node::Ptr node,
+                                                           const CacheEntry::List &relatedData)
 {
     // We use the status flag to see how the internal data should be updated
-    switch (node.status()) {
+    switch (node->status()) {
         case NodePrivate::LoadingRelatedDataReplacing: {
-            node.setRelatedData(relatedData);
+            node->setRelatedData(relatedData);
             foreach (SocialNetworkModelInterface *model, models) {
                 if (matches(node, model)) {
                     model->d_func()->setData(relatedData);
@@ -970,9 +1007,9 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node &node,
         }
         break;
         case NodePrivate::LoadingRelatedDataPrepending: {
-            QList<CacheEntry> data = relatedData;
-            data.append(node.relatedData());
-            node.setRelatedData(data);
+            CacheEntry::List data = relatedData;
+            data.append(node->relatedData());
+            node->setRelatedData(data);
             foreach (SocialNetworkModelInterface *model, models) {
                 if (matches(node, model)) {
                     model->d_func()->prependData(relatedData);
@@ -981,9 +1018,9 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node &node,
         }
         break;
         case NodePrivate::LoadingRelatedDataAppending: {
-            QList<CacheEntry> data = node.relatedData();
+            CacheEntry::List data = node->relatedData();
             data.append(relatedData);
-            node.setRelatedData(data);
+            node->setRelatedData(data);
             foreach (SocialNetworkModelInterface *model, models) {
                 if (matches(node, model)) {
                     model->d_func()->appendData(relatedData);
@@ -997,10 +1034,11 @@ void SocialNetworkInterfacePrivate::updateModelRelatedData(Node &node,
 
 }
 
-void SocialNetworkInterfacePrivate::updateModelHavePreviousAndNext(Node &node, bool havePrevious,
+void SocialNetworkInterfacePrivate::updateModelHavePreviousAndNext(Node::Ptr node,
+                                                                   bool havePrevious,
                                                                    bool haveNext)
 {
-    node.setHavePreviousAndNext(havePrevious, haveNext);
+    node->setHavePreviousAndNext(havePrevious, haveNext);
     foreach (SocialNetworkModelInterface *model, models) {
         if (matches(node, model)) {
             model->d_func()->setHavePreviousAndNext(havePrevious, haveNext);
@@ -1008,26 +1046,26 @@ void SocialNetworkInterfacePrivate::updateModelHavePreviousAndNext(Node &node, b
     }
 }
 
-CacheEntry SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &data,
-                                                           const QString &identifier)
+CacheEntry::Ptr SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMap &data,
+                                                                const QString &identifier)
 {
     // Check if there is already a cached entry that corresponds
     if (!identifier.isEmpty()) {
         if (cache.contains(identifier)) {
-            CacheEntry cacheEntry = cache.value(identifier);
+            CacheEntry::Ptr cacheEntry = cache.value(identifier);
 
             // Set the new data in the CacheEntry
-            cacheEntry.setData(data);
+            cacheEntry->setData(data);
             return cache.value(identifier);
         }
     }
 
     if (!identifier.isEmpty()) {
-        CacheEntry cacheEntry (data, identifier);
+        CacheEntry::Ptr cacheEntry = CacheEntry::create(data, identifier);
         cache.insert(identifier, cacheEntry);
         return cacheEntry;
     } else {
-        return CacheEntry(data);
+        return CacheEntry::create(data);
     }
 }
 
@@ -1066,7 +1104,7 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
 
 
     // Create or get the node from cache
-    Node node = getOrCreateNode(identifier, guessedType, filterSet);
+    Node::Ptr node = getOrCreateNode(identifier, guessedType, filterSet);
 
     // Purge the nodes if needed
     // This is needed if (eg) a model was associated to a Node,
@@ -1077,16 +1115,16 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
 
     // If the node is already loaded, and we didn't ask for a reload,
     // we should just set the nodes
-    if (node.status() == NodePrivate::Idle && !reload) {
-        model->d_func()->setNode(node.cacheEntry().identifiableItem());
-        model->d_func()->setData(node.relatedData());
+    if (node->status() == NodePrivate::Idle && !reload) {
+        model->d_func()->setNode(node->cacheEntry()->identifiableItem());
+        model->d_func()->setData(node->relatedData());
         return;
     }
 
-    bool loading = node.status() == NodePrivate::LoadingNodeData
-                   || node.status() == NodePrivate::LoadingRelatedDataReplacing
-                   || node.status() == NodePrivate::LoadingRelatedDataPrepending
-                   || node.status() == NodePrivate::LoadingRelatedDataAppending;
+    bool loading = node->status() == NodePrivate::LoadingNodeData
+                   || node->status() == NodePrivate::LoadingRelatedDataReplacing
+                   || node->status() == NodePrivate::LoadingRelatedDataPrepending
+                   || node->status() == NodePrivate::LoadingRelatedDataAppending;
 
     // If the node is already being loaded and that we called reload
     // we should not perform a reload
@@ -1099,9 +1137,9 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     // set the loaded data, and set the status to idle
     // before leaving.
     if (loading) {
-        model->d_func()->setNode(node.cacheEntry().identifiableItem());
-        model->d_func()->setData(node.relatedData());
-        model->d_func()->setStatus(correspondingStatus(node.status()));
+        model->d_func()->setNode(node->cacheEntry()->identifiableItem());
+        model->d_func()->setData(node->relatedData());
+        model->d_func()->setStatus(correspondingStatus(node->status()));
         return;
     }
 
@@ -1116,10 +1154,10 @@ void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
     // (we don't do that if we are asked to reload)
     if (cache.contains(identifier) && !reload) {
         if (validateCacheEntryForNode(cache.value(identifier))) {
-            CacheEntry cacheEntry = cache.value(identifier);
-            cacheEntry.setItem(createItem(cacheEntry));
-            node.setCacheEntry(cacheEntry);
-            newItem = node.cacheEntry().identifiableItem();
+            CacheEntry::Ptr cacheEntry = cache.value(identifier);
+            cacheEntry->setItem(createItem(cacheEntry));
+            node->setCacheEntry(cacheEntry);
+            newItem = node->cacheEntry()->identifiableItem();
 
             status = NodePrivate::LoadingRelatedDataReplacing;
         }
@@ -1183,8 +1221,8 @@ void SocialNetworkInterfacePrivate::removeModel(SocialNetworkModelInterface *mod
 
 void SocialNetworkInterfacePrivate::loadNext(SocialNetworkModelInterface *model)
 {
-    Node node = getNode(model->nodeIdentifier(), model->nodeType(),
-                        model->d_func()->filters.toSet());
+    Node::Ptr node = getNode(model->nodeIdentifier(), model->nodeType(),
+                             model->d_func()->filters.toSet());
     if (node.isNull()) {
         qWarning() << Q_FUNC_INFO << "The model is not loaded. Please call populate() first";
         return;
@@ -1196,8 +1234,8 @@ void SocialNetworkInterfacePrivate::loadNext(SocialNetworkModelInterface *model)
 
 void SocialNetworkInterfacePrivate::loadPrevious(SocialNetworkModelInterface *model)
 {
-    Node node = getNode(model->nodeIdentifier(), model->nodeType(),
-                        model->d_func()->filters.toSet());
+    Node::Ptr node = getNode(model->nodeIdentifier(), model->nodeType(),
+                             model->d_func()->filters.toSet());
     if (node.isNull()) {
         qWarning() << Q_FUNC_INFO << "The model is not loaded. Please call populate() first";
         return;
@@ -1207,13 +1245,12 @@ void SocialNetworkInterfacePrivate::loadPrevious(SocialNetworkModelInterface *mo
     populateRelatedDataforNode(node);
 }
 
-ContentItemInterface * SocialNetworkInterfacePrivate::createItem(const CacheEntry &cacheEntry)
+ContentItemInterface * SocialNetworkInterfacePrivate::createItem(CacheEntry::Ptr cacheEntry)
 {
     Q_Q(SocialNetworkInterface);
-    CacheEntry modifiableCacheEntry = cacheEntry;
-    ContentItemInterface *item = contentItemFromData(cacheEntry.data(), q);
+    ContentItemInterface *item = contentItemFromData(cacheEntry->data(), q);
     QObject::connect(item, SIGNAL(dataChanged()), q, SLOT(itemDataChangedHandler()));
-    modifiableCacheEntry.setItem(item);
+    cacheEntry->setItem(item);
     return item;
 }
 
@@ -1231,7 +1268,7 @@ void SocialNetworkInterfacePrivate::finishedHandler()
         return;
     }
 
-    Node node = replyToNodeMap.value(reply);
+    Node::Ptr node = replyToNodeMap.value(reply);
     handleFinished(node, reply);
     replyToNodeMap.remove(reply);
 }
@@ -1250,7 +1287,7 @@ void SocialNetworkInterfacePrivate::errorHandler(QNetworkReply::NetworkError net
         return;
     }
 
-    Node node = replyToNodeMap.value(reply);
+    Node::Ptr node = replyToNodeMap.value(reply);
     handleError(node, reply, networkError);
 }
 
@@ -1268,7 +1305,7 @@ void SocialNetworkInterfacePrivate::sslErrorsHandler(const QList<QSslError> &ssl
         return;
     }
 
-    Node node = replyToNodeMap.value(reply);
+    Node::Ptr node = replyToNodeMap.value(reply);
     handleSslError(node, reply, sslErrors);
 }
 
@@ -1284,16 +1321,16 @@ void SocialNetworkInterfacePrivate::filterDestroyedHandler(QObject *object)
     // If the node have the filter, we invalidate the content
     // of the node (and set the models associated to invalid)
 
-    QList<Node> doomedNodes;
+    Node::List doomedNodes;
 
-    foreach (Node node, nodes) {
-        if (node.filters().contains(filter)) {
+    foreach (Node::Ptr node, nodes) {
+        if (node->filters().contains(filter)) {
             doomedNodes.append(node);
         }
     }
 
-    foreach (Node node, doomedNodes) {
-        qWarning() << "Destroying a filter affected the node associated to" << node.identifier();
+    foreach (Node::Ptr node, doomedNodes) {
+        qWarning() << "Destroying a filter affected the node associated to" << node->identifier();
         nodes.removeAll(node);
         foreach (SocialNetworkModelInterface *model, models) {
             if (matches(node, model)) {
@@ -1317,11 +1354,11 @@ void SocialNetworkInterfacePrivate::itemDataChangedHandler()
     QString identifier = item->identifier();
     if (cache.contains(identifier)) {
         // Check data and update if needed
-        CacheEntry cacheEntry = cache.value(identifier);
+        CacheEntry::Ptr cacheEntry = cache.value(identifier);
 
-        if (cacheEntry.item() == item) {
-            if (cacheEntry.data() != item->data()) {
-                cacheEntry.setData(item->data());
+        if (cacheEntry->item() == item) {
+            if (cacheEntry->data() != item->data()) {
+                cacheEntry->setData(item->data());
             }
         }
     }
@@ -1367,9 +1404,9 @@ bool SocialNetworkInterfacePrivate::matches(const QString &identifier, int type,
     return true;
 }
 
-bool SocialNetworkInterfacePrivate::matches(const Node &node, SocialNetworkModelInterface *model)
+bool SocialNetworkInterfacePrivate::matches(Node::ConstPtr node, SocialNetworkModelInterface *model)
 {
-    return matches(node.identifier(), node.type(), node.filters(), model);
+    return matches(node->identifier(), node->type(), node->filters(), model);
 }
 
 SocialNetworkInterface::Status SocialNetworkInterfacePrivate::correspondingStatus(NodePrivate::Status status)
@@ -1412,12 +1449,12 @@ SocialNetworkInterface::Status SocialNetworkInterfacePrivate::correspondingStatu
     the filters to the destruction handlers, and adds the new
     node into the cache.
 */
-Node SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
-                                                    int type,
-                                                    const QSet<FilterInterface *> &filters)
+Node::Ptr SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
+                                                         int type,
+                                                         const QSet<FilterInterface *> &filters)
 {
     Q_Q(SocialNetworkInterface);
-    Node node (identifier, type, filters);
+    Node::Ptr node = Node::create(identifier, type, filters);
     int index = nodes.indexOf(node);
     if (index == -1) {
         // Connect to filter destruction handler
@@ -1432,13 +1469,13 @@ Node SocialNetworkInterfacePrivate::getOrCreateNode(const QString &identifier,
     }
 }
 
-Node SocialNetworkInterfacePrivate::getNode(const QString &identifier, int type,
-                                            const QSet<FilterInterface *> &filters)
+Node::Ptr SocialNetworkInterfacePrivate::getNode(const QString &identifier, int type,
+                                                 const QSet<FilterInterface *> &filters)
 {
-    Node node (identifier, type, filters);
+    Node::Ptr node = Node::create(identifier, type, filters);
     int index = nodes.indexOf(node);
     if (index == -1) {
-        return Node();
+        return Node::Ptr();
     } else {
         return nodes[index];
     }
@@ -1446,12 +1483,12 @@ Node SocialNetworkInterfacePrivate::getNode(const QString &identifier, int type,
 
 void SocialNetworkInterfacePrivate::checkDoomedNodes()
 {
-    QList<Node> currentNodes = nodes;
-    QList<Node> doomedNodes;
-    QList<Node> savedNodes;
+    Node::List currentNodes = nodes;
+    Node::List doomedNodes;
+    Node::List savedNodes;
     while (!currentNodes.isEmpty()) {
         bool doomed = true;
-        Node node = currentNodes.takeFirst();
+        Node::Ptr node = currentNodes.takeFirst();
         foreach (SocialNetworkModelInterface *otherModel, models) {
             if (matches(node, otherModel)) {
                 doomed = false;
@@ -1469,21 +1506,20 @@ void SocialNetworkInterfacePrivate::checkDoomedNodes()
     nodes = savedNodes;
 
     // Destroy the doomed nodes
-    foreach (const Node &node, doomedNodes) {
+    foreach (Node::Ptr node, doomedNodes) {
         deleteNode(node);
     }
 }
 
-void SocialNetworkInterfacePrivate::checkCacheEntryRefcount(const CacheEntry &entry)
+void SocialNetworkInterfacePrivate::checkCacheEntryRefcount(CacheEntry::Ptr entry)
 {
-    if (cache.contains(entry.identifier()) && entry.refcount() == 0) {
-        CacheEntry modifiableEntry = entry;
-        modifiableEntry.deleteItem();
-        cache.remove(entry.identifier());
+    if (cache.contains(entry->identifier()) && entry->refcount() == 0) {
+        entry->deleteItem();
+        cache.remove(entry->identifier());
     }
 }
 
-void SocialNetworkInterfacePrivate::deleteNode(const Node &node)
+void SocialNetworkInterfacePrivate::deleteNode(Node::Ptr node)
 {
     Q_Q(SocialNetworkInterface);
     int index = nodes.indexOf(node);
@@ -1491,15 +1527,13 @@ void SocialNetworkInterfacePrivate::deleteNode(const Node &node)
         return;
     }
 
-    Node modifiableNode = nodes[index];
-
     // Disconnect all the filters
-    foreach (FilterInterface *filter, node.filters()) {
+    foreach (FilterInterface *filter, node->filters()) {
 
         // Be sure that the filter is not used by another node
         bool doomed = true;
-        foreach (const Node &otherNode, nodes) {
-            if (otherNode != node && otherNode.filters().contains(filter)) {
+        foreach (Node::Ptr otherNode, nodes) {
+            if (otherNode != node && otherNode->filters().contains(filter)) {
                 doomed = false;
                 break;
             }
@@ -1510,14 +1544,14 @@ void SocialNetworkInterfacePrivate::deleteNode(const Node &node)
         }
     }
 
-    modifiableNode.cacheEntry().deref();
+    node->cacheEntry()->deref();
 
-    foreach (CacheEntry entry, modifiableNode.relatedData()) {
-        entry.deref();
+    foreach (CacheEntry::Ptr entry, node->relatedData()) {
+        entry->deref();
     }
 
-    checkCacheEntryRefcount(modifiableNode.cacheEntry());
-    foreach (CacheEntry entry, modifiableNode.relatedData()) {
+    checkCacheEntryRefcount(node->cacheEntry());
+    foreach (CacheEntry::Ptr entry, node->relatedData()) {
         checkCacheEntryRefcount(entry);
     }
 

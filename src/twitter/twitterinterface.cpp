@@ -147,13 +147,13 @@ QNetworkRequest TwitterInterfacePrivate::networkRequest(const QString &extraPath
     return request;
 }
 
-void TwitterInterfacePrivate::handlePopulateRelatedData(Node &node,
+void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
                                                         const QVariant &relatedData,
                                                         const QUrl &requestUrl)
 {
     // We receive the related data and transform it into ContentItems.
     // Finally, we populate the cache for the node and update the internal model data.
-    QList<CacheEntry> relatedContent;
+    CacheEntry::List relatedContent;
     QString requestPath = requestUrl.path();
 
     TwitterInterface::ContentItemType type = TwitterInterface::Unknown;
@@ -194,7 +194,7 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node &node,
                              relatedDataMap.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR,
                                                TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString());
 
-            node.setExtraInfo(nodeExtra);
+            node->setExtraInfo(nodeExtra);
 
             havePreviousRelatedData = nodeExtra.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR).toString()
                                       != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR;
@@ -226,7 +226,7 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node &node,
 
     // We should get the cursors for tweets with all the data we have loaded
     if (type == TwitterInterface::Tweet) {
-        QList<CacheEntry> relatedData = node.relatedData();
+        CacheEntry::List relatedData = node->relatedData();
         if (relatedData.isEmpty()) {
             havePreviousRelatedData = false;
             haveNextRelatedData = false;
@@ -235,8 +235,8 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node &node,
             // For newer tweets, (that are "previous") we should ask for since_id = first tweet id
             // And it might need several calls, but we TODO this
             // For older tweets, we should ask for max_id = last tweet id - 1
-            QString firstTweetId = relatedData.first().data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
-            QString lastTweetId = relatedData.last().data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
+            QString firstTweetId = relatedData.first()->data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
+            QString lastTweetId = relatedData.last()->data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
             qulonglong lastTweetIdInt = lastTweetId.toULongLong() - 1;
 
             QVariantMap previous;
@@ -248,7 +248,7 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node &node,
             QVariantMap nodeExtra;
             nodeExtra.insert(NEXT_TWEET_PAGE_KEY, next);
             nodeExtra.insert(PREVIOUS_TWEET_PAGE_KEY, previous);
-            node.setExtraInfo(nodeExtra);
+            node->setExtraInfo(nodeExtra);
 
             havePreviousRelatedData = true;
             haveNextRelatedData = true;
@@ -282,16 +282,16 @@ RequestInfo  TwitterInterfacePrivate::requestTweetInfo(const QString &identifier
 }
 
 /*! \reimp */
-void TwitterInterfacePrivate::populateDataForNode(Node &node)
+void TwitterInterfacePrivate::populateDataForNode(Node::Ptr node)
 {
     RequestInfo requestInfo;
-    switch (node.type()) {
+    switch (node->type()) {
         case TwitterInterface::User: {
-            requestInfo = TwitterInterfacePrivate::requestUserInfo(node.identifier());
+            requestInfo = TwitterInterfacePrivate::requestUserInfo(node->identifier());
         }
         break;
         case TwitterInterface::Tweet: {
-            requestInfo = TwitterInterfacePrivate::requestTweetInfo(node.identifier());
+            requestInfo = TwitterInterfacePrivate::requestTweetInfo(node->identifier());
         }
         break;
         default: {
@@ -307,9 +307,9 @@ void TwitterInterfacePrivate::populateDataForNode(Node &node)
 }
 
 /*! \reimp */
-void TwitterInterfacePrivate::populateRelatedDataforNode(Node &node)
+void TwitterInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
 {
-    if (!performRelatedDataRequest(node, node.identifier(), node.filters().toList())) {
+    if (!performRelatedDataRequest(node, node->identifier(), node->filters().toList())) {
         setError(node, SocialNetworkInterface::DataUpdateError,
                  QLatin1String("Cannot perform related data request"));
     }
@@ -466,7 +466,7 @@ int TwitterInterfacePrivate::guessType(const QString &identifier, int type,
 }
 
 /*! \internal */
-void TwitterInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
+void TwitterInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
     QUrl requestUrl = reply->request().url();
@@ -482,7 +482,7 @@ void TwitterInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
     }
 
 
-    switch (node.status()) {
+    switch (node->status()) {
         case NodePrivate::LoadingNodeData:{
             QVariantMap responseDataMap = responseData.toMap();
             // Create a cache entry associated to the retrieved data
@@ -490,14 +490,14 @@ void TwitterInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
             if (responseDataMap.contains(TWITTER_ONTOLOGY_METADATA_ID)) {
                 identifier = responseDataMap.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
             }
-            responseDataMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, node.type());
+            responseDataMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, node->type());
 
-            CacheEntry cacheEntry = createCacheEntry(responseDataMap, identifier);
-            node.setCacheEntry(cacheEntry);
+            CacheEntry::Ptr cacheEntry = createCacheEntry(responseDataMap, identifier);
+            node->setCacheEntry(cacheEntry);
             updateModelNode(node);
 
             // Performing a replace
-            node.setStatus(NodePrivate::LoadingRelatedDataReplacing);
+            node->setStatus(NodePrivate::LoadingRelatedDataReplacing);
             populateRelatedDataforNode(node);
         }
         break;
@@ -512,7 +512,7 @@ void TwitterInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
     }
 }
 
-bool TwitterInterfacePrivate::performRelatedDataRequest(Node &node, const QString &identifier,
+bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QString &identifier,
                                                         const QList<FilterInterface *> &filters)
 {
     // We first cast filters to known filters
@@ -549,22 +549,22 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node &node, const QStrin
     QString extraPath;
     QVariantMap extraData;
 
-    QVariantMap nodeExtraInfo = node.extraInfo();
+    QVariantMap nodeExtraInfo = node->extraInfo();
     // If we have cursors, we add them
     if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR)
-        && node.status() == NodePrivate::LoadingRelatedDataAppending) {
+        && node->status() == NodePrivate::LoadingRelatedDataAppending) {
         extraData.insert(TWITTER_ONTOLOGY_METADATA_CURSOR,
                          nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR));
     }
 
     if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR)
-        && node.status() == NodePrivate::LoadingRelatedDataPrepending) {
+        && node->status() == NodePrivate::LoadingRelatedDataPrepending) {
         extraData.insert(TWITTER_ONTOLOGY_METADATA_CURSOR,
                          nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR));
     }
 
     if (nodeExtraInfo.contains(NEXT_TWEET_PAGE_KEY)
-        && node.status() == NodePrivate::LoadingRelatedDataAppending) {
+        && node->status() == NodePrivate::LoadingRelatedDataAppending) {
         QVariantMap next = nodeExtraInfo.value(NEXT_TWEET_PAGE_KEY).toMap();
         foreach (QString key, next.keys()) {
             extraData.insert(key, next.value(key));
@@ -572,7 +572,7 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node &node, const QStrin
     }
 
     if (nodeExtraInfo.contains(PREVIOUS_TWEET_PAGE_KEY)
-        && node.status() == NodePrivate::LoadingRelatedDataPrepending) {
+        && node->status() == NodePrivate::LoadingRelatedDataPrepending) {
         QVariantMap previous = nodeExtraInfo.value(PREVIOUS_TWEET_PAGE_KEY).toMap();
         foreach (QString key, previous.keys()) {
             extraData.insert(key, previous.value(key));
