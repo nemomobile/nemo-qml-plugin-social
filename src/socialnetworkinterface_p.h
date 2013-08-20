@@ -109,7 +109,7 @@ private:
     Q_DECLARE_PRIVATE(CacheEntry)
 };
 
-//bool operator==(CacheEntry::Ptr cacheEntry1, CacheEntry::Ptr cacheEntry2);
+bool operator==(CacheEntry::Ptr cacheEntry1, CacheEntry::Ptr cacheEntry2);
 
 struct NodePrivate
 {
