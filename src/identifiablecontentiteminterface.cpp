@@ -312,8 +312,6 @@ void IdentifiableContentItemInterfacePrivate::reloadHandler()
         emit q->errorChanged();
         emit q->errorMessageChanged();
         emit q->responseReceived(responseData);
-
-        qDebug() << replyData;
     }
 }
 

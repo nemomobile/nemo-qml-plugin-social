@@ -103,7 +103,7 @@ private:
                                          const QVariantMap &relatedData,
                                          const QString &requestPath, int type,
                                          const QString &typeName, CacheEntry::List &list,
-                                         QVariantMap &nodeExtra);
+                                         QVariantMap &extraInfo);
     inline QString createField(int type, const QString &connection,
                                const RequestFieldsMap &requestFiledsMap);
     Q_DECLARE_PUBLIC(FacebookInterface)

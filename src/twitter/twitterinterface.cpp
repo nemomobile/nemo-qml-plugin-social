@@ -60,8 +60,7 @@
 static const char *TRUE_STRING = "true";
 static const char *FALSE_STRING = "false";
 static const char *HEADER_AUTHORIZATION_KEY = "Authorization";
-static const char *NEXT_TWEET_PAGE_KEY = "next";
-static const char *PREVIOUS_TWEET_PAGE_KEY = "previous";
+#define PAGING_HAVE_KEY QLatin1String("have")
 
 inline QString boolToString(bool boolean)
 {
@@ -145,8 +144,6 @@ QNetworkRequest TwitterInterfacePrivate::networkRequest(const QString &extraPath
 
     QNetworkRequest request (url);
     request.setRawHeader(HEADER_AUTHORIZATION_KEY, header);
-
-    qDebug() << url;
     return request;
 }
 
@@ -223,8 +220,12 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
         type = TwitterInterface::Tweet;
     }
 
+    // Just like in Facebook, we create two QVariantMap to hold page properties.
+    // They will use PAGING_HAVE_KEY to store if there is a next (resp. previous)
+    // page that can be loaded.
     bool havePreviousRelatedData = false;
     bool haveNextRelatedData = false;
+
     switch (type) {
         case TwitterInterface::User:
         {
@@ -239,20 +240,27 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
             }
 
             // Do the cursoring
-            QVariantMap nodeExtra;
-            nodeExtra.insert(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR,
-                             relatedDataMap.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR,
-                                               TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString());
-            nodeExtra.insert(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR,
-                             relatedDataMap.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR,
-                                               TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString());
+            QString previousCursor = relatedDataMap.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR,
+                                                          TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString();
+            QString nextCursor = relatedDataMap.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR,
+                                                      TWITTER_ONTOLOGY_METADATA_NULL_CURSOR).toString();
 
+            QVariantMap previousExtra;
+            QVariantMap nextExtra;
+            QVariantMap nodeExtra = node->extraInfo();
+            previousExtra.insert(TWITTER_ONTOLOGY_METADATA_CURSOR, previousCursor);
+            nextExtra.insert(TWITTER_ONTOLOGY_METADATA_CURSOR, nextCursor);
+
+            previousExtra.insert(PAGING_HAVE_KEY, previousCursor != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR);
+            nextExtra.insert(PAGING_HAVE_KEY, nextCursor != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR);
+            SocialNetworkInterfacePrivate::setNodeExtraPaging(nodeExtra, previousExtra, nextExtra,
+                                                              node->status());
             node->setExtraInfo(nodeExtra);
+            previousExtra = nodeExtra.value(NODE_EXTRA_PAGING_PREVIOUS_KEY).toMap();
+            nextExtra = nodeExtra.value(NODE_EXTRA_PAGING_NEXT_KEY).toMap();
 
-            havePreviousRelatedData = nodeExtra.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR).toString()
-                                      != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR;
-            haveNextRelatedData = nodeExtra.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR).toString()
-                                  != TWITTER_ONTOLOGY_METADATA_NULL_CURSOR;
+            havePreviousRelatedData = previousExtra.value(PAGING_HAVE_KEY).toBool();
+            haveNextRelatedData = nextExtra.value(PAGING_HAVE_KEY).toBool();
         }
         break;
         case TwitterInterface::Tweet:
@@ -279,11 +287,11 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
 
     // We should get the cursors for tweets with all the data we have loaded
     if (type == TwitterInterface::Tweet) {
+        havePreviousRelatedData = true;
+        haveNextRelatedData = true;
+
         CacheEntry::List relatedData = node->relatedData();
-        if (relatedData.isEmpty()) {
-            havePreviousRelatedData = false;
-            haveNextRelatedData = false;
-        } else {
+        if (!relatedData.isEmpty()) {
             // Create the token pairs for tweets
             // For newer tweets, (that are "previous") we should ask for since_id = first tweet id
             // And it might need several calls, but we TODO this
@@ -292,19 +300,17 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
             QString lastTweetId = relatedData.last()->data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString();
             qulonglong lastTweetIdInt = lastTweetId.toULongLong() - 1;
 
-            QVariantMap previous;
-            previous.insert(TWITTER_ONTOLOGY_CONNECTION_SINCE_ID_KEY, firstTweetId);
+            QVariantMap previousExtra;
+            previousExtra.insert(TWITTER_ONTOLOGY_CONNECTION_SINCE_ID_KEY, firstTweetId);
 
-            QVariantMap next;
-            next.insert(TWITTER_ONTOLOGY_CONNECTION_MAX_ID_KEY, QString::number(lastTweetIdInt));
+            QVariantMap nextExtra;
+            nextExtra.insert(TWITTER_ONTOLOGY_CONNECTION_MAX_ID_KEY, QString::number(lastTweetIdInt));
 
-            QVariantMap nodeExtra;
-            nodeExtra.insert(NEXT_TWEET_PAGE_KEY, next);
-            nodeExtra.insert(PREVIOUS_TWEET_PAGE_KEY, previous);
+            QVariantMap nodeExtra = node->extraInfo();
+            SocialNetworkInterfacePrivate::setNodeExtraPaging(nodeExtra, previousExtra, nextExtra,
+                                                              node->status());
             node->setExtraInfo(nodeExtra);
 
-            havePreviousRelatedData = true;
-            haveNextRelatedData = true;
         }
     }
 
@@ -631,7 +637,6 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
             && node->status() == NodePrivate::LoadingRelatedDataAppending) {
             limitingIdentifier = nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_CONVERSATIONNEXT_CURSOR).toString();
         }
-        qDebug() << identifier << limitingIdentifier;
         extraData.insert(TWITTER_ONTOLOGY_CONNECTION_SINCE_ID_KEY, limitingIdentifier);
         extraData.insert(TWITTER_ONTOLOGY_CONNECTION_COUNT_KEY, 200);
         setReply(node, getRequest(QString(), extraPath, QStringList(), extraData));
@@ -639,32 +644,31 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
     }
 
     // If we have cursors, we add them
-    if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR)
-        && node->status() == NodePrivate::LoadingRelatedDataAppending) {
-        extraData.insert(TWITTER_ONTOLOGY_METADATA_CURSOR,
-                         nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_NEXT_CURSOR));
-    }
+    switch (node->status()) {
+        case NodePrivate::LoadingRelatedDataAppending: {
+            QVariantMap extraMap = node->extraInfo().value(NODE_EXTRA_PAGING_NEXT_KEY).toMap();
+            qDebug() << extraMap;
 
-    if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR)
-        && node->status() == NodePrivate::LoadingRelatedDataPrepending) {
-        extraData.insert(TWITTER_ONTOLOGY_METADATA_CURSOR,
-                         nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_PREVIOUS_CURSOR));
-    }
-
-    if (nodeExtraInfo.contains(NEXT_TWEET_PAGE_KEY)
-        && node->status() == NodePrivate::LoadingRelatedDataAppending) {
-        QVariantMap next = nodeExtraInfo.value(NEXT_TWEET_PAGE_KEY).toMap();
-        foreach (QString key, next.keys()) {
-            extraData.insert(key, next.value(key));
+            foreach(QString key, extraMap.keys()) {
+                if (key != PAGING_HAVE_KEY) {
+                    extraData.insert(key, extraMap.value(key));
+                }
+            }
         }
-    }
+        break;
+        case NodePrivate::LoadingRelatedDataPrepending: {
+            QVariantMap extraMap = node->extraInfo().value(NODE_EXTRA_PAGING_PREVIOUS_KEY).toMap();
 
-    if (nodeExtraInfo.contains(PREVIOUS_TWEET_PAGE_KEY)
-        && node->status() == NodePrivate::LoadingRelatedDataPrepending) {
-        QVariantMap previous = nodeExtraInfo.value(PREVIOUS_TWEET_PAGE_KEY).toMap();
-        foreach (QString key, previous.keys()) {
-            extraData.insert(key, previous.value(key));
+            qDebug() << extraMap;
+
+            foreach(QString key, extraMap.keys()) {
+                if (key != PAGING_HAVE_KEY) {
+                    extraData.insert(key, extraMap.value(key));
+                }
+            }
         }
+        break;
+        default: break;
     }
 
     switch (filter->type()) {

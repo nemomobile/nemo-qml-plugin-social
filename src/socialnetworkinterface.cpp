@@ -1070,6 +1070,47 @@ CacheEntry::Ptr SocialNetworkInterfacePrivate::createCacheEntry(const QVariantMa
     }
 }
 
+void SocialNetworkInterfacePrivate::setNodeExtraPaging(QVariantMap &nodeExtra,
+                                                       const QVariantMap &previousExtra,
+                                                       const QVariantMap &nextExtra,
+                                                       NodePrivate::Status insertionMode)
+{
+    // Node::extraInfo is used to provide the cursors that are
+    // often used to load next or previous page of data in social API.
+    //
+    // This data is stored in Node::extraInfo using the
+    // NODE_EXTRA_PAGING_PREVIOUS_KEY and NODE_EXTRA_PAGING_NEXT_KEY keys,
+    // that are defined in socialnetworkinterface_p.h.
+    //
+    // Updating this data is sometimes tricky, because when a newer page
+    // is loaded a new set of cursors used for loading other pages is
+    // provided, and if the page is appended to the model, the new cursors
+    // might conflicts with the actual ones. This method is here to
+    // override the good set of cursors when prepending or appending
+    // data to the result model.
+    //
+    // The type of storage, as well as managing the fact that there is new
+    // data to be loaded is done by the implementer.
+
+    if (insertionMode != NodePrivate::LoadingRelatedDataReplacing
+        && insertionMode != NodePrivate::LoadingRelatedDataPrepending
+        && insertionMode != NodePrivate::LoadingRelatedDataAppending) {
+        return;
+    }
+
+    // If we are prepending data, we should override "previous"
+    if (insertionMode == NodePrivate::LoadingRelatedDataReplacing
+        || insertionMode == NodePrivate::LoadingRelatedDataPrepending) {
+        nodeExtra.insert(NODE_EXTRA_PAGING_PREVIOUS_KEY, previousExtra);
+    }
+
+    // If we are appending data, we should override "next"
+    if (insertionMode == NodePrivate::LoadingRelatedDataReplacing
+        || insertionMode == NodePrivate::LoadingRelatedDataAppending) {
+        nodeExtra.insert(NODE_EXTRA_PAGING_NEXT_KEY, nextExtra);
+    }
+}
+
 void SocialNetworkInterfacePrivate::populate(SocialNetworkModelInterface *model,
                                              const QString &identifier,
                                              int type,
