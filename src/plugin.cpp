@@ -53,6 +53,7 @@
 
 // facebook implementation headers
 #include "facebook/facebookinterface.h"
+#include "facebook/facebookcommentfilterinterface.h"
 #include "facebook/facebookobjectreferenceinterface.h"
 #include "facebook/facebookalbuminterface.h"
 #include "facebook/facebookcommentinterface.h"
@@ -60,14 +61,13 @@
 #include "facebook/facebookphotointerface.h"
 #include "facebook/facebookpostinterface.h"
 #include "facebook/facebookuserinterface.h"
-
 #include "facebook/facebooklikeinterface.h"
 
 // twitter implementation headers
 #include "twitter/twitterinterface.h"
+#include "twitter/twitterconversationfilterinterface.h"
 #include "twitter/twitteruserinterface.h"
 #include "twitter/twittertweetinterface.h"
-#include "twitter/twitterconversationfilterinterface.h"
 
 
 class Q_DECL_EXPORT NemoSocialPlugin : public QDeclarativeExtensionPlugin
@@ -106,6 +106,7 @@ public:
 
         // creatable types from the facebook implementation
         qmlRegisterType<FacebookInterface>(uri, 1, 0, "Facebook");
+        qmlRegisterType<FacebookCommentFilterInterface>(uri, 1, 0, "FacebookCommentFilter");
         qmlRegisterType<FacebookObjectReferenceInterface>(uri, 1, 0, "FacebookObjectReference");
         qmlRegisterType<FacebookAlbumInterface>(uri, 1, 0, "FacebookAlbum");
         qmlRegisterType<FacebookCommentInterface>(uri, 1, 0, "FacebookComment");
@@ -125,9 +126,9 @@ public:
 
         // creatable types from the twitter implementation
         qmlRegisterType<TwitterInterface>(uri, 1, 0, "Twitter");
+        qmlRegisterType<TwitterConversationFilterInterface>(uri, 1, 0, "TwitterConversationFilter");
         qmlRegisterType<TwitterUserInterface>(uri, 1, 0, "TwitterUser");
         qmlRegisterType<TwitterTweetInterface>(uri, 1, 0, "TwitterTweet");
-        qmlRegisterType<TwitterConversationFilterInterface>(uri, 1, 0, "TwitterConversationFilter");
     }
 };
 

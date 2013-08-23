@@ -106,6 +106,9 @@ private:
                                          QVariantMap &extraInfo);
     inline QString createField(int type, const QString &connection,
                                const RequestFieldsMap &requestFiledsMap);
+    inline QVariantMap makeCursorExtraData(NodePrivate::Status insertionMode,
+                                           const QVariantMap &oldExtraData,
+                                           const QVariantMap &cursorsMap);
     Q_DECLARE_PUBLIC(FacebookInterface)
 };
 

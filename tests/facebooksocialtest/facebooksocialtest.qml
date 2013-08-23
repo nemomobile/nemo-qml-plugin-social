@@ -116,7 +116,10 @@ Item {
             break
         case 11:
             homeList.populate(nodeId)
-             break
+            break
+        case 12:
+            offsetedCommentsList.populate()
+            break
         }
         whichActive = which
     }
@@ -183,6 +186,10 @@ Item {
             ListElement {
                 text: "Test getting \"me\""
                 which: -4
+            }
+            ListElement {
+                text: "Test getting offseted comments"
+                which: 12
             }
 
             ListElement {
@@ -298,6 +305,12 @@ Item {
         id: likesList
         visible: whichActive == 9
         onBackClicked: back(5)
+    }
+
+    FacebookPostOffsetedCommentsList {
+        id: offsetedCommentsList
+        visible: whichActive == 12
+        onBackClicked: back(0)
     }
 
     SocialNetworkModel {
