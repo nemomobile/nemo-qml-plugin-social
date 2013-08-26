@@ -51,7 +51,7 @@ public:
     IdentifiableContentItemInterface *node;
     bool hasPrevious;
     bool hasNext;
-    QList<CacheEntry> modelData;
+    CacheEntry::List modelData;
     bool resortUpdatePosted;
 private:
     void init();
@@ -75,9 +75,9 @@ private:
     // Methods for SNI
     void setNode(IdentifiableContentItemInterface *newNode);
     void clean();
-    void setData(const QList<CacheEntry> &data);
-    void prependData(const QList<CacheEntry> &data);
-    void appendData(const QList<CacheEntry> &data);
+    void setData(const CacheEntry::List &data);
+    void prependData(const CacheEntry::List &data);
+    void appendData(const CacheEntry::List &data);
     void setStatus(SocialNetworkInterface::Status newStatus);
     void setError(SocialNetworkInterface::ErrorType newError, const QString &newErrorMessage);
     void setHavePreviousAndNext(bool newHasPrevious, bool newHasNext);
