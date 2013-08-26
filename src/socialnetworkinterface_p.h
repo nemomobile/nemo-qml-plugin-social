@@ -48,6 +48,9 @@
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QNetworkReply>
 
+#define NODE_EXTRA_PAGING_PREVIOUS_KEY QLatin1String("previous")
+#define NODE_EXTRA_PAGING_NEXT_KEY QLatin1String("next")
+
 class QNetworkAccessManager;
 class IdentifiableContentItemInterface;
 class FilterInterface;
@@ -109,7 +112,7 @@ private:
     Q_DECLARE_PRIVATE(CacheEntry)
 };
 
-//bool operator==(CacheEntry::Ptr cacheEntry1, CacheEntry::Ptr cacheEntry2);
+bool operator==(CacheEntry::Ptr cacheEntry1, CacheEntry::Ptr cacheEntry2);
 
 struct NodePrivate
 {
@@ -271,6 +274,9 @@ protected:
     void updateModelHavePreviousAndNext(Node::Ptr node, bool havePrevious, bool haveNext);
     CacheEntry::Ptr createCacheEntry(const QVariantMap &data,
                                      const QString &nodeIdentifier = QString());
+    static void setNodeExtraPaging(QVariantMap &nodeExtra,
+                                   const QVariantMap &previousExtra, const QVariantMap &nextExtra,
+                                   NodePrivate::Status insertionMode);
 
     // Aliases map
     QMap<QString, QString> aliases;

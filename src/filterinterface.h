@@ -44,8 +44,6 @@ class FilterInterface : public QObject
 public:
     explicit FilterInterface(QObject *parent = 0);
     virtual ~FilterInterface();
-    virtual bool matches(ContentItemInterface *content) const;
-    virtual bool matches(const QVariantMap &contentData) const;
 };
 
 #endif // FILTERINTERFACE_H

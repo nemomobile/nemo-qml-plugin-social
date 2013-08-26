@@ -57,20 +57,6 @@ ContentItemTypeFilterInterface::~ContentItemTypeFilterInterface()
 {
 }
 
-bool ContentItemTypeFilterInterface::matches(ContentItemInterface *content) const
-{
-    Q_D(const ContentItemTypeFilterInterface);
-    if (content && content->type() > 0)
-        return d->type == content->type();
-    return false;
-}
-
-bool ContentItemTypeFilterInterface::matches(const QVariantMap &contentData) const
-{
-    Q_D(const ContentItemTypeFilterInterface);
-    return d->type == contentData.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
-}
-
 int ContentItemTypeFilterInterface::type() const
 {
     Q_D(const ContentItemTypeFilterInterface);

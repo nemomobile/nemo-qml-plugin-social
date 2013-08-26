@@ -522,13 +522,17 @@ void SocialNetworkModelInterface::repopulate()
 void SocialNetworkModelInterface::loadNext()
 {
     Q_D(SocialNetworkModelInterface);
-    d->socialNetwork->d_func()->loadNext(this);
+    if (hasNext()) {
+        d->socialNetwork->d_func()->loadNext(this);
+    }
 }
 
 void SocialNetworkModelInterface::loadPrevious()
 {
     Q_D(SocialNetworkModelInterface);
-    d->socialNetwork->d_func()->loadPrevious(this);
+    if (hasPrevious()) {
+        d->socialNetwork->d_func()->loadPrevious(this);
+    }
 }
 
 void SocialNetworkModelInterface::clean()

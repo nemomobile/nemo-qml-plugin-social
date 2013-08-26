@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
+ * Copyright (C) 2013 Lucien XU <sfietkonstantin@free.fr>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -12,9 +12,9 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * Neither the name of Nemo Mobile nor the names of its contributors
- *     may be used to endorse or promote products derived from this
- *     software without specific prior written permission.
+ *   * The names of its contributors may not be used to endorse or promote 
+ *     products derived from this software without specific prior written 
+ *     permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,42 +27,44 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
- */
+ */ 
 
-#ifndef CONTENTITEMTYPEFILTERINTERFACE_H
-#define CONTENTITEMTYPEFILTERINTERFACE_H
+#ifndef FACEBOOKCOMMENTFILTERINTERFACE_H
+#define FACEBOOKCOMMENTFILTERINTERFACE_H
 
 #include "filterinterface.h"
-#include <QtCore/QStringList>
 
-class ContentItemTypeFilterInterfacePrivate;
-class ContentItemTypeFilterInterface : public FilterInterface
+class FacebookCommentFilterInterfacePrivate;
+class FacebookCommentFilterInterface: public FilterInterface
 {
     Q_OBJECT
-    Q_PROPERTY(int type READ type WRITE setType NOTIFY typeChanged)
-    Q_PROPERTY(QStringList whichFields READ whichFields WRITE setWhichFields NOTIFY whichFieldsChanged)
+    Q_ENUMS(RetrieveMode)
     Q_PROPERTY(int limit READ limit WRITE setLimit NOTIFY limitChanged)
-
+    Q_PROPERTY(int offset READ offset WRITE setOffset NOTIFY offsetChanged)
+    Q_PROPERTY(RetrieveMode retrieveMode READ retrieveMode WRITE setRetrieveMode
+               NOTIFY retrieveModeChanged)
 public:
-    explicit ContentItemTypeFilterInterface(QObject *parent = 0);
-    virtual ~ContentItemTypeFilterInterface();
-
-    // properties
-    int type() const;
-    QStringList whichFields() const;
+    enum RetrieveMode {
+        RetrieveOffset,
+        RetrieveFirst,
+        RetrieveLatest
+    };
+    explicit FacebookCommentFilterInterface(QObject *parent = 0);
+    virtual ~FacebookCommentFilterInterface();
     int limit() const;
-    void setType(int type);
-    void setWhichFields(const QStringList &whichFields);
     void setLimit(int limit);
-
+    int offset() const;
+    void setOffset(int offset);
+    RetrieveMode retrieveMode() const;
+    void setRetrieveMode(RetrieveMode retrieveMode);
 Q_SIGNALS:
-    void typeChanged();
-    void whichFieldsChanged();
     void limitChanged();
+    void offsetChanged();
+    void retrieveModeChanged();
 protected:
-    QScopedPointer<ContentItemTypeFilterInterfacePrivate> d_ptr;
+    QScopedPointer<FacebookCommentFilterInterfacePrivate> d_ptr;
 private:
-    Q_DECLARE_PRIVATE(ContentItemTypeFilterInterface)
+    Q_DECLARE_PRIVATE(FacebookCommentFilterInterface)
 };
 
-#endif // CONTENTITEMTYPEFILTERINTERFACE_H
+#endif // FACEBOOKCOMMENTFILTERINTERFACE_H

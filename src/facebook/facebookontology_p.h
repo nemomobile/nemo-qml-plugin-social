@@ -54,6 +54,7 @@
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_SINCE            QLatin1String("since")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_UNTIL            QLatin1String("until")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET           QLatin1String("offset")
+#define FACEBOOK_ONTOLOGY_METADATA_PAGING_LIMIT            QLatin1String("limit")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS         QLatin1String("previous")
 #define FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT             QLatin1String("next")
 #define FACEBOOK_ONTOLOGY_METADATA_DATA                    QLatin1String("data")

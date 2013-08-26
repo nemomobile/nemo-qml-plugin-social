@@ -42,13 +42,3 @@ FilterInterface::FilterInterface(QObject *parent)
 FilterInterface::~FilterInterface()
 {
 }
-
-bool FilterInterface::matches(ContentItemInterface *) const
-{
-    return false;
-}
-
-bool FilterInterface::matches(const QVariantMap &) const
-{
-    return false;
-}

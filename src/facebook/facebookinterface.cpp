@@ -40,6 +40,7 @@
 #include "contentiteminterface_p.h"
 #include "identifiablecontentiteminterface.h"
 #include "contentitemtypefilterinterface.h"
+#include "facebookcommentfilterinterface.h"
 
 #include "facebookobjectreferenceinterface.h"
 #include "facebookalbuminterface.h"
@@ -53,6 +54,8 @@
 
 #include "util_p.h"
 
+#include <QtCore/QMetaObject>
+#include <QtCore/QMetaProperty>
 #include <QtCore/QVariantMap>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
@@ -66,6 +69,7 @@
 #define GETTING_ME_KEY QLatin1String("getting_me")
 #define PERFORM_ADDITIONAL_LOADING QLatin1String("perform_additional_loading")
 #define PERFORM_TYPE_LOADING QLatin1String("perform_type_loading")
+#define PAGING_HAVE_KEY QLatin1String("have")
 
 FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
     : SocialNetworkInterfacePrivate(q)
@@ -96,17 +100,19 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
     const QSet<FilterInterface *> &filters = node->filters();
 
 
-    QList<ContentItemTypeFilterInterface *> realFilters;
+    QList<FilterInterface *> realFilters;
     foreach (FilterInterface *filter, filters) {
         ContentItemTypeFilterInterface *contentItemTypeFilter
                 = qobject_cast<ContentItemTypeFilterInterface*>(filter);
-        if (!contentItemTypeFilter) {
+        FacebookCommentFilterInterface *facebookCommentFilterInterface
+                = qobject_cast<FacebookCommentFilterInterface*>(filter);
+        if (!contentItemTypeFilter && !facebookCommentFilterInterface) {
             qWarning() << Q_FUNC_INFO
-                       << "The Facebook adapter only supports ContentItemType filters";
+                       << "The Facebook adapter only supports ContentItemType and FacebookCommentFilter filters";
             continue;
         }
 
-        realFilters.append(contentItemTypeFilter);
+        realFilters.append(filter);
     }
 
     if (realFilters.isEmpty()) {
@@ -132,31 +138,33 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
     RequestFieldsMap requestFieldsMap;
     switch (node->status()) {
         case NodePrivate::LoadingRelatedDataAppending: {
-            QVariantMap extraMap = node->extraInfo();
+            QVariantMap extraMap = node->extraInfo().value(NODE_EXTRA_PAGING_NEXT_KEY).toMap();
 
             foreach (QString key, extraMap.keys()) {
                 int keyInteger = key.toInt();
-                QVariantMap entries
-                        = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toMap();
+                QVariantMap entries = extraMap.value(key).toMap();
 
                 foreach(QString entryKey, entries.keys()) {
-                    StringPair pair (entryKey, entries.value(entryKey).toString());
-                    requestFieldsMap.insert(keyInteger, pair);
+                    if (entryKey != PAGING_HAVE_KEY) {
+                        StringPair pair (entryKey, entries.value(entryKey).toString());
+                        requestFieldsMap.insert(keyInteger, pair);
+                    }
                 }
             }
         }
         break;
         case NodePrivate::LoadingRelatedDataPrepending: {
-            QVariantMap extraMap = node->extraInfo();
+            QVariantMap extraMap = node->extraInfo().value(NODE_EXTRA_PAGING_PREVIOUS_KEY).toMap();
 
             foreach (QString key, extraMap.keys()) {
                 int keyInteger = key.toInt();
-                QVariantMap entries
-                        = extraMap.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toMap();
+                QVariantMap entries = extraMap.value(key).toMap();
 
                 foreach(QString entryKey, entries.keys()) {
-                    StringPair pair (entryKey, entries.value(entryKey).toString());
-                    requestFieldsMap.insert(keyInteger, pair);
+                    if (entryKey != PAGING_HAVE_KEY) {
+                        StringPair pair (entryKey, entries.value(entryKey).toString());
+                        requestFieldsMap.insert(keyInteger, pair);
+                    }
                 }
             }
         }
@@ -164,26 +172,97 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
         default: break;
     }
 
-    foreach (ContentItemTypeFilterInterface *filter, realFilters) {
-        // We ignore also all redundant filters
-        int type = filter->type();
-        if (!connectionTypes.contains(type)) {
-            connectionTypes.append(type);
-            if (!filter->whichFields().isEmpty()) {
-                StringPair fieldsEntry (QLatin1String("fields"), filter->whichFields().join(","));
-                connectionFields.insert(type, fieldsEntry);
+    foreach (FilterInterface *filter, realFilters) {
+        ContentItemTypeFilterInterface *contentItemTypeFilter
+                = qobject_cast<ContentItemTypeFilterInterface*>(filter);
+        FacebookCommentFilterInterface *facebookCommentFilterInterface
+                = qobject_cast<FacebookCommentFilterInterface*>(filter);
+
+        int type = -1;
+        if (contentItemTypeFilter) {
+            // We ignore also all redundant filters
+            type = contentItemTypeFilter->type();
+            if (!connectionTypes.contains(type)) {
+                connectionTypes.append(type);
+                if (!contentItemTypeFilter->whichFields().isEmpty()) {
+                    StringPair fieldsEntry (QLatin1String("fields"),
+                                            contentItemTypeFilter->whichFields().join(","));
+                    connectionFields.insert(type, fieldsEntry);
+                }
+                if (contentItemTypeFilter->limit() > 0) {
+                    StringPair limitEntry (QLatin1String("limit"),
+                                           QString::number(contentItemTypeFilter->limit()));
+                    connectionFields.insert(type, limitEntry);
+                }
+
             }
-            if (filter->limit() > 0) {
-                StringPair limitEntry (QLatin1String("limit"), QString::number(filter->limit()));
+        }
+
+        if (facebookCommentFilterInterface) {
+            type = FacebookInterface::Comment;
+            // Still ignoring any redundant filter
+            // especially a "Comment" type ContentItemTypeFilterInterface
+            if (!connectionTypes.contains(type)) {
+                connectionTypes.append(type);
+
+                int limit = facebookCommentFilterInterface->limit();
+                int offset = 0;
+                StringPair limitEntry (FACEBOOK_ONTOLOGY_METADATA_PAGING_LIMIT,
+                                       QString::number(limit));
                 connectionFields.insert(type, limitEntry);
+
+                // If we are prepending or appending, we don't need offset
+                if (node->status() != NodePrivate::LoadingRelatedDataAppending
+                    && node->status() != NodePrivate::LoadingRelatedDataPrepending) {
+
+                    switch (facebookCommentFilterInterface->retrieveMode()) {
+                        case FacebookCommentFilterInterface::RetrieveOffset:
+                            offset = facebookCommentFilterInterface->offset() * limit;
+                        break;
+                        case FacebookCommentFilterInterface::RetrieveLatest: {
+
+                            // Slightly hacky, we retrieve the commentsCount property
+                            // from the CacheEntry item. If we can't we fallback to 0.
+                            const ContentItemInterface *item = node->cacheEntry()->item();
+                            if (!item) {
+                                break;
+                            }
+
+                            const QMetaObject *metaObject = item->metaObject();
+                            int propertyIndex = metaObject->indexOfProperty("commentsCount");
+                            if (propertyIndex == -1) {
+                                break;
+                            }
+
+                            QMetaProperty property = metaObject->property(propertyIndex);
+                            QVariant countVariant = property.read(item);
+
+                            if (!countVariant.isValid()) {
+                                break;
+                            }
+
+                            int count = countVariant.toInt();
+                            offset = qMax(count - limit, 0);
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+
+                    StringPair offsetEntry (FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET,
+                                            QString::number(offset));
+                    connectionFields.insert(type, offsetEntry);
+                }
             }
 
-            if (requestFieldsMap.contains(type)) {
-                QList<QPair<QString, QString> > extraValues = requestFieldsMap.values(type);
-                QList<QPair<QString, QString> >::Iterator i;
-                for (i = extraValues.begin(); i != extraValues.end(); i++) {
-                    connectionFields.insert(type, *i);
-                }
+        }
+
+        // Add paging entries first
+        if (requestFieldsMap.contains(type)) {
+            QList<QPair<QString, QString> > extraValues = requestFieldsMap.values(type);
+            QList<QPair<QString, QString> >::Iterator i;
+            for (i = extraValues.begin(); i != extraValues.end(); i++) {
+                connectionFields.insert(type, *i);
             }
         }
     }
@@ -723,50 +802,50 @@ void FacebookInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
         updateModelNode(node);
     }
 
-
     // We receive the related data and transform it into ContentItems.
     // Finally, we populate the cache for the node and update the internal model data.
     CacheEntry::List relatedContent;
 
     QString requestPath = requestUrl.path();
     bool ok = false;
-    QVariantMap nodeExtra;
+    QVariantMap extraInfo = node->extraInfo();
+
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Like,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Comment,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::PhotoTag,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Photo,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Album,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::User,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Notification,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Post,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_FEED,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Home,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_HOME,
-                                        relatedContent, nodeExtra);
+                                        relatedContent, extraInfo);
     if (!ok && relatedData.keys().count() == 2
             && relatedData.keys().contains(FACEBOOK_ONTOLOGY_USER_PICTURE)) {
         // Force the fact that user pictures can get through
@@ -774,29 +853,52 @@ void FacebookInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
     }
 
     if (!ok) {
-        // If we have an empty list, we will only obtain a related data with "id"
-        // so that's ok. If the count is > 1, we should be more careful.
-        if (relatedData.keys().count() > 1) {
-            qWarning() << Q_FUNC_INFO << "Unsupported data retrieved";
+        QStringList relatedDataKeys = relatedData.keys();
+        // If the list only contains id and/or created_time, it is ok
+        if (relatedDataKeys.contains(FACEBOOK_ONTOLOGY_METADATA_ID)) {
+            relatedDataKeys.removeAll(FACEBOOK_ONTOLOGY_METADATA_ID);
+        }
+
+        if (relatedDataKeys.contains(FACEBOOK_ONTOLOGY_POST_CREATEDTIME)) {
+            relatedDataKeys.removeAll(FACEBOOK_ONTOLOGY_POST_CREATEDTIME);
+        }
+
+        // If we have more entries, we should be careful
+        if (!relatedDataKeys.isEmpty()) {
+            qWarning() << Q_FUNC_INFO << "Unsupported or empty data retrieved";
             qWarning() << Q_FUNC_INFO << "Request url:" << requestUrl;
             qWarning() << Q_FUNC_INFO << "List of keys: " << relatedData.keys();
         }
+
+        // If we are loading previous or next, we should not disable completely paging
+        // but instead, keep extra information, and just remove any way to go
+        // next or previous. It is because we might get empty data because we reached
+        // the end of a list.
+        QVariantMap previousExtra;
+        QVariantMap nextExtra;
+        SocialNetworkInterfacePrivate::setNodeExtraPaging(extraInfo, previousExtra, nextExtra,
+                                                          node->status());
     }
 
-    node->setExtraInfo(nodeExtra);
+    node->setExtraInfo(extraInfo);
 
     bool havePreviousRelatedData = false;
     bool haveNextRelatedData = false;
 
-    foreach (QString key, nodeExtra.keys()) {
-        QVariantMap paging = nodeExtra.value(key).toMap().value(FACEBOOK_ONTOLOGY_METADATA_PAGING).toMap();
-        havePreviousRelatedData = havePreviousRelatedData
-                                  || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toBool();
-        haveNextRelatedData = haveNextRelatedData
-                              || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toBool();
+    QVariantMap previousExtra = extraInfo.value(NODE_EXTRA_PAGING_PREVIOUS_KEY).toMap();
+    QVariantMap nextExtra = extraInfo.value(NODE_EXTRA_PAGING_NEXT_KEY).toMap();
+
+    foreach (QString key, previousExtra.keys()) {
+        bool have = previousExtra.value(key).toMap().value(PAGING_HAVE_KEY).toBool();
+        havePreviousRelatedData = havePreviousRelatedData || have;
     }
 
-    node->setHavePreviousAndNext(havePreviousRelatedData, haveNextRelatedData);
+    foreach (QString key, nextExtra.keys()) {
+        bool have = nextExtra.value(key).toMap().value(PAGING_HAVE_KEY).toBool();
+        haveNextRelatedData = haveNextRelatedData || have;
+    }
+
+    updateModelHavePreviousAndNext(node, havePreviousRelatedData, haveNextRelatedData);
     updateModelRelatedData(node, relatedContent);
 
     setStatus(node, NodePrivate::Idle);
@@ -910,8 +1012,11 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(NodePrivate::Status node
                                                         int type,
                                                         const QString &typeName,
                                                         CacheEntry::List &list,
-                                                        QVariantMap &nodeExtra)
+                                                        QVariantMap &extraInfo)
 {
+
+    QVariantMap globalPreviousExtra = extraInfo.value(NODE_EXTRA_PAGING_PREVIOUS_KEY).toMap();
+    QVariantMap globalNextExtra = extraInfo.value(NODE_EXTRA_PAGING_NEXT_KEY).toMap();
 
     QVariantMap data;
     // First we try if the provided related data contains the "data" field
@@ -931,6 +1036,22 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(NodePrivate::Status node
     }
 
     if (data.isEmpty()) {
+        // Workaround: if there is nothing, it is likely that
+        // we don't have either next or previous data
+        QVariantMap nullPagingMap;
+        nullPagingMap.insert(PAGING_HAVE_KEY, false);
+
+        if (globalPreviousExtra.contains(QString::number(type))) {
+            globalPreviousExtra.insert(QString::number(type), nullPagingMap);
+        }
+
+        if (globalNextExtra.contains(QString::number(type))) {
+            globalNextExtra.insert(QString::number(type), nullPagingMap);
+        }
+
+        SocialNetworkInterfacePrivate::setNodeExtraPaging(extraInfo, globalPreviousExtra,
+                                                          globalNextExtra, nodeStatus);
+
         return false;
     }
 
@@ -946,133 +1067,151 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(NodePrivate::Status node
         if (type == FacebookInterface::Home) {
             trueType = FacebookInterface::Post;
         }
+        // Manage threaded comments
+        // TODO: maybe make it an option (not to append
+        // threaded comments in the main flow of comments)
+        QVariantList threadedComments;
+        if (type == FacebookInterface::Comment) {
+            QVariantMap threadedCommentsObject = variantMap.value(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS).toMap();
+            threadedComments = threadedCommentsObject.value(FACEBOOK_ONTOLOGY_CONNECTIONS_DATA).toList();
+            variantMap.remove(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS);
+        }
+
         variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, trueType);
         variantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, identifier);
         list.append(createCacheEntry(variantMap, identifier));
+
+        // Manage threaded comments (continued)
+        if (!threadedComments.isEmpty()) {
+            foreach (const QVariant &comment, threadedComments) {
+                QVariantMap commentVariantMap = comment.toMap();
+                QString commentIdentifier = commentVariantMap.value(FACEBOOK_ONTOLOGY_METADATA_ID).toString();
+                commentVariantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, FacebookInterface::Comment);
+                commentVariantMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, commentIdentifier);
+                list.append(createCacheEntry(commentVariantMap, commentIdentifier));
+            }
+        }
     }
 
-
+    QVariantMap previousExtra;
+    QVariantMap nextExtra;
     // Extract paging informations
     // We deliver paging informations to the node extra using the following scheme
     // {
     //     "next": {
-    //         "key1": "value1", "key2": "value2"
+    //         "key1": {
+    //             "some_value": 12
+    //             "have": true
+    //         },
+    //         "key2": {...}
     //     },
-    //     "previous": {...},
-    //     "paging": {
-    //         "next": true,
-    //         "previous": false
-    //     }
+    //     "previous": {...}
     // }
-    // The key-values pairs in "next" and "previous" are used to store the query items
-    // used in the URL for next and previous.
-    // The paging field is used to indicate if there is a next or previous page.
-    // If they are not present, they are guessed using the following pattern:
-    // If the next or previous URL that Facebook API provide do not exist then
+    // Next and previous are the conventionnal way to handle paging cursors,
+    // but we need to know if, for a specific type, we need to display the
+    // next / previous button. The "have" key is used to display this button.
+    //
+    // It is usually simple to detect if there is a need of having a next / previous
+    // button if Facebook uses cursors. But if it don't use cursors, it is harder.
+    //
+    // We guess the presence of this button with the following idea:
+    // if the next or previous URL that Facebook API provide do not exist then
     // there is no next or previous. If it is provided, there is a next (resp. previous)
     // if and only if we are not appending (resp. prepending) or if we are appending
     // (resp. prepending) and that the data that is retrieved is not empty.
-    if (!nodeExtra.contains(QString::number(type))) {
-        QVariantMap pagingMap = data.value(FACEBOOK_ONTOLOGY_METADATA_PAGING).toMap();
-        if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS)) {
-            QVariantMap cursorsMap
-                    = pagingMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS).toMap();
+    QVariantMap pagingMap = data.value(FACEBOOK_ONTOLOGY_METADATA_PAGING).toMap();
 
-            // If it is using cursors, we should build a nice cursor query
-            QVariantMap extraData;
-            QVariantMap paging;
-            paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS,
-                          pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS));
-            paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT,
-                          pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT));
-            extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING, paging);
+    // Manage cursors: easy
+    if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS)) {
+        QVariantMap cursorsMap = pagingMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS).toMap();
 
-            if (cursorsMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER)) {
-                QVariantMap next;
-                next.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER,
-                            cursorsMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER).toString());
-                extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, next);
-            }
+        // Data for cursors
+        if (cursorsMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER)) {
+            nextExtra.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER,
+                        cursorsMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER).toString());
+        }
 
-            if (cursorsMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE)) {
-                QVariantMap previous;
-                previous.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE,
-                                cursorsMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE).toString());
-                extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, previous);
-            }
-            nodeExtra.insert(QString::number(type), extraData);
-        } else {
-            // If not, we should parse the next and previous url and extract relevant data
-            QVariantMap extraData;
-            QUrl previousUrl = QUrl(pagingMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toString());
+        if (cursorsMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE)) {
+            previousExtra.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE,
+                                 cursorsMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE).toString());
+        }
+    } else {
+        // If not, we should parse the next and previous url and extract relevant data
+        QUrl previousUrl = QUrl(pagingMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS).toString());
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-            QList<QPair<QString, QString> > previousQueries = previousUrl.queryItems();
+        QList<QPair<QString, QString> > previousQueries = previousUrl.queryItems();
 #else
-            QUrlQuery query (previousUrl);
-            QList<QPair<QString, QString> > previousQueries = query.queryItems();
+        QUrlQuery query (previousUrl);
+        QList<QPair<QString, QString> > previousQueries = query.queryItems();
 #endif
-            QList<QPair<QString, QString> >::const_iterator i;
+        QList<QPair<QString, QString> >::const_iterator i;
 
-            QVariantMap previous;
-            for (i = previousQueries.begin(); i != previousQueries.end(); ++ i) {
-                if (i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET
-                    || i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_SINCE) {
-                    previous.insert(i->first, i->second);
-                }
+        for (i = previousQueries.begin(); i != previousQueries.end(); ++ i) {
+            if (i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET
+                || i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_SINCE) {
+                previousExtra.insert(i->first, i->second);
             }
-            if (!previous.isEmpty()) {
-                extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, previous);
-            }
+        }
 
-
-            QUrl nextUrl = QUrl(pagingMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toString());
+        QUrl nextUrl = QUrl(pagingMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toString());
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-            QList<QPair<QString, QString> > nextQueries = nextUrl.queryItems();
+        QList<QPair<QString, QString> > nextQueries = nextUrl.queryItems();
 #else
-            query = QUrlQuery(nextUrl);
-            QList<QPair<QString, QString> > nextQueries = query.queryItems();
+        query = QUrlQuery(nextUrl);
+        QList<QPair<QString, QString> > nextQueries = query.queryItems();
 #endif
 
-            QVariantMap next;
-            for (i = nextQueries.begin(); i != nextQueries.end(); ++ i) {
-                if (i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET
-                    || i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_UNTIL) {
-                    next.insert(i->first, i->second);
-                }
+        for (i = nextQueries.begin(); i != nextQueries.end(); ++ i) {
+            if (i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET
+                || i->first == FACEBOOK_ONTOLOGY_METADATA_PAGING_UNTIL) {
+                nextExtra.insert(i->first, i->second);
             }
-            if (!next.isEmpty()) {
-                extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, next);
+        }
+
+    }
+
+    // If we have cursors, next and previous are easy, except if the
+    // type is comments. We need to workaround Facebook comments,
+    // since the previous field won't exist in returned replies (sadly)
+    bool hasPrevious = false;
+    bool hasNext = false;
+
+    if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS)
+        && type != FacebookInterface::Comment) {
+        hasPrevious = pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS);
+        hasNext = pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT);
+    } else if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS)
+               && type == FacebookInterface::Comment) {
+        // If we have comments, we hack and say that we always have previous and next
+        // This is really hacking and TODO
+        hasPrevious = true;
+        hasNext = true;
+    } else {
+        // Otherwise, let's guess previous and next in paging
+        if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS)) {
+            hasPrevious = true;
+            if (nodeStatus == NodePrivate::LoadingRelatedDataPrepending && list.isEmpty()) {
+                hasPrevious = false;
             }
+        }
 
-            // Let's guess previous and next in paging
-            bool hasPrevious = false;
-            bool hasNext = false;
-
-            if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS)) {
-                hasPrevious = true;
-                if (nodeStatus == NodePrivate::LoadingRelatedDataPrepending && list.isEmpty()) {
-                    hasPrevious = false;
-                }
+        if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT)) {
+            hasNext = true;
+            if (nodeStatus == NodePrivate::LoadingRelatedDataAppending && list.isEmpty()) {
+                hasNext = false;
             }
-
-            if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT)) {
-                hasNext = true;
-                if (nodeStatus == NodePrivate::LoadingRelatedDataAppending && list.isEmpty()) {
-                    hasNext = false;
-                }
-            }
-
-            QVariantMap paging;
-            paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, hasPrevious);
-            paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, hasNext);
-
-            extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING, paging);
-
-
-            nodeExtra.insert(QString::number(type), extraData);
         }
     }
+
+    previousExtra.insert(PAGING_HAVE_KEY, hasPrevious);
+    nextExtra.insert(PAGING_HAVE_KEY, hasNext);
+
+    globalPreviousExtra.insert(QString::number(type), previousExtra);
+    globalNextExtra.insert(QString::number(type), nextExtra);
+
+    SocialNetworkInterfacePrivate::setNodeExtraPaging(extraInfo, globalPreviousExtra,
+                                                      globalNextExtra, nodeStatus);
 
     return true;
 }
@@ -1090,7 +1229,6 @@ QString FacebookInterfacePrivate::createField(int type, const QString &connectio
         }
     }
 
-    // TODO: comment, and have to adapt to the threaded comment system
     switch(type) {
         case FacebookInterface::Album: {
             field.append(".fields(likes.summary(1),comments.summary(1),from,name,description,link,"\
@@ -1110,11 +1248,63 @@ QString FacebookInterfacePrivate::createField(int type, const QString &connectio
                          "updated_time,shares,status_type)");
         }
         break;
+        case FacebookInterface::Comment: {
+            // There is a hack to load a very large batch
+            // subcomments, in order not to load them using cursors.
+            // It should be quite unlikely that we have ~1000 subcomments
+            field.append(".fields(from,message,created_time,like_count,user_likes,parent,"\
+                         "can_comment,comment_count,comments.count(1000))");
+        }
+        break;
         default: break;
     }
 
     return field;
 }
+
+QVariantMap FacebookInterfacePrivate::makeCursorExtraData(NodePrivate::Status insertionMode,
+                                                          const QVariantMap &oldExtraData,
+                                                          const QVariantMap &cursorsMap)
+{
+    if (insertionMode != NodePrivate::LoadingRelatedDataReplacing
+        && insertionMode != NodePrivate::LoadingRelatedDataPrepending
+        && insertionMode != NodePrivate::LoadingRelatedDataAppending) {
+        return QVariantMap();
+    }
+
+    QVariantMap extraData = oldExtraData;
+    QVariantMap paging = oldExtraData.value(FACEBOOK_ONTOLOGY_METADATA_PAGING).toMap();
+
+    // In case we are prepending, we should keep the old "next" entry
+    if (insertionMode == NodePrivate::LoadingRelatedDataReplacing
+        || insertionMode == NodePrivate::LoadingRelatedDataPrepending) {
+
+        QVariantMap previous;
+        previous.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE,
+                        cursorsMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE).toString());
+        extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, previous);
+
+        paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS,
+                      cursorsMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE));
+    }
+
+    // In case we are appending, we should keep the old "previous" entry
+    if (insertionMode == NodePrivate::LoadingRelatedDataReplacing
+        || insertionMode == NodePrivate::LoadingRelatedDataAppending) {
+
+        QVariantMap next;
+        next.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER,
+                        cursorsMap.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER).toString());
+        extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, next);
+
+        paging.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT,
+                      cursorsMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER));
+    }
+    extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING, paging);
+
+    return extraData;
+}
+
 
 //----------------------------------------------------------
 
