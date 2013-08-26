@@ -75,9 +75,9 @@ public:
     QString currentUserIdentifier;
 protected:
     // Reimplemented
-    void populateDataForNode(Node &node);
-    void populateRelatedDataforNode(Node &node);
-    bool validateCacheEntryForNode(const CacheEntry &cacheEntry);
+    void populateDataForNode(Node::Ptr node);
+    void populateRelatedDataforNode(Node::Ptr node);
+    bool validateCacheEntryForNode(CacheEntry::ConstPtr cacheEntry);
     QString dataSection(int type, const QVariantMap &data) const;
     ContentItemInterface * contentItemFromData(const QVariantMap &data, QObject *parent = 0) const;
     QNetworkReply * getRequest(const QString &objectIdentifier, const QString &extraPath,
@@ -86,23 +86,23 @@ protected:
                                 const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply * deleteRequest(const QString &objectIdentifier, const QString &extraPath,
                                   const QVariantMap &extraData);
-    void handleFinished(Node &node, QNetworkReply *reply);
+    void handleFinished(Node::Ptr node, QNetworkReply *reply);
 
 private:
     QUrl requestUrl(const QString &objectId, const QString &extraPath,
                     const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply * uploadImage(const QString &objectId, const QString &extraPath,
                                 const QVariantMap &data, const QVariantMap &extraData);
-    void handlePopulateNode(Node &node, const QVariantMap &responseData);
-    void handlePopulateRelatedData(Node &node, const QVariantMap &relatedData,
+    void handlePopulateNode(Node::Ptr node, const QVariantMap &responseData);
+    void handlePopulateRelatedData(Node::Ptr node, const QVariantMap &relatedData,
                                    const QUrl &requestUrl);
     void setCurrentUserIdentifier(const QString &meId);
-    bool checkNodeType(Node &node);
-    bool checkIfNeedAdditionalLoading(Node &node);
+    bool checkNodeType(Node::Ptr node);
+    bool checkIfNeedAdditionalLoading(Node::Ptr node);
     inline bool tryAddCacheEntryFromData(NodePrivate::Status nodeStatus,
                                          const QVariantMap &relatedData,
                                          const QString &requestPath, int type,
-                                         const QString &typeName, QList<CacheEntry> &list,
+                                         const QString &typeName, CacheEntry::List &list,
                                          QVariantMap &nodeExtra);
     inline QString createField(int type, const QString &connection,
                                const RequestFieldsMap &requestFiledsMap);

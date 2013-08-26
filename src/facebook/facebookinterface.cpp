@@ -73,27 +73,27 @@ FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
 {
 }
 
-void FacebookInterfacePrivate::populateDataForNode(Node &node)
+void FacebookInterfacePrivate::populateDataForNode(Node::Ptr node)
 {
     // We are trying to get the current user identifier at the same time
     // Of cause, we do that if we are not already getting the "me" as a node
-    if (currentUserIdentifier == FACEBOOK_ME && node.identifier() != FACEBOOK_ME) {
+    if (currentUserIdentifier == FACEBOOK_ME && node->identifier() != FACEBOOK_ME) {
         QVariantMap extraInfo;
         extraInfo.insert(GETTING_ME_KEY, QVariant::fromValue(true));
-        node.setExtraInfo(extraInfo);
+        node->setExtraInfo(extraInfo);
         QVariantMap extra;
-        extra.insert(QLatin1String("ids"), QString("%1,%2").arg(FACEBOOK_ME, node.identifier()));
+        extra.insert(QLatin1String("ids"), QString("%1,%2").arg(FACEBOOK_ME, node->identifier()));
         setReply(node, getRequest(QString(), QString(), QStringList(), extra));
         return;
     }
 
-    setReply(node, getRequest(node.identifier(), QString(), QStringList(), QVariantMap()));
+    setReply(node, getRequest(node->identifier(), QString(), QStringList(), QVariantMap()));
 }
 
-void FacebookInterfacePrivate::populateRelatedDataforNode(Node &node)
+void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
 {
-    const QString &identifier = node.identifier();
-    const QSet<FilterInterface *> &filters = node.filters();
+    const QString &identifier = node->identifier();
+    const QSet<FilterInterface *> &filters = node->filters();
 
 
     QList<ContentItemTypeFilterInterface *> realFilters;
@@ -130,9 +130,9 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node &node)
 
     // Create paging request
     RequestFieldsMap requestFieldsMap;
-    switch (node.status()) {
+    switch (node->status()) {
         case NodePrivate::LoadingRelatedDataAppending: {
-            QVariantMap extraMap = node.extraInfo();
+            QVariantMap extraMap = node->extraInfo();
 
             foreach (QString key, extraMap.keys()) {
                 int keyInteger = key.toInt();
@@ -147,7 +147,7 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node &node)
         }
         break;
         case NodePrivate::LoadingRelatedDataPrepending: {
-            QVariantMap extraMap = node.extraInfo();
+            QVariantMap extraMap = node->extraInfo();
 
             foreach (QString key, extraMap.keys()) {
                 int keyInteger = key.toInt();
@@ -293,21 +293,21 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node &node)
     setReply(node, getRequest(identifier, QString(), fields, QVariantMap()));
 }
 
-bool FacebookInterfacePrivate::validateCacheEntryForNode(const CacheEntry &cacheEntry)
+bool FacebookInterfacePrivate::validateCacheEntryForNode(CacheEntry::ConstPtr cacheEntry)
 {
     // If the item has not been created yet, we might
     // need to be sure to have it created by reloading it
-    const IdentifiableContentItemInterface *item = cacheEntry.identifiableItem();
+    const IdentifiableContentItemInterface *item = cacheEntry->identifiableItem();
     if (!item) {
         return false;
     }
 
-    switch (cacheEntry.identifiableItem()->type()) {
+    switch (cacheEntry->identifiableItem()->type()) {
         case FacebookInterface::Album:
         //case FacebookInterface::Comment: // TODO Please check
         case FacebookInterface::Photo:
         case FacebookInterface::Post: {
-            return cacheEntry.data().contains(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE);
+            return cacheEntry->data().contains(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE);
         }
         break;
         // TODO Case of friends loaded from the friendlist
@@ -452,7 +452,7 @@ QNetworkReply * FacebookInterfacePrivate::deleteRequest(const QString &objectIde
     return networkAccessManager->deleteResource(request);
 }
 
-void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
+void FacebookInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
     QUrl requestUrl = reply->request().url();
@@ -484,7 +484,7 @@ void FacebookInterfacePrivate::handleFinished(Node &node, QNetworkReply *reply)
         return;
     }
 
-    switch (node.status()) {
+    switch (node->status()) {
         case NodePrivate::LoadingNodeData:{
             handlePopulateNode(node, responseData);
         }
@@ -608,13 +608,13 @@ QNetworkReply * FacebookInterfacePrivate::uploadImage(const QString &objectId,
     return networkAccessManager->post(request, postData);
 }
 
-void FacebookInterfacePrivate::handlePopulateNode(Node &node, const QVariantMap &responseData)
+void FacebookInterfacePrivate::handlePopulateNode(Node::Ptr node, const QVariantMap &responseData)
 {
     Q_Q(FacebookInterface);
-    if (node.extraInfo().contains(PERFORM_ADDITIONAL_LOADING)) {
+    if (node->extraInfo().contains(PERFORM_ADDITIONAL_LOADING)) {
         // Merge the response data that we got to the old
         // one and recreate a newer item
-        QVariantMap data = node.cacheEntry().data();
+        QVariantMap data = node->cacheEntry()->data();
         // We add this marker because we have to make the item know that we
         // are performing a second population part, and that the data
         // that is retrieved is correct
@@ -624,11 +624,11 @@ void FacebookInterfacePrivate::handlePopulateNode(Node &node, const QVariantMap 
             data.insert(key, responseData.value(key));
         }
 
-        node.cacheEntry().setData(data);
+        node->cacheEntry()->setData(data);
         updateModelNode(node);
-    } else if (node.extraInfo().contains(PERFORM_TYPE_LOADING)) {
+    } else if (node->extraInfo().contains(PERFORM_TYPE_LOADING)) {
         // Get the type based on the metadata field
-        QVariantMap data = node.cacheEntry().data();
+        QVariantMap data = node->cacheEntry()->data();
 
         QVariantMap metadata = responseData.value(FACEBOOK_ONTOLOGY_METADATA).toMap();
         QString typeString = metadata.value(FACEBOOK_ONTOLOGY_METADATA_TYPE).toString();
@@ -655,21 +655,21 @@ void FacebookInterfacePrivate::handlePopulateNode(Node &node, const QVariantMap 
         }
 
         data.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, type);
-        node.cacheEntry().setData(data);
+        node->cacheEntry()->setData(data);
 
-        QVariantMap extraInfo = node.extraInfo();
+        QVariantMap extraInfo = node->extraInfo();
         extraInfo.remove(PERFORM_TYPE_LOADING);
-        node.setExtraInfo(extraInfo);
+        node->setExtraInfo(extraInfo);
     } else {
         QVariantMap writableResponseData = responseData;
-        if (node.extraInfo().contains(GETTING_ME_KEY)) {
+        if (node->extraInfo().contains(GETTING_ME_KEY)) {
             // Remove the getting_me_key
-            QVariantMap nodeExtra = node.extraInfo();
+            QVariantMap nodeExtra = node->extraInfo();
             nodeExtra.remove(GETTING_ME_KEY);
-            node.setExtraInfo(nodeExtra);
+            node->setExtraInfo(nodeExtra);
 
             // In the case of getting me, we should split into two different objects
-            QVariantMap objectData = writableResponseData.value(node.identifier()).toMap();
+            QVariantMap objectData = writableResponseData.value(node->identifier()).toMap();
             QVariantMap meData = writableResponseData.value(FACEBOOK_ME).toMap();
 
             // Change the identifier if needed
@@ -684,12 +684,12 @@ void FacebookInterfacePrivate::handlePopulateNode(Node &node, const QVariantMap 
             identifier = writableResponseData.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
         }
 
-        if (node.identifier() == FACEBOOK_ME) {
+        if (node->identifier() == FACEBOOK_ME) {
             setCurrentUserIdentifier(identifier);
         }
 
-        CacheEntry cacheEntry = createCacheEntry(writableResponseData, identifier);
-        node.setCacheEntry(cacheEntry);
+        CacheEntry::Ptr cacheEntry = createCacheEntry(writableResponseData, identifier);
+        node->setCacheEntry(cacheEntry);
     }
 
     // Set type
@@ -705,11 +705,11 @@ void FacebookInterfacePrivate::handlePopulateNode(Node &node, const QVariantMap 
     updateModelNode(node);
 
     // Performing a replace
-    node.setStatus(NodePrivate::LoadingRelatedDataReplacing);
+    node->setStatus(NodePrivate::LoadingRelatedDataReplacing);
     populateRelatedDataforNode(node);
 }
 
-void FacebookInterfacePrivate::handlePopulateRelatedData(Node &node,
+void FacebookInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
                                                          const QVariantMap &relatedData,
                                                          const QUrl &requestUrl)
 {
@@ -717,53 +717,53 @@ void FacebookInterfacePrivate::handlePopulateRelatedData(Node &node,
     if (relatedData.keys().contains(FACEBOOK_ONTOLOGY_USER_PICTURE)) {
         QVariantMap pictureData = relatedData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap();
         // Merge with current object
-        QVariantMap data = node.cacheEntry().data();
+        QVariantMap data = node->cacheEntry()->data();
         data.insert(FACEBOOK_ONTOLOGY_USER_PICTURE, pictureData);
-        node.cacheEntry().setData(data);
+        node->cacheEntry()->setData(data);
         updateModelNode(node);
     }
 
 
     // We receive the related data and transform it into ContentItems.
     // Finally, we populate the cache for the node and update the internal model data.
-    QList<CacheEntry> relatedContent;
+    CacheEntry::List relatedContent;
 
     QString requestPath = requestUrl.path();
     bool ok = false;
     QVariantMap nodeExtra;
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Like,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES,
                                         relatedContent, nodeExtra);
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Comment,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS,
                                         relatedContent, nodeExtra);
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::PhotoTag,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS,
                                         relatedContent, nodeExtra);
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Photo,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS,
                                         relatedContent, nodeExtra);
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Album,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS,
                                         relatedContent, nodeExtra);
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::User,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_FRIENDS,
                                         relatedContent, nodeExtra);
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Notification,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_NOTIFICATIONS,
                                         relatedContent, nodeExtra);
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Post,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_FEED,
                                         relatedContent, nodeExtra);
-    ok = ok || tryAddCacheEntryFromData(node.status(), relatedData, requestPath,
+    ok = ok || tryAddCacheEntryFromData(node->status(), relatedData, requestPath,
                                         FacebookInterface::Home,
                                         FACEBOOK_ONTOLOGY_CONNECTIONS_HOME,
                                         relatedContent, nodeExtra);
@@ -783,7 +783,7 @@ void FacebookInterfacePrivate::handlePopulateRelatedData(Node &node,
         }
     }
 
-    node.setExtraInfo(nodeExtra);
+    node->setExtraInfo(nodeExtra);
 
     bool havePreviousRelatedData = false;
     bool haveNextRelatedData = false;
@@ -796,7 +796,7 @@ void FacebookInterfacePrivate::handlePopulateRelatedData(Node &node,
                               || paging.value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT).toBool();
     }
 
-    node.setHavePreviousAndNext(havePreviousRelatedData, haveNextRelatedData);
+    node->setHavePreviousAndNext(havePreviousRelatedData, haveNextRelatedData);
     updateModelRelatedData(node, relatedContent);
 
     setStatus(node, NodePrivate::Idle);
@@ -815,9 +815,9 @@ void FacebookInterfacePrivate::setCurrentUserIdentifier(const QString &meId)
 
 
 // Returns if a loading should be performed
-bool FacebookInterfacePrivate::checkNodeType(Node &node)
+bool FacebookInterfacePrivate::checkNodeType(Node::Ptr node)
 {
-    QVariantMap data = node.cacheEntry().data();
+    QVariantMap data = node->cacheEntry()->data();
     if (!data.contains(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE)) {
         // Use some heuristics to detect the type of the data
         // it is not really exactly precise, and is only used
@@ -845,35 +845,35 @@ bool FacebookInterfacePrivate::checkNodeType(Node &node)
         if (detectedType == FacebookInterface::Unknown) {
             qWarning() << Q_FUNC_INFO << "Performing metadata request to detect type";
 
-            QVariantMap extraInfo = node.extraInfo();
+            QVariantMap extraInfo = node->extraInfo();
             extraInfo.insert(PERFORM_TYPE_LOADING, QVariant::fromValue(true));
-            node.setExtraInfo(extraInfo);
+            node->setExtraInfo(extraInfo);
 
             QVariantMap extra;
             extra.insert(FACEBOOK_ONTOLOGY_METADATA, 1);
-            setReply(node, getRequest(node.identifier(), QString(), QStringList(), extra));
+            setReply(node, getRequest(node->identifier(), QString(), QStringList(), extra));
 
             return true;
         } else {
             data.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE, detectedType);
-            node.cacheEntry().setData(data);
+            node->cacheEntry()->setData(data);
         }
     }
 
     return false;
 }
 
-bool FacebookInterfacePrivate::checkIfNeedAdditionalLoading(Node &node)
+bool FacebookInterfacePrivate::checkIfNeedAdditionalLoading(Node::Ptr node)
 {
-    if (node.extraInfo().contains(PERFORM_ADDITIONAL_LOADING)) {
-        QVariantMap extraInfo = node.extraInfo();
+    if (node->extraInfo().contains(PERFORM_ADDITIONAL_LOADING)) {
+        QVariantMap extraInfo = node->extraInfo();
         extraInfo.remove(PERFORM_ADDITIONAL_LOADING);
-        node.setExtraInfo(extraInfo);
+        node->setExtraInfo(extraInfo);
         return false;
     }
 
 
-    QVariantMap data = node.cacheEntry().data();
+    QVariantMap data = node->cacheEntry()->data();
     int typeInt = data.value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt();
 
     FacebookInterface::ContentItemType type
@@ -890,11 +890,11 @@ bool FacebookInterfacePrivate::checkIfNeedAdditionalLoading(Node &node)
             QStringList whichFields;
             whichFields.append(field);
 
-            QVariantMap extraInfo = node.extraInfo();
+            QVariantMap extraInfo = node->extraInfo();
             extraInfo.insert(PERFORM_ADDITIONAL_LOADING, QVariant::fromValue(true));
-            node.setExtraInfo(extraInfo);
+            node->setExtraInfo(extraInfo);
 
-            setReply(node, getRequest(node.identifier(), QString(), whichFields, QVariantMap()));
+            setReply(node, getRequest(node->identifier(), QString(), whichFields, QVariantMap()));
             return true;
         }
         break;
@@ -909,7 +909,7 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(NodePrivate::Status node
                                                         const QString &requestPath,
                                                         int type,
                                                         const QString &typeName,
-                                                        QList<CacheEntry> &list,
+                                                        CacheEntry::List &list,
                                                         QVariantMap &nodeExtra)
 {
 

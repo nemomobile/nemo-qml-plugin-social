@@ -71,7 +71,7 @@ public:
                                    const QVariantMap &postData = QVariantMap());
 
     int detectTypeFromData(const QVariantMap &data) const;
-    void handlePopulateRelatedData(Node &node, const QVariant &relatedData,
+    void handlePopulateRelatedData(Node::Ptr node, const QVariant &relatedData,
                                    const QUrl &requestUrl);
 
     // Requests
@@ -92,8 +92,8 @@ public:
     };
 protected:
     // Reimplemented
-    void populateDataForNode(Node &node);
-    void populateRelatedDataforNode(Node &node);
+    void populateDataForNode(Node::Ptr node);
+    void populateRelatedDataforNode(Node::Ptr node);
     bool validateCacheEntryForNode(const CacheEntry &cacheEntry);
     QString dataSection(int type, const QVariantMap &data) const;
     ContentItemInterface * contentItemFromData(const QVariantMap &data, QObject *parent = 0) const;
@@ -104,10 +104,10 @@ protected:
     QNetworkReply * deleteRequest(const QString &objectIdentifier, const QString &extraPath,
                                   const QVariantMap &extraData);
     int guessType(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
-    void handleFinished(Node &node, QNetworkReply *reply);
+    void handleFinished(Node::Ptr node, QNetworkReply *reply);
 
 private:
-    bool performRelatedDataRequest(Node &node, const QString &identifier,
+    bool performRelatedDataRequest(Node::Ptr node, const QString &identifier,
                                    const QList<FilterInterface *> &filters);
     Q_DECLARE_PUBLIC(TwitterInterface)
 };

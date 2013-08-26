@@ -193,7 +193,7 @@ void SocialNetworkModelInterfacePrivate::clean()
     setHavePreviousAndNext(false, false);
 }
 
-void SocialNetworkModelInterfacePrivate::setData(const QList<CacheEntry> &data)
+void SocialNetworkModelInterfacePrivate::setData(const CacheEntry::List &data)
 {
     Q_Q(SocialNetworkModelInterface);
     if (data.isEmpty()) {
@@ -211,7 +211,7 @@ void SocialNetworkModelInterfacePrivate::setData(const QList<CacheEntry> &data)
     resort();
 }
 
-void SocialNetworkModelInterfacePrivate::prependData(const QList<CacheEntry> &data)
+void SocialNetworkModelInterfacePrivate::prependData(const CacheEntry::List &data)
 {
     Q_Q(SocialNetworkModelInterface);
     if (data.isEmpty()) {
@@ -219,7 +219,7 @@ void SocialNetworkModelInterfacePrivate::prependData(const QList<CacheEntry> &da
     }
 
     q->beginInsertRows(QModelIndex(), 0, data.count() - 1);
-    QList<CacheEntry> newData = data;
+    CacheEntry::List newData = data;
     newData.append(modelData);
     modelData = newData;
     emit q->countChanged();
@@ -227,7 +227,7 @@ void SocialNetworkModelInterfacePrivate::prependData(const QList<CacheEntry> &da
     resort();
 }
 
-void SocialNetworkModelInterfacePrivate::appendData(const QList<CacheEntry> &data)
+void SocialNetworkModelInterfacePrivate::appendData(const CacheEntry::List &data)
 {
     Q_Q(SocialNetworkModelInterface);
     if (data.isEmpty()) {
@@ -327,28 +327,28 @@ QVariant SocialNetworkModelInterface::data(const QModelIndex &index, int role) c
         return QVariant();
     }
 
-    CacheEntry cacheEntry = d->modelData.at(index.row());
+    CacheEntry::Ptr cacheEntry = d->modelData.at(index.row());
 
     switch (role) {
         case ContentItemTypeRole: {
-            return QVariant::fromValue(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt());
+            return QVariant::fromValue(cacheEntry->data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt());
         }
         case ContentItemDataRole: {
-            return QVariant::fromValue(cacheEntry.data());
+            return QVariant::fromValue(cacheEntry->data());
         }
         case ContentItemIdentifierRole: {
-            return QVariant::fromValue(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString());
+            return QVariant::fromValue(cacheEntry->data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID).toString());
         }
         case ContentItemRole: {
-            if (cacheEntry.item()) {
-                return QVariant::fromValue(cacheEntry.item());
+            if (cacheEntry->item()) {
+                return QVariant::fromValue(cacheEntry->item());
             }
 
             return QVariant::fromValue(d->socialNetwork->d_func()->createItem(cacheEntry));
         }
         case SectionRole: {
-            return d->socialNetwork->d_func()->dataSection(cacheEntry.data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt(),
-                                                           cacheEntry.data());
+            return d->socialNetwork->d_func()->dataSection(cacheEntry->data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt(),
+                                                           cacheEntry->data());
         }
         default: {
             return QVariant();

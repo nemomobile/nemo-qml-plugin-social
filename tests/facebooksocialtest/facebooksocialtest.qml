@@ -240,7 +240,7 @@ Item {
         ]
     }
 
-    PostList {
+    FacebookPostList {
         id: homeList
         visible: whichActive == 11
         onBackClicked: back(0)
