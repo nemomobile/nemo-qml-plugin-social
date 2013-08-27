@@ -181,6 +181,11 @@
 
 
 
+// TODO conversation related keys (still experimental)
+#define TWITTER_ONTOLOGY_CONNECTION_CONVERSATION_KEY                QLatin1String("conversation")
+#define TWITTER_ONTOLOGY_METADATA_CONVERSATIONNEXT_CURSOR           QLatin1String("conversation_next_cursor")
+// TODO end conversation related keys (still experimental)
+
 
 #define TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW                   QLatin1String("statuses/show/%1.json")
 #define TWITTER_ONTOLOGY_CONNECTION_STATUSES_SHOW_INCLUDE_MY_RETWEET_KEY QLatin1String("include_my_retweet")

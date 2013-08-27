@@ -29,40 +29,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef CONTENTITEMTYPEFILTERINTERFACE_H
-#define CONTENTITEMTYPEFILTERINTERFACE_H
+#ifndef TWITTERCONVERSATIONFILTER_H
+#define TWITTERCONVERSATIONFILTER_H
 
 #include "filterinterface.h"
-#include <QtCore/QStringList>
 
-class ContentItemTypeFilterInterfacePrivate;
-class ContentItemTypeFilterInterface : public FilterInterface
+class TwitterConversationFilterInterfacePrivate;
+class TwitterConversationFilterInterface: public FilterInterface
 {
-    Q_OBJECT
-    Q_PROPERTY(int type READ type WRITE setType NOTIFY typeChanged)
-    Q_PROPERTY(QStringList whichFields READ whichFields WRITE setWhichFields NOTIFY whichFieldsChanged)
-    Q_PROPERTY(int limit READ limit WRITE setLimit NOTIFY limitChanged)
-
 public:
-    explicit ContentItemTypeFilterInterface(QObject *parent = 0);
-    virtual ~ContentItemTypeFilterInterface();
-
-    // properties
-    int type() const;
-    QStringList whichFields() const;
-    int limit() const;
-    void setType(int type);
-    void setWhichFields(const QStringList &whichFields);
-    void setLimit(int limit);
-
+    Q_OBJECT
+    // Q_PROPERTY(Stream stream READ stream WRITE setStream NOTIFY streamChanged)
+    // Q_ENUMS(Stream)
+public:
+    enum Stream {
+        Upstream,
+        Downstream
+    };
+    explicit TwitterConversationFilterInterface(QObject *parent = 0);
+    virtual ~TwitterConversationFilterInterface();
+    Stream stream() const;
+    void setStream(Stream stream);
 Q_SIGNALS:
-    void typeChanged();
-    void whichFieldsChanged();
-    void limitChanged();
+    void streamChanged();
 protected:
-    QScopedPointer<ContentItemTypeFilterInterfacePrivate> d_ptr;
+    QScopedPointer<TwitterConversationFilterInterfacePrivate> d_ptr;
 private:
-    Q_DECLARE_PRIVATE(ContentItemTypeFilterInterface)
+    Q_DECLARE_PRIVATE(TwitterConversationFilterInterface)
 };
 
-#endif // CONTENTITEMTYPEFILTERINTERFACE_H
+#endif // TWITTERCONVERSATIONFILTER_H

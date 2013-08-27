@@ -66,6 +66,8 @@ public:
     QString consumerSecret;
     QString currentUserIdentifier;
 
+    QList<CacheEntry> conversationCache;
+
     QNetworkRequest networkRequest(const QString &extraPath, const QVariantMap &extraData,
                                    const QByteArray &requestMethod,
                                    const QVariantMap &postData = QVariantMap());
@@ -109,6 +111,9 @@ protected:
 private:
     bool performRelatedDataRequest(Node::Ptr node, const QString &identifier,
                                    const QList<FilterInterface *> &filters);
+    void makeConversationList(const QMap<QString, CacheEntry::Ptr> &tweets,
+                              const QMap<QString, QList<QString> > &tweetsTree,
+                              const QString &parent, CacheEntry::List &list);
     Q_DECLARE_PUBLIC(TwitterInterface)
 };
 

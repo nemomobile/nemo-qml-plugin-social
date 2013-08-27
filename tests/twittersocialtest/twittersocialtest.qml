@@ -64,6 +64,9 @@ Item {
         case 5:
             userColorPage.populate(nodeId)
             break
+        case 6:
+            replyList.populate("221540251670298624")
+            break
         }
         whichActive = which
     }
@@ -80,6 +83,7 @@ Item {
         property QtObject followersFilter:    ContentItemTypeFilter { type: Twitter.Followers }
         property QtObject feedFilter:         ContentItemTypeFilter { type: Twitter.Tweet }
         property QtObject homeFilter:         ContentItemTypeFilter { type: Twitter.Home }
+        property QtObject replyFilter:        TwitterConversationFilter {}
     }
 
     TwitterUser {
@@ -155,6 +159,10 @@ Item {
                 which: 5
             }
             ListElement {
+                text: "Show replies test"
+                which: 6
+            }
+            ListElement {
                 text: "Quit"
                 which: -1
             }
@@ -222,6 +230,13 @@ Item {
         id: userColorPage
         visible: whichActive == 5
         filters: []
+        onBackClicked: back(0)
+    }
+
+    TwitterReplyList {
+        id: replyList
+        visible: whichActive == 6
+        filters: [twitter.replyFilter]
         onBackClicked: back(0)
     }
 }
