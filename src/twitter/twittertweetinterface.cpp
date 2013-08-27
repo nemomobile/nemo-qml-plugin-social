@@ -86,12 +86,21 @@ void TwitterTweetInterfacePrivate::finishedHandler()
         break;
         case TwitterInterfacePrivate::UnfavoriteAction:
         case TwitterInterfacePrivate::FavoriteAction: {
+
             // Update the favorited count
             bool favorited = responseData.value(TWITTER_ONTOLOGY_TWEET_FAVORITED).toBool();
-            int favoriteCount = responseData.value(TWITTER_ONTOLOGY_TWEET_FAVORITECOUNT).toInt();
             QVariantMap currentData = data();
-            currentData.insert(TWITTER_ONTOLOGY_TWEET_FAVORITED, QVariant::fromValue(favorited));
+            int favoriteCount = currentData.value(TWITTER_ONTOLOGY_TWEET_FAVORITECOUNT).toInt();
+            // We need to overcome a Twitter bug (or feature) that when returning from
+            // favorites/create, the "favorite_count" field is null. So, as a hack, we
+            // just increment (or decrement) the current favorite count.
+            if (action == TwitterInterfacePrivate::UnfavoriteAction) {
+                favoriteCount = qMax(0, favoriteCount - 1);
+            } else if (action == TwitterInterfacePrivate::FavoriteAction) {
+                ++ favoriteCount;
+            }
             currentData.insert(TWITTER_ONTOLOGY_TWEET_FAVORITECOUNT, favoriteCount);
+            currentData.insert(TWITTER_ONTOLOGY_TWEET_FAVORITED, QVariant::fromValue(favorited));
             setData(currentData);
             emit q->favoritedChanged();
             emit q->favoriteCountChanged();

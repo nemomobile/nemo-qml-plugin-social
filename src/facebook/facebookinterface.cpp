@@ -180,7 +180,9 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
 
         int type = -1;
         if (contentItemTypeFilter) {
-            // We ignore also all redundant filters
+            // We only use the first filter of a given type to
+            // build the request. So we ignore all the following filters
+            // of the same type
             type = contentItemTypeFilter->type();
             if (!connectionTypes.contains(type)) {
                 connectionTypes.append(type);
@@ -200,7 +202,7 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
 
         if (facebookCommentFilterInterface) {
             type = FacebookInterface::Comment;
-            // Still ignoring any redundant filter
+            // Just like before, we ignore redundant filter
             // especially a "Comment" type ContentItemTypeFilterInterface
             if (!connectionTypes.contains(type)) {
                 connectionTypes.append(type);
