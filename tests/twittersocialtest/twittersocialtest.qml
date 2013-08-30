@@ -163,6 +163,10 @@ Item {
                 which: 6
             }
             ListElement {
+                text: "Show retweet test"
+                which: -5
+            }
+            ListElement {
                 text: "Quit"
                 which: -1
             }
@@ -237,6 +241,12 @@ Item {
         id: replyList
         visible: whichActive == 6
         filters: [twitter.replyFilter]
+        onBackClicked: back(0)
+    }
+
+    TwitterRetweetPage {
+        id: retweetPage
+        visible: whichActive == -5
         onBackClicked: back(0)
     }
 }

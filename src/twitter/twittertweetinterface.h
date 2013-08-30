@@ -75,6 +75,7 @@ public:
 
     // Invokable API.
     Q_INVOKABLE bool uploadRetweet();
+    Q_INVOKABLE bool removeRetweet();
     Q_INVOKABLE bool favorite();
     Q_INVOKABLE bool unfavorite();
     Q_INVOKABLE bool uploadReply(const QString &message, const QStringList &pathToMedias = QStringList());
