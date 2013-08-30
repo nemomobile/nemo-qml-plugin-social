@@ -159,6 +159,11 @@
             "doc": ""
         },
         {
+            "name": "removeRetweet",
+            "parameters": [],
+            "doc": ""
+        },
+        {
             "name": "favorite",
             "parameters": [],
             "doc": ""
