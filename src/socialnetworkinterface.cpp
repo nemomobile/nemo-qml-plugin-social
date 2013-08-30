@@ -1587,13 +1587,18 @@ void SocialNetworkInterfacePrivate::deleteNode(Node::Ptr node)
         }
     }
 
-    node->cacheEntry()->deref();
+    if (!node->cacheEntry().isNull()) {
+        node->cacheEntry()->deref();
+    }
 
     foreach (CacheEntry::Ptr entry, node->relatedData()) {
         entry->deref();
     }
 
-    checkCacheEntryRefcount(node->cacheEntry());
+    if (!node->cacheEntry().isNull()) {
+        checkCacheEntryRefcount(node->cacheEntry());
+    }
+
     foreach (CacheEntry::Ptr entry, node->relatedData()) {
         checkCacheEntryRefcount(entry);
     }
