@@ -34,6 +34,9 @@
 #include "twitterontology_p.h"
 // <<< include
 #include <QtCore/QtDebug>
+
+
+#define TWITTER_ONTOLOGY_TWEET_RETWEETED_STATUS QLatin1String("retweeted_status")
 // >>> include
 
 TwitterTweetInterfacePrivate::TwitterTweetInterfacePrivate(TwitterTweetInterface *q)
@@ -49,6 +52,7 @@ void TwitterTweetInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
     Q_Q(TwitterTweetInterface);
+
     if (!reply()) {
         // if an error occurred, it might have been deleted by the error handler.
         qWarning() << Q_FUNC_INFO << "network request finished but no reply";
@@ -58,7 +62,11 @@ void TwitterTweetInterfacePrivate::finishedHandler()
     QByteArray replyData = reply()->readAll();
     deleteReply();
     bool ok = false;
-    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
+    QVariant responseDataVariant = ContentItemInterfacePrivate::parseReplyDataVariant(replyData, &ok);
+    QVariantMap responseData;
+    if (responseDataVariant.type() == QVariant::Map) {
+        responseData = responseDataVariant.toMap();
+    }
     if (!ok)
         responseData.insert("response", replyData);
 
@@ -70,6 +78,72 @@ void TwitterTweetInterfacePrivate::finishedHandler()
         break;
         case TwitterInterfacePrivate::RetweetAction: {
             // Update the retweet count
+            bool retweeted = responseData.value(TWITTER_ONTOLOGY_TWEET_RETWEETED).toBool();
+            int retweetCount = responseData.value(TWITTER_ONTOLOGY_TWEET_RETWEETCOUNT).toInt();
+            QVariantMap currentData = data();
+            currentData.insert(TWITTER_ONTOLOGY_TWEET_RETWEETED, QVariant::fromValue(retweeted));
+            currentData.insert(TWITTER_ONTOLOGY_TWEET_RETWEETCOUNT, retweetCount);
+            setData(currentData);
+            emit q->retweetedChanged();
+            emit q->retweetCountChanged();
+
+            status = SocialNetworkInterface::Idle;
+            emit q->statusChanged();
+            emit q->responseReceived(responseData);
+        }
+        break;
+        case TwitterInterfacePrivate::UnretweetGetTweetIdToRemoveAction: {
+            // We parse the response data, searching for the tweet that corresponds
+            QVariantList tweets = responseDataVariant.toList();
+            QString retweetIdentifier;
+
+            foreach (const QVariant &tweetVariant, tweets) {
+                QVariantMap tweet = tweetVariant.toMap();
+                if (!tweet.contains(TWITTER_ONTOLOGY_TWEET_RETWEETED_STATUS)) {
+                    continue;
+                }
+
+                QVariantMap retweetedTweet = tweet.value(TWITTER_ONTOLOGY_TWEET_RETWEETED_STATUS).toMap();
+                QString originalTweetId = retweetedTweet.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
+
+                if (originalTweetId == identifier) {
+                    retweetIdentifier = tweet.value(TWITTER_ONTOLOGY_METADATA_ID).toString();
+                    break;
+                }
+            }
+
+            if (!retweetIdentifier.isEmpty()) {
+                // We got the identifier to remove,
+                // now, perform tweet deletion
+                QVariantMap postData;
+                postData.insert(TWITTER_ONTOLOGY_CONNECTION_TRIM_USER_KEY, QLatin1String("true"));
+                QString path = QString(TWITTER_ONTOLOGY_CONNECTION_STATUS_DESTROY).arg(retweetIdentifier);
+
+                // Slight hack to overcome the fact that request don't want to
+                // work when Busy
+                status = SocialNetworkInterface::Idle;
+                bool requestMade = request(IdentifiableContentItemInterfacePrivate::Post,
+                                              QString(), path, QStringList(), postData);
+                status = SocialNetworkInterface::Busy;
+
+                if (requestMade) {
+                    action = TwitterInterfacePrivate::UnretweetRemoveTweetAction;
+                    connectFinishedAndErrors();
+                    return;
+                }
+            }
+
+            error = SocialNetworkInterface::DataUpdateError;
+            errorMessage = QLatin1String("Unable to cancel retweet");
+            status = SocialNetworkInterface::Error;
+
+            emit q->statusChanged();
+            emit q->errorChanged();
+            emit q->errorMessageChanged();
+            emit q->responseReceived(responseData);
+        }
+        break;
+        case TwitterInterfacePrivate::UnretweetRemoveTweetAction: {
             bool retweeted = responseData.value(TWITTER_ONTOLOGY_TWEET_RETWEETED).toBool();
             int retweetCount = responseData.value(TWITTER_ONTOLOGY_TWEET_RETWEETCOUNT).toInt();
             QVariantMap currentData = data();
@@ -303,6 +377,38 @@ bool TwitterTweetInterface::uploadRetweet()
     d->connectFinishedAndErrors();
     return true;
 // >>> uploadRetweet
+}
+/*!
+    \qmlmethod bool TwitterTweet::removeRetweet()
+    */
+
+bool TwitterTweetInterface::removeRetweet()
+{
+// <<< removeRetweet
+    Q_D(TwitterTweetInterface);
+    TwitterInterface *twitter = qobject_cast<TwitterInterface*>(socialNetwork());
+    QString userIdentifier = twitter->currentUserIdentifier();
+
+    QString path = QString(TWITTER_ONTOLOGY_CONNECTION_STATUSES_USER_TIMELINE);
+    QVariantMap extraData;
+    extraData.insert(TWITTER_ONTOLOGY_CONNECTION_USER_ID_KEY, userIdentifier);
+    extraData.insert(TWITTER_ONTOLOGY_CONNECTION_SINCE_ID_KEY, identifier());
+    extraData.insert(TWITTER_ONTOLOGY_CONNECTION_COUNT_KEY, 200);
+    extraData.insert(TWITTER_ONTOLOGY_CONNECTION_EXCLUDE_REPLIES_KEY, QLatin1String("true"));
+    extraData.insert(TWITTER_ONTOLOGY_CONNECTION_INCLUDE_RTS_KEY, QLatin1String("true"));
+
+
+    bool requestMade = d->request(IdentifiableContentItemInterfacePrivate::Get,
+                                  QString(), path, QStringList(), QVariantMap(), extraData);
+
+    if (!requestMade) {
+        return false;
+    }
+
+    d->action = TwitterInterfacePrivate::UnretweetGetTweetIdToRemoveAction;
+    d->connectFinishedAndErrors();
+    return true;
+// >>> removeRetweet
 }
 /*!
     \qmlmethod bool TwitterTweet::favorite()

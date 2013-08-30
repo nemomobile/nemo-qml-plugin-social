@@ -61,6 +61,7 @@ QNetworkReply *IdentifiableContentItemInterfacePrivate::reply()
 void IdentifiableContentItemInterfacePrivate::deleteReply()
 {
     if (currentReply) {
+        currentReply->disconnect();
         currentReply->deleteLater();
         currentReply = 0;
     }

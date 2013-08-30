@@ -89,6 +89,8 @@ public:
         UnfollowAction,
         TweetAction,
         RetweetAction,
+        UnretweetGetTweetIdToRemoveAction,
+        UnretweetRemoveTweetAction,
         FavoriteAction,
         UnfavoriteAction
     };

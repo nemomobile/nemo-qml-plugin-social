@@ -160,6 +160,7 @@
 #define TWITTER_ONTOLOGY_CONNECTION_EXCLUDE_REPLIES_KEY             QLatin1String("exclude_replies")
 #define TWITTER_ONTOLOGY_CONNECTION_CONTRIBUTOR_DETAILS_KEY         QLatin1String("contributor_details")
 #define TWITTER_ONTOLOGY_CONNECTION_COUNT_KEY                       QLatin1String("count")
+#define TWITTER_ONTOLOGY_CONNECTION_INCLUDE_RTS_KEY                 QLatin1String("include_rts")
 
 
 #define TWITTER_ONTOLOGY_CONNECTION_USERS_KEY                       QLatin1String("users")
@@ -195,6 +196,7 @@
 #define TWITTER_ONTOLOGY_CONNECTION_STATUS_UPDATE_IN_REPLY_TO_STATUS_ID_KEY QLatin1String("in_reply_to_status_id")
 // More to come here (lat long etc)
 #define TWITTER_ONTOLOGY_CONNECTION_STATUS_RETWEET                  QLatin1String("statuses/retweet/%1.json")
+#define TWITTER_ONTOLOGY_CONNECTION_STATUS_DESTROY                  QLatin1String("statuses/destroy/%1.json")
 
 #define TWITTER_ONTOLOGY_CONNECTION_FAVORITES_CREATE                QLatin1String("favorites/create.json")
 #define TWITTER_ONTOLOGY_CONNECTION_FAVORITES_DESTROY               QLatin1String("favorites/destroy.json")
