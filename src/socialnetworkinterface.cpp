@@ -721,6 +721,7 @@ SocialNetworkInterfacePrivate::~SocialNetworkInterfacePrivate()
     // We should say to all models that we are being destroyed
     foreach (SocialNetworkModelInterface *model, models) {
         model->d_func()->setNode(0);
+        model->d_func()->modelData.clear();
     }
 
     // Remove all nodes
