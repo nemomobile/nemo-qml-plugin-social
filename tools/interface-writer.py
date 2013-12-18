@@ -157,6 +157,8 @@ def generate(structure_file):
     header += "    int type() const;\n"
     
     if struct.identifiable:
+        # TODO: test
+        header += "#if 0\n"
         header += "    Q_INVOKABLE bool remove();\n"
         header += "    Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());\n"
         header += "\n"
@@ -175,6 +177,7 @@ def generate(structure_file):
                 parameterList.append(parameterName)
             header += ", ".join(parameterList)
             header += ");\n"
+        header += "#endif\n"
         header += "\n"
     
     header += "    // Accessors\n"
@@ -250,7 +253,10 @@ def generate(structure_file):
     private += "public:\n"
     private += "    explicit " + className + "Private(" + className + " *q);\n"
     if struct.identifiable:
+        # TODO: test
+        private += "#if 0\n"
         private += "    void finishedHandler();\n"
+        private += "#endif\n"
     private += "    void emitPropertyChangeSignals(const QVariantMap &oldData, \
 const QVariantMap &newData);\n"
 
@@ -343,6 +349,8 @@ const QVariantMap &newData);\n"
     source += "\n"
     
     if struct.identifiable:
+        # TODO test
+        source += "#if 0\n"
         source += "void " + className + "Private::finishedHandler()\n"
         source += "{\n"
         source += "// <<< finishedHandler\n"
@@ -353,6 +361,7 @@ const QVariantMap &newData);\n"
         source += "// >>> finishedHandler\n"
         source += "}"
         source += "\n"
+        source += "#endif\n"
     
     
     source += "void " + className
@@ -514,6 +523,8 @@ const QVariantMap &newData);\n"
     source += "}\n"
     source += "\n"
     if struct.identifiable:
+        # TODO: test
+        source += "#if 0\n"
         source += "/*! \\reimp */\n"
         source += "bool " + className +  "::remove()\n"
         source += "{\n"
@@ -538,12 +549,15 @@ const QVariantMap &newData);\n"
         source += "// >>> reload\n"
         source += "}\n"
         source += "\n"
+        source += "#endif\n"
     
     
     
+    # TODO: test
+    source += "#if 0\n"
+
     # Methods
     for method in struct.methods:
-        
         signature = "bool " + className + "::" + method.name + "("
         docSignature = "bool " + qmlClassName + "::" + method.name + "("
         parameterList = []
@@ -573,7 +587,8 @@ const QVariantMap &newData);\n"
         source += "// >>> " + method.name + "\n"
         source += "}\n"
     source += "\n"
-        
+
+    source += "#endif\n"
     
     
     
@@ -590,10 +605,10 @@ const QVariantMap &newData);\n"
             source += " const"
         source += "\n"
         source += "{\n"
-        if not property.isList:
+        if not property.isList and property.custom:
             source += "    Q_D(const " + className + ");\n"
         if not property.custom:
-            line = "d->data().value(" 
+            line = "data().value("
             line += writerhelper.ontologyKey(splittedPropertyName, prefix) + ")"
             source += indent(typehelper.convert(type, line), 1) + "\n"
         else:

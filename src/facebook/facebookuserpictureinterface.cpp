@@ -86,15 +86,16 @@ int FacebookUserPictureInterface::type() const
     return FacebookInterface::UserPicture;
 }
 
+#if 0
 
+#endif
 /*!
     \qmlproperty QUrl FacebookUserPicture::url
     Holds the url to the image source of the picture.
 */
 QUrl FacebookUserPictureInterface::url() const
 {
-    Q_D(const FacebookUserPictureInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_URL).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_URL).toString().toLocal8Bit());
 }
 
 /*!
@@ -103,7 +104,6 @@ QUrl FacebookUserPictureInterface::url() const
 */
 bool FacebookUserPictureInterface::isSilhouette() const
 {
-    Q_D(const FacebookUserPictureInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE).toString() == QLatin1String("true");
+    return data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE).toString() == QLatin1String("true");
 }
 

@@ -37,10 +37,10 @@ Item {
     anchors.fill: parent
     signal backClicked
     signal postClicked(string postId)
-    property alias filters: model.filters
+    property alias filter: model.filter
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
+        model.filter.identifier = nodeId
+        model.load()
         view.positionViewAtBeginning()
     }
 

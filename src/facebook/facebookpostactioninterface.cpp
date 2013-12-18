@@ -86,15 +86,16 @@ int FacebookPostActionInterface::type() const
     return FacebookInterface::PostAction;
 }
 
+#if 0
 
+#endif
 /*!
     \qmlproperty QString FacebookPostAction::name
     Holds the name of the action
 */
 QString FacebookPostActionInterface::name() const
 {
-    Q_D(const FacebookPostActionInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_ACTION_NAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_ACTION_NAME).toString();
 }
 
 /*!
@@ -103,7 +104,6 @@ QString FacebookPostActionInterface::name() const
 */
 QString FacebookPostActionInterface::link() const
 {
-    Q_D(const FacebookPostActionInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_ACTION_LINK).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_ACTION_LINK).toString();
 }
 

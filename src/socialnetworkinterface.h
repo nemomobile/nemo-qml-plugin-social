@@ -48,13 +48,8 @@
 #include <QDeclarativeListProperty>
 #endif
 
-#include "filterinterface.h"
-#include "sorterinterface.h"
-
-
-class QNetworkReply;
-class ContentItemInterface;
-class IdentifiableContentItemInterface;
+//#include "filterinterface.h"
+//#include "sorterinterface.h"
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -62,8 +57,6 @@ class IdentifiableContentItemInterface;
  * directly after construction.
  */
 
-class CacheEntry;
-class SocialNetworkModelInterface;
 class SocialNetworkInterfacePrivate;
 class SocialNetworkInterface : public QObject, public QDeclarativeParserStatus
 {
@@ -86,20 +79,13 @@ public:
     };
     enum ErrorType {
         NoError = 0,
-        AccountError = 1,
-        SignOnError = 2,
-        BusyError = 3,
+//        AccountError = 1,
+//        SignOnError = 2,
+//        BusyError = 3,
         RequestError = 4,
         DataUpdateError = 5,
         OtherError = 6,
-        LastError = 255
-    };
-    enum Roles {
-        ContentItemRole = Qt::UserRole + 1,
-        ContentItemTypeRole,
-        ContentItemDataRole,
-        ContentItemIdentifierRole, // 0 for unidentifiable content items
-        SectionRole
+//        LastError = 255
     };
     enum ContentType {
         NotInitialized = 0,
@@ -129,24 +115,15 @@ Q_SIGNALS:
 
 protected:
     SocialNetworkInterface(SocialNetworkInterfacePrivate &dd, QObject *parent = 0);
-
-    QVariantMap contentItemData(ContentItemInterface *contentItem) const;
-    void setContentItemData(ContentItemInterface *contentItem, const QVariantMap &data) const;
-
     QScopedPointer<SocialNetworkInterfacePrivate> d_ptr;
-    friend class IdentifiableContentItemInterfacePrivate;
-    friend class ContentItemInterface;
-    friend class ContentItemInterfacePrivate;
 
 private:
     Q_DECLARE_PRIVATE(SocialNetworkInterface)
     Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler(QObject*))
+//    Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler(QObject*))
     Q_PRIVATE_SLOT(d_func(), void finishedHandler())
-    Q_PRIVATE_SLOT(d_func(), void errorHandler(QNetworkReply::NetworkError))
-    Q_PRIVATE_SLOT(d_func(), void sslErrorsHandler(const QList<QSslError>&))
-    Q_PRIVATE_SLOT(d_func(), void itemDataChangedHandler())
-    Q_PRIVATE_SLOT(d_func(), void modelDestroyedHandler(QObject*))
-    friend class SocialNetworkModelInterface;
+//    Q_PRIVATE_SLOT(d_func(), void itemDataChangedHandler())
+//    Q_PRIVATE_SLOT(d_func(), void modelDestroyedHandler(QObject*))
 };
 
 #endif // SOCIALNETWORKINTERFACE_H

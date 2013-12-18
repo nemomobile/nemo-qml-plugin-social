@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
+ * Copyright (C) 2013 Jolla Ltd. <lucien.xu@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -29,61 +29,34 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-import QtQuick 1.1
-import org.nemomobile.social 1.0
+#include <QtCore/QMap>
+#include <QtCore/QObject>
+#include <QtCore/QVariantMap>
 
-Item {
-    id: container
-    anchors.fill: parent
-    signal backClicked
-    function populate(nodeId) {
-        model.clear()
-        filter.identifier = nodeId
-        model.load()
-        view.positionViewAtBeginning()
-    }
-
-    SocialNetworkModel {
-        id: model
-        socialNetwork: facebook
-        filter: FacebookRelatedDataFilter {
-            id: filter
-            connection: Facebook.Likes
-        }
-    }
-
-    Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: model.status != SocialNetwork.Idle
-              ? "... Loading ..." : "There are " + model.count + " likes"
-    }
-
-    FacebookButton {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
-    }
-
-    ListView {
-        id: view
-        clip: true
-        anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        model: model
-        delegate: Item {
-            width: view.width
-            height: 50
-
-            Text {
-                anchors.centerIn: parent
-                text: model.contentItem.userName
-            }
-        }
-    }
+template<class T> bool testType(QObject *object)
+{
+    return qobject_cast<T *>(object);
 }
+
+class SocialNetworkInterface;
+class FilterInterface;
+class FilterInterfacePrivate
+{
+public:
+    explicit FilterInterfacePrivate(FilterInterface *q);
+    bool addHandle(QObject *handle, QObject *item, SocialNetworkInterface *socialNetwork);
+    void addHandleProperties(QObject *handle, const QVariantMap &properties);
+protected:
+    FilterInterface * const q_ptr;
+private:
+    Q_DECLARE_PUBLIC(FilterInterface)
+    // Slots
+    void socialNetworkDestroyedHandler(QObject *object);
+    void itemDestroyedHandler(QObject *object);
+
+    QMap<QObject *, QObject *> handlesToItemMap;
+    QMap<QObject *, SocialNetworkInterface *> handlesToSniMap;
+    QMap<QObject *, QVariantMap> handlesToPropertiesMap;
+    QMultiMap<QObject *, QObject *> sniToHandlesMap;
+    QMap<QObject *, QObject *> itemToHandleMap;
+};

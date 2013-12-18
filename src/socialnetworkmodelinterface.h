@@ -51,26 +51,22 @@
 #include "socialnetworkinterface.h"
 
 class SocialNetworkInterface;
+class ContentItemInterface;
 class IdentifiableContentItemInterface;
-
 class SocialNetworkModelInterfacePrivate;
 class SocialNetworkModelInterface: public QAbstractListModel, public QDeclarativeParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
+    Q_PROPERTY(SocialNetworkInterface * socialNetwork READ socialNetwork WRITE setSocialNetwork
+               NOTIFY socialNetworkChanged)
+    Q_PROPERTY(FilterInterface * filter READ filter WRITE setFilter NOTIFY filterChanged)
     Q_PROPERTY(SocialNetworkInterface::Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(SocialNetworkInterface::ErrorType error READ error NOTIFY errorChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
-    Q_PROPERTY(SocialNetworkInterface * socialNetwork READ socialNetwork WRITE setSocialNetwork
-               NOTIFY socialNetworkChanged)
-    Q_PROPERTY(QString nodeIdentifier READ nodeIdentifier WRITE setNodeIdentifier
-               NOTIFY nodeIdentifierChanged)
-    Q_PROPERTY(int nodeType READ nodeType WRITE setNodeType NOTIFY nodeTypeChanged)
-    Q_PROPERTY(IdentifiableContentItemInterface *node READ node NOTIFY nodeChanged)
     Q_PROPERTY(bool hasPrevious READ hasPrevious NOTIFY hasPreviousChanged)
     Q_PROPERTY(bool hasNext READ hasNext NOTIFY hasNextChanged)
-    Q_PROPERTY(QDeclarativeListProperty<FilterInterface> filters READ filters)
-    Q_PROPERTY(QDeclarativeListProperty<SorterInterface> sorters READ sorters)
+//    Q_PROPERTY(QDeclarativeListProperty<SorterInterface> sorters READ sorters)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 public:
     enum Roles {
@@ -92,43 +88,41 @@ public:
     int rowCount(const QModelIndex &index = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role) const;
 
-    // Property accessors.
+    // Properties
+    SocialNetworkInterface * socialNetwork() const;
+    void setSocialNetwork(SocialNetworkInterface *socialNetwork);
+    FilterInterface * filter() const;
+    void setFilter(FilterInterface *filter);
     SocialNetworkInterface::Status status() const;
     SocialNetworkInterface::ErrorType error() const;
     QString errorMessage() const;
-
-    SocialNetworkInterface * socialNetwork() const;
-    QString nodeIdentifier() const;
-    int nodeType() const;
-    IdentifiableContentItemInterface *node() const;
     bool hasPrevious() const;
     bool hasNext() const;
-    QDeclarativeListProperty<FilterInterface> filters();
-    QDeclarativeListProperty<SorterInterface> sorters();
+
+//    QDeclarativeListProperty<SorterInterface> sorters();
     int count() const;
 
-    // Property mutators.
-    void setSocialNetwork(SocialNetworkInterface *socialNetwork);
-    void setNodeIdentifier(const QString &nodeIdentifier);
-    void setNodeType(int nodeType);
-
+    // Invokable API
     Q_INVOKABLE QObject * relatedItem(int index) const;
 
+    Q_INVOKABLE bool load();
+//    Q_INVOKABLE void loadNext();
+//    Q_INVOKABLE void loadPrevious();
+
+    // Non QML API
+    void setModelData(const QList<ContentItemInterface *> &data);
+    QVariantMap extraData() const;
+    void setExtraData(const QVariantMap &extraData);
+    void setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage);
 public Q_SLOTS:
-    void populate();
-    void repopulate();
-    void loadNext();
-    void loadPrevious();
-    void clean();
+    void clear();
 
 Q_SIGNALS:
+    void socialNetworkChanged();
+    void filterChanged();
     void statusChanged();
     void errorChanged();
     void errorMessageChanged();
-    void socialNetworkChanged();
-    void nodeIdentifierChanged();
-    void nodeTypeChanged();
-    void nodeChanged();
     void hasPreviousChanged();
     void hasNextChanged();
     void countChanged();
@@ -137,12 +131,14 @@ protected:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QHash<int, QByteArray> roleNames() const;
 #endif
-    bool event(QEvent *e);
+//    bool event(QEvent *e);
     QScopedPointer<SocialNetworkModelInterfacePrivate> d_ptr;
 private:
     Q_DECLARE_PRIVATE(SocialNetworkModelInterface)
-    Q_PRIVATE_SLOT(d_func(), void sorterDestroyedHandler(QObject*))
-    friend class SocialNetworkInterfacePrivate;
+    Q_PRIVATE_SLOT(d_func(), void socialNetworkInitializedChangedHandler())
+    Q_PRIVATE_SLOT(d_func(), void socialNetworkDestroyedHandler())
+    Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler())
+//    Q_PRIVATE_SLOT(d_func(), void sorterDestroyedHandler(QObject*))
 };
 
 #endif // SOCIALNETWORKMODELINTERFACE_H

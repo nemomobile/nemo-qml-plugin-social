@@ -40,7 +40,9 @@ class FacebookUserInterfacePrivate: public IdentifiableContentItemInterfacePriva
 {
 public:
     explicit FacebookUserInterfacePrivate(FacebookUserInterface *q);
+#if 0
     void finishedHandler();
+#endif
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     FacebookInterfacePrivate::FacebookAction action;
     FacebookUserInterface::Gender gender;

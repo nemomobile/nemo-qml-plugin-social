@@ -42,24 +42,24 @@ public:
     explicit ContentItemInterfacePrivate(ContentItemInterface *q);
     virtual ~ContentItemInterfacePrivate();
 
-    QVariantMap data() const;
-    void setData(const QVariantMap &data);
-
     virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
+    virtual void initializationIncomplete();
     virtual void initializationComplete();
 
     // helper api - parse network reply data into QVariantMap
     // TODO: This method should be put in a header containing useful functions, and maybe inlined
     static QVariant parseReplyDataVariant(const QByteArray &replyData, bool *ok);
+    static QByteArray writeReplyData(const QVariantMap &data, bool *ok);
     static QVariantMap parseReplyData(const QByteArray &replyData, bool *ok);
 
-    SocialNetworkInterface *socialNetworkInterface;
-    bool isInitialized;
+    SocialNetworkInterface *socialNetwork;
 protected:
+    bool initialized;
     ContentItemInterface * const q_ptr;
 private:
     // Slots
     void socialNetworkInitializedChangedHandler();
+    void socialNetworkDestroyedHandler();
     Q_DECLARE_PUBLIC(ContentItemInterface)
     QVariantMap m_data;
 };

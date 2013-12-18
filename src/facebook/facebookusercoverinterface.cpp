@@ -91,15 +91,16 @@ int FacebookUserCoverInterface::type() const
     return FacebookInterface::UserCover;
 }
 
+#if 0
 
+#endif
 /*!
     \qmlproperty QString FacebookUserCover::photoIdentifier
     Holds the identifier of the cover photo
 */
 QString FacebookUserCoverInterface::photoIdentifier() const
 {
-    Q_D(const FacebookUserCoverInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_COVER_PHOTOIDENTIFIER).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_COVER_PHOTOIDENTIFIER).toString();
 }
 
 /*!
@@ -108,8 +109,7 @@ QString FacebookUserCoverInterface::photoIdentifier() const
 */
 QString FacebookUserCoverInterface::source() const
 {
-    Q_D(const FacebookUserCoverInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_COVER_SOURCE).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_COVER_SOURCE).toString();
 }
 
 /*!
@@ -118,8 +118,7 @@ QString FacebookUserCoverInterface::source() const
 */
 int FacebookUserCoverInterface::offsetY() const
 {
-    Q_D(const FacebookUserCoverInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_USER_COVER_OFFSETY).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_USER_COVER_OFFSETY).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {

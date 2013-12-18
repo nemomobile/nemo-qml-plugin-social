@@ -39,29 +39,41 @@ Item {
     signal photoClicked(string photoId)
 
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
+        model.clear()
+        itemFilter.identifier = nodeId
+        modelFilter.identifier = nodeId
+        album.load()
+        model.load()
         view.positionViewAtBeginning()
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Photo
-            }
-        ]
+        filter: FacebookRelatedDataFilter {
+            id: modelFilter
+            connection: Facebook.Photos
+        }
+    }
+
+    FacebookAlbum {
+        id: album
+        socialNetwork: facebook
+        filter: FacebookItemFilter {
+            id: itemFilter
+            fields: "id,likes,comments"
+        }
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model.node == null ? "... Loading ..."
-              : "There are "  + model.node.count + " photos in this album"
-              + "\nComments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
-              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
+        text: model.status != SocialNetwork.Idle || album.status != SocialNetwork.Idle
+              ? "... Loading ..."
+              : "There are "  + model.count + " photos in this album"
+              + "\nComments: " +  album.commentsCount
+              + "\nLikes: " + album.likesCount
     }
 
     FacebookButton {

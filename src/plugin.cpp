@@ -48,12 +48,14 @@
 #include "contentiteminterface.h"
 #include "identifiablecontentiteminterface.h"
 #include "filterinterface.h"
-#include "sorterinterface.h"
-#include "contentitemtypefilterinterface.h"
+//#include "sorterinterface.h"
+//#include "contentitemtypefilterinterface.h"
 
 // facebook implementation headers
 #include "facebook/facebookinterface.h"
-#include "facebook/facebookcommentfilterinterface.h"
+#include "facebook/facebookitemfilterinterface.h"
+#include "facebook/facebookrelateddatafilterinterface.h"
+//#include "facebook/facebookcommentfilterinterface.h"
 #include "facebook/facebookobjectreferenceinterface.h"
 #include "facebook/facebookalbuminterface.h"
 #include "facebook/facebookcommentinterface.h"
@@ -64,10 +66,10 @@
 #include "facebook/facebooklikeinterface.h"
 
 // twitter implementation headers
-#include "twitter/twitterinterface.h"
-#include "twitter/twitterconversationfilterinterface.h"
-#include "twitter/twitteruserinterface.h"
-#include "twitter/twittertweetinterface.h"
+//#include "twitter/twitterinterface.h"
+//#include "twitter/twitterconversationfilterinterface.h"
+//#include "twitter/twitteruserinterface.h"
+//#include "twitter/twittertweetinterface.h"
 
 
 class Q_DECL_EXPORT NemoSocialPlugin : public QDeclarativeExtensionPlugin
@@ -98,15 +100,17 @@ public:
         qmlRegisterType<ContentItemInterface>(uri, 1, 0, "ContentItem");
         qmlRegisterType<IdentifiableContentItemInterface>(uri, 1, 0, "IdentifiableContentItem");
         qmlRegisterType<FilterInterface>(uri, 1, 0, "Filter");
-        qmlRegisterType<SorterInterface>(uri, 1, 0, "Sorter");
+//        qmlRegisterType<SorterInterface>(uri, 1, 0, "Sorter");
 
-        // creatable types from the social plugin
+//        // creatable types from the social plugin
         qmlRegisterType<SocialNetworkModelInterface>(uri, 1, 0, "SocialNetworkModel");
-        qmlRegisterType<ContentItemTypeFilterInterface>(uri, 1, 0, "ContentItemTypeFilter");
+//        qmlRegisterType<ContentItemTypeFilterInterface>(uri, 1, 0, "ContentItemTypeFilter");
 
-        // creatable types from the facebook implementation
+//        // creatable types from the facebook implementation
         qmlRegisterType<FacebookInterface>(uri, 1, 0, "Facebook");
-        qmlRegisterType<FacebookCommentFilterInterface>(uri, 1, 0, "FacebookCommentFilter");
+        qmlRegisterType<FacebookItemFilterInterface>(uri, 1, 0, "FacebookItemFilter");
+        qmlRegisterType<FacebookRelatedDataFilterInterface>(uri, 1, 0, "FacebookRelatedDataFilter");
+//        qmlRegisterType<FacebookCommentFilterInterface>(uri, 1, 0, "FacebookCommentFilter");
         qmlRegisterType<FacebookObjectReferenceInterface>(uri, 1, 0, "FacebookObjectReference");
         qmlRegisterType<FacebookAlbumInterface>(uri, 1, 0, "FacebookAlbum");
         qmlRegisterType<FacebookCommentInterface>(uri, 1, 0, "FacebookComment");
@@ -124,11 +128,11 @@ public:
         qmlRegisterType<FacebookUserCoverInterface>(uri, 1, 0, "FacebookUserCover");
         qmlRegisterType<FacebookUserPictureInterface>(uri, 1, 0, "FacebookUserPicture");
 
-        // creatable types from the twitter implementation
-        qmlRegisterType<TwitterInterface>(uri, 1, 0, "Twitter");
-        qmlRegisterType<TwitterConversationFilterInterface>(uri, 1, 0, "TwitterConversationFilter");
-        qmlRegisterType<TwitterUserInterface>(uri, 1, 0, "TwitterUser");
-        qmlRegisterType<TwitterTweetInterface>(uri, 1, 0, "TwitterTweet");
+//        // creatable types from the twitter implementation
+//        qmlRegisterType<TwitterInterface>(uri, 1, 0, "Twitter");
+//        qmlRegisterType<TwitterConversationFilterInterface>(uri, 1, 0, "TwitterConversationFilter");
+//        qmlRegisterType<TwitterUserInterface>(uri, 1, 0, "TwitterUser");
+//        qmlRegisterType<TwitterTweetInterface>(uri, 1, 0, "TwitterTweet");
     }
 };
 

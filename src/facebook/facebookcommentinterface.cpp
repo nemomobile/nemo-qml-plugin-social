@@ -47,6 +47,7 @@ FacebookCommentInterfacePrivate::FacebookCommentInterfacePrivate(FacebookComment
 {
 }
 
+#if 0
 void FacebookCommentInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
@@ -94,6 +95,7 @@ void FacebookCommentInterfacePrivate::finishedHandler()
     }
 // >>> finishedHandler
 }
+#endif
 void FacebookCommentInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                                 const QVariantMap &newData)
 {
@@ -135,7 +137,7 @@ void FacebookCommentInterfacePrivate::emitPropertyChangeSignals(const QVariantMa
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
+        from->setData(newFromData);
         emit q->fromChanged();
     }
 
@@ -262,6 +264,7 @@ int FacebookCommentInterface::type() const
     return FacebookInterface::Comment;
 }
 
+#if 0
 /*! \reimp */
 bool FacebookCommentInterface::remove()
 {
@@ -278,6 +281,8 @@ bool FacebookCommentInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+#endif
+#if 0
 /*!
     \qmlmethod bool FacebookComment::like()
     Initiates a "like" operation on the comment.
@@ -327,6 +332,7 @@ bool FacebookCommentInterface::unlike()
 // >>> unlike
 }
 
+#endif
 /*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookComment::from
     Holds a reference to the user or profile which uploaded this comment.
@@ -343,8 +349,7 @@ FacebookObjectReferenceInterface * FacebookCommentInterface::from() const
 */
 QString FacebookCommentInterface::message() const
 {
-    Q_D(const FacebookCommentInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_COMMENT_MESSAGE).toString();
+    return data().value(FACEBOOK_ONTOLOGY_COMMENT_MESSAGE).toString();
 }
 
 /*!
@@ -353,8 +358,7 @@ QString FacebookCommentInterface::message() const
 */
 QString FacebookCommentInterface::createdTime() const
 {
-    Q_D(const FacebookCommentInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_COMMENT_CREATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_COMMENT_CREATEDTIME).toString();
 }
 
 /*!
@@ -363,8 +367,7 @@ QString FacebookCommentInterface::createdTime() const
 */
 int FacebookCommentInterface::likeCount() const
 {
-    Q_D(const FacebookCommentInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_COMMENT_LIKECOUNT).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_COMMENT_LIKECOUNT).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -389,8 +392,7 @@ FacebookCommentInterface * FacebookCommentInterface::parent() const
 */
 bool FacebookCommentInterface::canComment() const
 {
-    Q_D(const FacebookCommentInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_COMMENT_CANCOMMENT).toString() == QLatin1String("true");
+    return data().value(FACEBOOK_ONTOLOGY_COMMENT_CANCOMMENT).toString() == QLatin1String("true");
 }
 
 /*!
@@ -399,8 +401,7 @@ bool FacebookCommentInterface::canComment() const
 */
 int FacebookCommentInterface::commentCount() const
 {
-    Q_D(const FacebookCommentInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_COMMENT_COMMENTCOUNT).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_COMMENT_COMMENTCOUNT).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
