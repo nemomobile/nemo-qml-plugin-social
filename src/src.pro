@@ -26,27 +26,28 @@ SOURCES += \
     $$PWD/plugin.cpp \
     $$PWD/contentiteminterface.cpp \
     $$PWD/filterinterface.cpp \
-    $$PWD/contentitemtypefilterinterface.cpp \
+#    $$PWD/contentitemtypefilterinterface.cpp \
     $$PWD/identifiablecontentiteminterface.cpp \
     $$PWD/socialnetworkinterface.cpp \
-    $$PWD/sorterinterface.cpp \
+#    $$PWD/sorterinterface.cpp \
     $$PWD/socialnetworkmodelinterface.cpp
 
 HEADERS += \
     $$PWD/contentiteminterface.h \
     $$PWD/contentiteminterface_p.h \
-    $$PWD/contentitemtypefilterinterface.h \
+#    $$PWD/contentitemtypefilterinterface.h \
     $$PWD/filterinterface.h \
+    $$PWD/filterinterface_p.h \
     $$PWD/identifiablecontentiteminterface.h \
     $$PWD/identifiablecontentiteminterface_p.h \
     $$PWD/socialnetworkinterface.h \
     $$PWD/socialnetworkinterface_p.h \
-    $$PWD/sorterinterface.h \
-    $$PWD/util_p.h \
+#    $$PWD/sorterinterface.h \
+#    $$PWD/util_p.h \
     $$PWD/socialnetworkmodelinterface.h \
     $$PWD/socialnetworkmodelinterface_p.h
 
 include(facebook/facebook.pri)
-include(twitter/twitter.pri)
+#include(twitter/twitter.pri)
 
 OTHER_FILES += qmldir social.qdoc social.qdocconf

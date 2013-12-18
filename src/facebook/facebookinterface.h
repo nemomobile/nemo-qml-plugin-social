@@ -38,7 +38,7 @@
 #include <QtCore/QString>
 
 class QNetworkReply;
-class FacebookObjectReferenceInterface;
+//class FacebookObjectReferenceInterface;
 
 /*
  * NOTE: if you construct one of these in C++ directly,
@@ -46,7 +46,7 @@ class FacebookObjectReferenceInterface;
  * directly after construction.
  */
 
-class CacheEntry;
+class FilterInterface;
 class FacebookInterfacePrivate;
 class FacebookInterface : public SocialNetworkInterface
 {
@@ -57,6 +57,7 @@ class FacebookInterface : public SocialNetworkInterface
                NOTIFY currentUserIdentifierChanged)
 
     Q_ENUMS(ContentItemType)
+    Q_ENUMS(ConnectionType)
 
 public:
     enum ContentItemType {
@@ -72,7 +73,6 @@ public:
 
         Application,
         Event,
-        Home,
         Location,
 
         Like,
@@ -86,6 +86,17 @@ public:
 
 
     };
+    enum ConnectionType {
+        InvalidConnection,
+        Albums,
+        Comments,
+        Feed,
+        Friends,
+        Home,
+        Likes,
+        Notifications,
+        Photos
+    };
 
 public:
     explicit FacebookInterface(QObject *parent = 0);
@@ -95,23 +106,15 @@ public:
     void setAccessToken(const QString &token);
     QString currentUserIdentifier() const;
 
+    // Non QML API
+    QObject * get(FilterInterface *filter, const QString &identifier,
+                  const QString &graph = QString(), const QString &fields = QString(),
+                  const QMap<QString, QString> &arguments = QMap<QString, QString>());
+
+
 Q_SIGNALS:
     void accessTokenChanged();
     void currentUserIdentifierChanged();
-    // private API for all Facebook adapters to use
-private:
-    FacebookObjectReferenceInterface *objectReference(QObject *parent, int type,
-                                                      QString identifier, QString name);
-    QVariantMap facebookContentItemData(ContentItemInterface *contentItem);
-    void setFacebookContentItemData(ContentItemInterface *contentItem, const QVariantMap &data);
-    friend class FacebookObjectReferenceInterface;
-    friend class FacebookAlbumInterfacePrivate;
-    friend class FacebookCommentInterfacePrivate;
-    friend class FacebookNotificationInterfacePrivate;
-    friend class FacebookPhotoInterfacePrivate;
-    friend class FacebookPostInterfacePrivate;
-    friend class FacebookUserInterfacePrivate;
-
 private:
     Q_DECLARE_PRIVATE(FacebookInterface)
 };

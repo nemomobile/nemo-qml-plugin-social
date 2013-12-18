@@ -65,6 +65,7 @@ FacebookUserInterfacePrivate::FacebookUserInterfacePrivate(FacebookUserInterface
 {
 }
 
+#if 0
 void FacebookUserInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
@@ -136,6 +137,7 @@ void FacebookUserInterfacePrivate::finishedHandler()
     }
 // >>> finishedHandler
 }
+#endif
 void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                              const QVariantMap &newData)
 {
@@ -236,7 +238,7 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
     QVariantMap newCoverMap = newData.value(FACEBOOK_ONTOLOGY_USER_COVER).toMap();
 
     if (newCoverMap != oldCoverMap) {
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(cover, newCoverMap);
+        cover->setData(newCoverMap);
         emit q->coverChanged();
     }
 
@@ -253,7 +255,7 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         newHometownData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Location);
         newHometownData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newHometownId);
         newHometownData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newHometownName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(hometown, newHometownData);
+        hometown->setData(newHometownData);
         emit q->hometownChanged();
     }
 
@@ -285,7 +287,7 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         newLocationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Location);
         newLocationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newLocationId);
         newLocationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newLocationName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(location, newLocationData);
+        location->setData(newLocationData);
         emit q->locationChanged();
     }
 
@@ -294,7 +296,7 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
     QVariantMap newPictureMap = newData.value(FACEBOOK_ONTOLOGY_USER_PICTURE).toMap().value(FACEBOOK_ONTOLOGY_METADATA_DATA).toMap();
 
     if (newPictureMap != oldPictureMap) {
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(picture, newPictureMap);
+        picture->setData(newPictureMap);
         emit q->pictureChanged();
     }
 
@@ -342,7 +344,7 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         newSignificantOtherData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
         newSignificantOtherData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newSignificantOtherId);
         newSignificantOtherData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newSignificantOtherName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(significantOther, newSignificantOtherData);
+        significantOther->setData(newSignificantOtherData);
         emit q->significantOtherChanged();
     }
 // >>> emitPropertyChangeSignals
@@ -425,6 +427,7 @@ int FacebookUserInterface::type() const
     return FacebookInterface::User;
 }
 
+#if 0
 /*! \reimp */
 bool FacebookUserInterface::remove()
 {
@@ -441,6 +444,8 @@ bool FacebookUserInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+#endif
+#if 0
 /*!
     \qmlmethod bool FacebookUser::uploadPhoto(const QUrl &source, const QString &message)
     Initiates a "post photo" operation on the user.  The photo will
@@ -571,14 +576,14 @@ bool FacebookUserInterface::removeAlbum(const QString &albumIdentifier)
 // >>> removeAlbum
 }
 
+#endif
 /*!
     \qmlproperty QString FacebookUser::name
     Holds the full name of the user.
 */
 QString FacebookUserInterface::name() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_NAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_NAME).toString();
 }
 
 /*!
@@ -587,8 +592,7 @@ QString FacebookUserInterface::name() const
 */
 QString FacebookUserInterface::firstName() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_FIRSTNAME).toString();
 }
 
 /*!
@@ -597,8 +601,7 @@ QString FacebookUserInterface::firstName() const
 */
 QString FacebookUserInterface::middleName() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_MIDDLENAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_MIDDLENAME).toString();
 }
 
 /*!
@@ -607,8 +610,7 @@ QString FacebookUserInterface::middleName() const
 */
 QString FacebookUserInterface::lastName() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_LASTNAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_LASTNAME).toString();
 }
 
 /*!
@@ -627,8 +629,7 @@ FacebookUserInterface::Gender FacebookUserInterface::gender() const
 */
 QString FacebookUserInterface::locale() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_LOCALE).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_LOCALE).toString();
 }
 
 /*!
@@ -637,8 +638,7 @@ QString FacebookUserInterface::locale() const
 */
 QUrl FacebookUserInterface::link() const
 {
-    Q_D(const FacebookUserInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_USER_LINK).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_USER_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -647,8 +647,7 @@ QUrl FacebookUserInterface::link() const
 */
 QString FacebookUserInterface::username() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_USERNAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_USERNAME).toString();
 }
 
 /*!
@@ -657,8 +656,7 @@ QString FacebookUserInterface::username() const
 */
 QString FacebookUserInterface::thirdPartyIdentifier() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_THIRDPARTYIDENTIFIER).toString();
 }
 
 /*!
@@ -668,8 +666,7 @@ QString FacebookUserInterface::thirdPartyIdentifier() const
 */
 bool FacebookUserInterface::installed() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_INSTALLED).toString() == QLatin1String("true");
+    return data().value(FACEBOOK_ONTOLOGY_USER_INSTALLED).toString() == QLatin1String("true");
 }
 
 /*!
@@ -678,8 +675,7 @@ bool FacebookUserInterface::installed() const
 */
 float FacebookUserInterface::timezone() const
 {
-    Q_D(const FacebookUserInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_USER_TIMEZONE).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_USER_TIMEZONE).toString();
     bool ok;
     float number = numberString.toFloat(&ok);
     if (ok) {
@@ -694,8 +690,7 @@ float FacebookUserInterface::timezone() const
 */
 QString FacebookUserInterface::updatedTime() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_UPDATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_UPDATEDTIME).toString();
 }
 
 /*!
@@ -704,8 +699,7 @@ QString FacebookUserInterface::updatedTime() const
 */
 bool FacebookUserInterface::verified() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_VERIFIED).toString() == QLatin1String("true");
+    return data().value(FACEBOOK_ONTOLOGY_USER_VERIFIED).toString() == QLatin1String("true");
 }
 
 /*!
@@ -714,8 +708,7 @@ bool FacebookUserInterface::verified() const
 */
 QString FacebookUserInterface::bio() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_BIO).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_BIO).toString();
 }
 
 /*!
@@ -724,8 +717,7 @@ QString FacebookUserInterface::bio() const
 */
 QString FacebookUserInterface::birthday() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_BIRTHDAY).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_BIRTHDAY).toString();
 }
 
 /*!
@@ -744,8 +736,7 @@ FacebookUserCoverInterface * FacebookUserInterface::cover() const
 */
 QString FacebookUserInterface::email() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_EMAIL).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_EMAIL).toString();
 }
 
 /*!
@@ -785,8 +776,7 @@ FacebookObjectReferenceInterface * FacebookUserInterface::location() const
 */
 QString FacebookUserInterface::political() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_POLITICAL).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_POLITICAL).toString();
 }
 
 /*!
@@ -805,8 +795,7 @@ FacebookUserPictureInterface * FacebookUserInterface::picture() const
 */
 QString FacebookUserInterface::quotes() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_QUOTES).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_QUOTES).toString();
 }
 
 /*!
@@ -825,8 +814,7 @@ FacebookUserInterface::RelationshipStatus FacebookUserInterface::relationshipSta
 */
 QString FacebookUserInterface::religion() const
 {
-    Q_D(const FacebookUserInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_USER_RELIGION).toString();
+    return data().value(FACEBOOK_ONTOLOGY_USER_RELIGION).toString();
 }
 
 /*!
@@ -846,7 +834,6 @@ FacebookObjectReferenceInterface * FacebookUserInterface::significantOther() con
 */
 QUrl FacebookUserInterface::website() const
 {
-    Q_D(const FacebookUserInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_USER_WEBSITE).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_USER_WEBSITE).toString().toLocal8Bit());
 }
 

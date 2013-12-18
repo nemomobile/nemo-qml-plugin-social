@@ -49,6 +49,7 @@ FacebookAlbumInterfacePrivate::FacebookAlbumInterfacePrivate(FacebookAlbumInterf
 {
 }
 
+#if 0
 void FacebookAlbumInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
@@ -129,6 +130,7 @@ void FacebookAlbumInterfacePrivate::finishedHandler()
     }
 // >>> finishedHandler
 }
+#endif
 void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                               const QVariantMap &newData)
 {
@@ -185,7 +187,7 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
+        from->setData(newFromData);
         emit q->fromChanged();
     }
 
@@ -206,14 +208,11 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         emit q->albumTypeChanged();
     }
 
-    // Check if we are in the second phase (getting info about likes and comments)
-    bool isSecondPhase = newData.contains(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE);
-
     // Check if the user liked this album
     QString currentUserIdentifier
             = qobject_cast<FacebookInterface*>(q->socialNetwork())->currentUserIdentifier();
     bool newLiked = false;
-    int newLikesCount = isSecondPhase ? 0 : -1;
+    int newLikesCount = 0;
     QVariant likes = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
     if (!likes.isNull()) {
         QVariantMap likesMap = likes.toMap();
@@ -247,7 +246,7 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     }
 
     // Check infos about comments
-    int newCommentsCount = isSecondPhase ? 0 : -1;
+    int newCommentsCount = 0;
     QVariant comments = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS);
     if (!comments.isNull()) {
         QVariantMap commentsMap = comments.toMap();
@@ -382,6 +381,7 @@ int FacebookAlbumInterface::type() const
     return FacebookInterface::Album;
 }
 
+#if 0
 /*! \reimp */
 bool FacebookAlbumInterface::remove()
 {
@@ -398,6 +398,8 @@ bool FacebookAlbumInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+#endif
+#if 0
 /*!
     \qmlmethod bool FacebookAlbum::like()
     Initiates a "like" operation on the album.
@@ -571,6 +573,7 @@ bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
 // >>> removePhoto
 }
 
+#endif
 /*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookAlbum::from
     Holds a reference to the user or profile which created the album.
@@ -587,8 +590,7 @@ FacebookObjectReferenceInterface * FacebookAlbumInterface::from() const
 */
 QString FacebookAlbumInterface::name() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_NAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_NAME).toString();
 }
 
 /*!
@@ -597,8 +599,7 @@ QString FacebookAlbumInterface::name() const
 */
 QString FacebookAlbumInterface::description() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION).toString();
 }
 
 /*!
@@ -607,8 +608,7 @@ QString FacebookAlbumInterface::description() const
 */
 QUrl FacebookAlbumInterface::link() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -617,8 +617,7 @@ QUrl FacebookAlbumInterface::link() const
 */
 QUrl FacebookAlbumInterface::coverPhoto() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString().toLocal8Bit());
 }
 
 /*!
@@ -627,8 +626,7 @@ QUrl FacebookAlbumInterface::coverPhoto() const
 */
 QString FacebookAlbumInterface::privacy() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).toString();
 }
 
 /*!
@@ -637,8 +635,7 @@ QString FacebookAlbumInterface::privacy() const
 */
 int FacebookAlbumInterface::count() const
 {
-    Q_D(const FacebookAlbumInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -670,8 +667,7 @@ FacebookAlbumInterface::AlbumType FacebookAlbumInterface::albumType() const
 */
 QString FacebookAlbumInterface::createdTime() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
 }
 
 /*!
@@ -680,8 +676,7 @@ QString FacebookAlbumInterface::createdTime() const
 */
 QString FacebookAlbumInterface::updatedTime() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
 }
 
 /*!
@@ -690,8 +685,7 @@ QString FacebookAlbumInterface::updatedTime() const
 */
 bool FacebookAlbumInterface::canUpload() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString() == QLatin1String("true");
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString() == QLatin1String("true");
 }
 
 /*!

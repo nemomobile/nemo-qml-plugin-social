@@ -38,29 +38,36 @@ Item {
     property string currentIdentifier
     signal backClicked
     function populate(nodeId) {
-        if (currentIdentifier == nodeId) {
-            model.repopulate()
-            return
-        }
-
-        model.nodeIdentifier = nodeId
-        model.populate()
+        model.clear()
+        itemFilter.identifier = nodeId
+        commentsFilter.identifier = nodeId
+        post.load()
+        model.load()
         view.positionViewAtBeginning()
+    }
+
+    FacebookPost {
+        id: post
+        socialNetwork: facebook
+        filter: FacebookItemFilter {
+            id: itemFilter
+            fields: "id,likes,comments"
+        }
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [ commentsFilter ]
+        filter: commentsFilter
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model.node == null ? "... Loading ..."
-              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
-              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
+        text: model.status != Facebook.Idle || post.status != Facebook.Idle ? "... Loading ..."
+              : "Comments: " + post.commentsCount
+              + "\nLikes: " +  post.likesCount
     }
 
     FacebookButton {

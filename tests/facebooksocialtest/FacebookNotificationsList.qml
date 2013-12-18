@@ -37,19 +37,18 @@ Item {
     anchors.fill: parent
     signal backClicked
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
+        filter.identifier = nodeId
+        model.load()
         view.positionViewAtBeginning()
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Notification
-            }
-        ]
+        filter: FacebookRelatedDataFilter {
+            id: filter
+            connection: Facebook.Notifications
+         }
     }
 
     Text {

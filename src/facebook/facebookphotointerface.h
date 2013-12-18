@@ -80,6 +80,7 @@ public:
 
     // Overrides.
     int type() const;
+#if 0
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
@@ -92,6 +93,7 @@ public:
     Q_INVOKABLE bool untagText(const QString &text);
     Q_INVOKABLE bool uploadComment(const QString &message);
     Q_INVOKABLE bool removeComment(const QString &commentIdentifier);
+#endif
 
     // Accessors
     FacebookObjectReferenceInterface * from() const;

@@ -40,7 +40,9 @@ class FacebookNotificationInterfacePrivate: public IdentifiableContentItemInterf
 {
 public:
     explicit FacebookNotificationInterfacePrivate(FacebookNotificationInterface *q);
+#if 0
     void finishedHandler();
+#endif
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     FacebookInterfacePrivate::FacebookAction action;
     FacebookObjectReferenceInterface *from;

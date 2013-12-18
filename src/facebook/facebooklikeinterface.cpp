@@ -86,15 +86,16 @@ int FacebookLikeInterface::type() const
     return FacebookInterface::Like;
 }
 
+#if 0
 
+#endif
 /*!
     \qmlproperty QString FacebookLike::userIdentifier
     Holds the identifier of the user who liked an entry
 */
 QString FacebookLikeInterface::userIdentifier() const
 {
-    Q_D(const FacebookLikeInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER).toString();
+    return data().value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER).toString();
 }
 
 /*!
@@ -103,7 +104,6 @@ QString FacebookLikeInterface::userIdentifier() const
 */
 QString FacebookLikeInterface::userName() const
 {
-    Q_D(const FacebookLikeInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_LIKE_USERNAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_LIKE_USERNAME).toString();
 }
 

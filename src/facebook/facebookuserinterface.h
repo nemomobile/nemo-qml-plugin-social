@@ -106,6 +106,7 @@ public:
 
     // Overrides.
     int type() const;
+#if 0
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
@@ -114,6 +115,7 @@ public:
     Q_INVOKABLE bool removePhoto(const QString &photoIdentifier);
     Q_INVOKABLE bool uploadAlbum(const QString &name, const QString &message = QString(), const QVariantMap &privacy = QVariantMap());
     Q_INVOKABLE bool removeAlbum(const QString &albumIdentifier);
+#endif
 
     // Accessors
     QString name() const;

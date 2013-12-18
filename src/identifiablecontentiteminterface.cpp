@@ -43,105 +43,12 @@ IdentifiableContentItemInterfacePrivate
     : ContentItemInterfacePrivate(q)
     , status(SocialNetworkInterface::Initializing)
     , error(SocialNetworkInterface::NoError)
-    , needsReload(false)
-    , currentReply(0)
+    , filter(0)
 {
 }
 
 IdentifiableContentItemInterfacePrivate::~IdentifiableContentItemInterfacePrivate()
 {
-    deleteReply();
-}
-
-QNetworkReply *IdentifiableContentItemInterfacePrivate::reply()
-{
-    return currentReply;
-}
-
-void IdentifiableContentItemInterfacePrivate::deleteReply()
-{
-    if (currentReply) {
-        currentReply->disconnect();
-        currentReply->deleteLater();
-        currentReply = 0;
-    }
-}
-
-/*
-    This convenience function should be called by derived types
-    when they want to implement any form of network communication.
-
-    If the request is created successfully, the state of the
-    IdentifiableContentItem will change to Busy, and the function
-    will return true.  The caller takes ownership of dd->reply()
-    and must delete the reply via dd->deleteReply() when they are
-    finished with it.
-
-    postData is only valid for post requests
-    extraData is specific to the social network
-*/
-bool IdentifiableContentItemInterfacePrivate::request(RequestType requestType,
-                                                      const QString &objectIdentifier,
-                                                      const QString &extraPath,
-                                                      const QStringList &whichFields,
-                                                      const QVariantMap &postData,
-                                                      const QVariantMap &extraData)
-{
-    Q_Q(IdentifiableContentItemInterface);
-    // Caller takes ownership of dd->reply() and must dd->deleteReply()
-    // If request created successfully, changes state to Busy and returns true.
-
-    if (status == SocialNetworkInterface::Initializing
-            || status == SocialNetworkInterface::Busy
-            || status == SocialNetworkInterface::Invalid) {
-        qWarning() << Q_FUNC_INFO
-                   << "Warning: cannot start request, because status is Initializing/Busy/Invalid";
-        return false;
-    }
-
-    if (requestType != IdentifiableContentItemInterfacePrivate::Get
-            && requestType != IdentifiableContentItemInterfacePrivate::Post
-            && requestType != IdentifiableContentItemInterfacePrivate::Delete) {
-        qWarning() << Q_FUNC_INFO
-                   << "Warning: cannot start request, because request type is unknown";
-        return false;
-    }
-
-    if (currentReply != 0) {
-        qWarning() << Q_FUNC_INFO << "Error: not Busy and yet current reply is non-null!";
-        return false;
-    }
-
-    if (!socialNetworkInterface) {
-        qWarning() << Q_FUNC_INFO << "Error: social network is not valid!";
-        return false;
-    }
-
-    QNetworkReply *reply = 0;
-    switch (requestType) {
-    case IdentifiableContentItemInterfacePrivate::Get:
-        reply = socialNetworkInterface->d_func()->getRequest(objectIdentifier, extraPath,
-                                                             whichFields, extraData);
-        break;
-    case IdentifiableContentItemInterfacePrivate::Post:
-        reply = socialNetworkInterface->d_func()->postRequest(objectIdentifier, extraPath,
-                                                              postData, extraData);
-        break;
-    default:
-        reply = socialNetworkInterface->d_func()->deleteRequest(objectIdentifier, extraPath,
-                                                                extraData);
-        break;
-    }
-
-    if (reply) {
-        currentReply = reply;
-        status = SocialNetworkInterface::Busy;
-        emit q->statusChanged();
-        return true;
-    }
-
-    qWarning() << "Warning: social network was unable to create request";
-    return false;
 }
 
 /*! \reimp */
@@ -158,7 +65,6 @@ void IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(const QV
     //     }
     //     SuperClass::emitPropertyChangeSignals(oldData, newData);
     // }
-    // But this one is a bit special, since if the id changed, it's a terrible error.
 
     // check identifier - NOTE: derived types MUST fill out this field before calling this
     // class' implementation of emitPropertyChangeSignals.
@@ -181,21 +87,24 @@ void IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(const QV
         // We now have an identifier; set it and update.
         identifier = newId;
         emit q->identifierChanged();
-    } else if (newId.isEmpty() || oldId != newId) {
-        // The identifier changed.
-        // This shouldn't happen in real life.  Must be an error.
-        status = SocialNetworkInterface::Invalid;
-        error = SocialNetworkInterface::DataUpdateError;
-        errorMessage = QString(QLatin1String("identifier changed during data update from %1 to %2")).arg(oldId).arg(newId);
-        socialNetworkInterface = 0;
-        emit q->statusChanged();
-        emit q->errorChanged();
-        emit q->errorMessageChanged();
-        emit q->socialNetworkChanged();
     }
 
     // finally, as all derived classes must do, call super class implementation.
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
+
+    if (status == SocialNetworkInterface::Busy) {
+        status = SocialNetworkInterface::Idle;
+        emit q->statusChanged();
+    }
+}
+
+void IdentifiableContentItemInterfacePrivate::initializationIncomplete()
+{
+    Q_Q(IdentifiableContentItemInterface);
+    status = SocialNetworkInterface::Initializing;
+    emit q->statusChanged();
+
+    ContentItemInterfacePrivate::initializationIncomplete();
 }
 
 /*! \reimp */
@@ -203,155 +112,24 @@ void IdentifiableContentItemInterfacePrivate::initializationComplete()
 {
     Q_Q(IdentifiableContentItemInterface);
     // reload content if required.
-    if (needsReload) {
-        needsReload = false;
-        status = SocialNetworkInterface::Idle; // but DON'T emit, otherwise reload() will fail.
-        q->reload(); // XXX TODO: allow specifying whichFields for first time initialization reload()?
-    } else {
+//    if (needsLoad) {
+//        needsLoad = false;
+//        status = SocialNetworkInterface::Idle; // but DON'T emit, otherwise reload() will fail.
+//        q->load(); // XXX TODO: allow specifying whichFields for first time initialization reload()?
+//    } else {
         status = SocialNetworkInterface::Idle;
         emit q->statusChanged();
-    }
+//    }
 
     // Finally, as all derived classes must do, call super class implementation.
     ContentItemInterfacePrivate::initializationComplete();
 }
 
-void IdentifiableContentItemInterfacePrivate::connectFinishedAndErrors()
+void IdentifiableContentItemInterfacePrivate::filterDestroyedHandler()
 {
     Q_Q(IdentifiableContentItemInterface);
-    connectErrors();
-    QObject::connect(reply(), SIGNAL(finished()), q, SLOT(finishedHandler()));
-}
-
-void IdentifiableContentItemInterfacePrivate::connectErrors()
-{
-    Q_Q(IdentifiableContentItemInterface);
-    QObject::connect(reply(), SIGNAL(error(QNetworkReply::NetworkError)),
-                     q, SLOT(errorHandler(QNetworkReply::NetworkError)));
-    QObject::connect(reply(), SIGNAL(sslErrors(QList<QSslError>)),
-                     q, SLOT(sslErrorsHandler(QList<QSslError>)));
-}
-
-void IdentifiableContentItemInterfacePrivate::finishedHandler()
-{
-}
-
-void IdentifiableContentItemInterfacePrivate::removeHandler()
-{
-    // TODO: this handler might not be very suited
-
-    Q_Q(IdentifiableContentItemInterface);
-    if (!reply()) {
-        // if an error occurred, it might have been deleted by the error handler.
-        qWarning() << Q_FUNC_INFO << "network request finished but no reply";
-        return;
-    }
-
-    // Default just checks to see if the response is the text "true".
-    // If it is, this handler deletes the reply(), sets the status to invalid.
-    // If it isn't, this handler deletes the reply(), sets the status to error,
-    // and emits responseReceived() with the given data.
-    QByteArray replyData = reply()->readAll();
-    deleteReply();
-    bool ok = false;
-    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
-    if (!ok)
-        responseData.insert("response", replyData);
-    if (replyData == QString(QLatin1String("true"))) {
-        status = SocialNetworkInterface::Invalid; // We have been removed, so we are now invalid.
-        emit q->statusChanged();
-        emit q->responseReceived(responseData);
-    } else {
-        status = SocialNetworkInterface::Error;
-        errorMessage = "remove() request returned non-true value";
-        error = SocialNetworkInterface::RequestError;
-        emit q->statusChanged();
-        emit q->errorChanged();
-        emit q->errorMessageChanged();
-        emit q->responseReceived(responseData);
-    }
-}
-
-void IdentifiableContentItemInterfacePrivate::reloadHandler()
-{
-    Q_Q(IdentifiableContentItemInterface);
-    if (!reply()) {
-        // If an error occurred, it might have been deleted by the error handler.
-        qWarning() << Q_FUNC_INFO << "Network request finished but no reply";
-        return;
-    }
-
-    // Default just checks to see if the response is a valid FB Object
-    // If it is, this handler deletes the reply(), sets the status to Idle,
-    // and sets the internal data() to the object data.
-    // If it isn't, this handler deletes the reply(), sets the status to error,
-    // and emits responseReceived() with the given data.
-    QByteArray replyData = reply()->readAll();
-    deleteReply();
-    bool ok = false;
-    QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
-    if (!ok)
-        responseData.insert("response", replyData);
-    if (ok && !responseData.value("id").toString().isEmpty()) {
-        // We should merge new data, replacing old data with new one
-        // but keeping missing data (if the new data do not have everything)
-        if (data() != responseData) {
-            QVariantMap currentData = data();
-            foreach (QString key, responseData.keys()) {
-                currentData.insert(key, responseData.value(key));
-            }
-            setData(currentData);
-        }
-        status = SocialNetworkInterface::Idle;
-        emit q->statusChanged();
-        emit q->responseReceived(responseData);
-    } else {
-        status = SocialNetworkInterface::Error;
-        errorMessage = "reload() request returned unidentifiable value";
-        error = SocialNetworkInterface::RequestError;
-        emit q->statusChanged();
-        emit q->errorChanged();
-        emit q->errorMessageChanged();
-        emit q->responseReceived(responseData);
-    }
-}
-
-void IdentifiableContentItemInterfacePrivate::errorHandler(QNetworkReply::NetworkError networkError)
-{
-    Q_Q(IdentifiableContentItemInterface);
-    deleteReply();
-
-    // TODO: This huge switch should be better, with QMetaEnum for example.
-    // It should also be exported, in order to be used elsewhere
-    errorMessage = networkErrorString(networkError);
-    error = SocialNetworkInterface::RequestError;
-    status = SocialNetworkInterface::Error;
-
-    emit q->statusChanged();
-    emit q->errorChanged();
-    emit q->errorMessageChanged();
-}
-
-void IdentifiableContentItemInterfacePrivate::sslErrorsHandler(const QList<QSslError> &sslErrors)
-{
-    Q_Q(IdentifiableContentItemInterface);
-    deleteReply();
-
-    errorMessage = QLatin1String("SSL error: ");
-    if (sslErrors.isEmpty()) {
-        errorMessage += QLatin1String("unknown SSL error");
-    } else {
-        foreach (const QSslError &sslError, sslErrors)
-            errorMessage += sslError.errorString() + QLatin1String("; ");
-        errorMessage.chop(2);
-    }
-
-    error = SocialNetworkInterface::RequestError;
-    status = SocialNetworkInterface::Error;
-
-    emit q->statusChanged();
-    emit q->errorChanged();
-    emit q->errorMessageChanged();
+    q->setError(SocialNetworkInterface::OtherError, "Filter is destroyed during request");
+    q->setFilter(0);
 }
 
 //-------------------------------------------------
@@ -438,14 +216,36 @@ QString IdentifiableContentItemInterface::identifier() const
     return d->identifier;
 }
 
-void IdentifiableContentItemInterface::setIdentifier(const QString &id)
+FilterInterface * IdentifiableContentItemInterface::filter() const
+{
+    Q_D(const IdentifiableContentItemInterface);
+    return d->filter;
+}
+
+void IdentifiableContentItemInterface::setFilter(FilterInterface *filter)
 {
     Q_D(IdentifiableContentItemInterface);
-    d->identifier = id;
-    if (d->status == SocialNetworkInterface::Initializing) {
-        d->needsReload = true;
-    } else {
-        reload(); // XXX TODO: allow user to set whichFields for first-time initialization?
+    if (d->filter != filter) {
+        if (d->status == SocialNetworkInterface::Busy) {
+            qWarning() << Q_FUNC_INFO << "Cannot set filter when item is in Busy state";
+            return;
+        }
+
+        if (d->filter) {
+            d->filter->disconnect(this);
+        }
+
+        d->filter = filter;
+
+        if (d->filter) {
+            connect(d->filter, SIGNAL(destroyed()), this, SLOT(filterDestroyedHandler()));
+        }
+//        if (d->status == SocialNetworkInterface::Initializing) {
+//            d->needsLoad = true;
+//        } else {
+//            load();
+//        }
+        emit filterChanged();
     }
 }
 
@@ -488,43 +288,67 @@ QString IdentifiableContentItemInterface::errorMessage() const
     return d->errorMessage;
 }
 
-/*!
-    \qmlmethod bool IdentifiableContentItem::remove()
-    Removes the object from the social network.
 
-    The default implementation sends a HTTP DELETE request for the
-    specified object identifier.
-*/
-bool IdentifiableContentItemInterface::remove()
+bool IdentifiableContentItemInterface::load()
 {
     Q_D(IdentifiableContentItemInterface);
-    if (!d->request(IdentifiableContentItemInterfacePrivate::Delete, d->identifier))
+    if (d->status == SocialNetworkInterface::Initializing) {
+        qWarning()<< Q_FUNC_INFO
+                  << "Cannot load IdentifiableContentItem: did you set socialNetwork ?";
         return false;
+    }
 
-    connect(d->reply(), SIGNAL(finished()), this, SLOT(removeHandler()));
-    d->connectErrors();
+    if (d->status == SocialNetworkInterface::Busy
+            || d->status == SocialNetworkInterface::Invalid) {
+        qWarning() << Q_FUNC_INFO << "Cannot load IdentifiableContentItem: status is Busy/Invalid";
+        return false;
+    }
+
+    if (!d->filter) {
+        qWarning() << Q_FUNC_INFO << "Cannot load IdentifiableContentItem: No filter set";
+        return false;
+    }
+
+
+    if (!d->socialNetwork) {
+        qWarning() << Q_FUNC_INFO << "Cannot load IdentifiableContentItem: No socialNetwork set";
+        return false;
+    }
+
+    if (!d->filter->isAcceptable(this, d->socialNetwork)) {
+        qWarning() << Q_FUNC_INFO << "Cannot load IdentifiableContentItem: invalid filter";
+        return false;
+    }
+
+
+    if (!d->filter->performLoadRequest(this, d->socialNetwork)) {
+        qWarning() << Q_FUNC_INFO << "Failed to perform load request";
+        return false;
+    }
+
+    d->status = SocialNetworkInterface::Busy;
+    emit statusChanged();
     return true;
 }
 
-/*!
-    \qmlmethod bool IdentifiableContentItem::reload()
-    Reloads the object data from the social network.  Only the fields
-    specified in the \a whichFields list will be requested from the
-    remote service.
-
-    The default implementation sends a HTTP GET request for the
-    specified object identifier.
-*/
-bool IdentifiableContentItemInterface::reload(const QStringList &whichFields)
+void IdentifiableContentItemInterface::setError(SocialNetworkInterface::ErrorType error,
+                                                const QString &errorMessage)
 {
     Q_D(IdentifiableContentItemInterface);
-    if (!d->request(IdentifiableContentItemInterfacePrivate::Get, d->identifier,
-                    QString(), whichFields))
-        return false;
+    if (d->status != SocialNetworkInterface::Error) {
+        d->status = SocialNetworkInterface::Error;
+        emit statusChanged();
+    }
 
-    connect(d->reply(), SIGNAL(finished()), this, SLOT(reloadHandler()));
-    d->connectErrors();
-    return true;
+    if (d->error != error) {
+        d->error = error;
+        emit errorChanged();
+    }
+
+    if (d->errorMessage != errorMessage) {
+        d->errorMessage = errorMessage;
+        emit errorMessageChanged();
+    }
 }
 
 #include "moc_identifiablecontentiteminterface.cpp"

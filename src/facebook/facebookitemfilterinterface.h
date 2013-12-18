@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
+ * Copyright (C) 2013 Jolla Ltd. <lucien.xu@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -29,61 +29,42 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-import QtQuick 1.1
-import org.nemomobile.social 1.0
+#ifndef FACEBOOKITEMFILTERINTERFACE_H
+#define FACEBOOKITEMFILTERINTERFACE_H
 
-Item {
-    id: container
-    anchors.fill: parent
-    signal backClicked
-    function populate(nodeId) {
-        model.clear()
-        filter.identifier = nodeId
-        model.load()
-        view.positionViewAtBeginning()
-    }
+#include "filterinterface.h"
 
-    SocialNetworkModel {
-        id: model
-        socialNetwork: facebook
-        filter: FacebookRelatedDataFilter {
-            id: filter
-            connection: Facebook.Likes
-        }
-    }
+class FacebookItemFilterInterfacePrivate;
+class FacebookItemFilterInterface : public FilterInterface
+{
+    Q_OBJECT
+    Q_PROPERTY(QString identifier READ identifier WRITE setIdentifier NOTIFY identifierChanged)
+    Q_PROPERTY(QString fields READ fields WRITE setFields NOTIFY fieldsChanged)
+public:
+    explicit FacebookItemFilterInterface(QObject *parent = 0);
 
-    Text {
-        id: topLabel
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: model.status != SocialNetwork.Idle
-              ? "... Loading ..." : "There are " + model.count + " likes"
-    }
+    // Properties
+    QString identifier() const;
+    void setIdentifier(const QString &identifier);
+    QString fields() const;
+    void setFields(const QString &fields);
 
-    FacebookButton {
-        id: backButton
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: "Back"
-        onClicked: container.backClicked()
-    }
+    // Non QML API
+    // Used by items
+    bool isAcceptable(QObject *item, SocialNetworkInterface *socialNetwork) const;
+    bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork);
 
-    ListView {
-        id: view
-        clip: true
-        anchors.top: topLabel.bottom
-        anchors.bottom: backButton.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        model: model
-        delegate: Item {
-            width: view.width
-            height: 50
+Q_SIGNALS:
+    void identifierChanged();
+    void fieldsChanged();
 
-            Text {
-                anchors.centerIn: parent
-                text: model.contentItem.userName
-            }
-        }
-    }
-}
+protected:
+    bool performSetItemDataImpl(IdentifiableContentItemInterface *item,
+                                SocialNetworkInterface *socialNetwork,
+                                const QByteArray &data, const QVariantMap &properties);
+private:
+    Q_DECLARE_PRIVATE(FacebookItemFilterInterface)
+
+};
+
+#endif // FACEBOOKITEMFILTERINTERFACE_H

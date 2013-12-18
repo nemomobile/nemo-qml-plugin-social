@@ -60,12 +60,14 @@ public:
 
     // Overrides.
     int type() const;
+#if 0
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
     // Invokable API.
     Q_INVOKABLE bool like();
     Q_INVOKABLE bool unlike();
+#endif
 
     // Accessors
     FacebookObjectReferenceInterface * from() const;

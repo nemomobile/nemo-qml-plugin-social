@@ -39,20 +39,18 @@ Item {
     signal albumClicked(string albumId)
 
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
+        filter.identifier = nodeId
+        model.load()
         view.positionViewAtBeginning()
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Album
-                limit: 10
-            }
-        ]
+        filter: FacebookRelatedDataFilter {
+            id: filter
+            connection: Facebook.Albums
+        }
     }
 
     Text {

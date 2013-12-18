@@ -46,45 +46,48 @@ public:
     QString errorMessage;
 
     SocialNetworkInterface *socialNetwork;
-    QString nodeIdentifier;
-    int nodeType;
-    IdentifiableContentItemInterface *node;
+    FilterInterface *filter;
     bool hasPrevious;
     bool hasNext;
-    CacheEntry::List modelData;
-    bool resortUpdatePosted;
+    QList<ContentItemInterface *> modelData;
+    QVariantMap extraData;
+//    bool resortUpdatePosted;
 private:
     void init();
     static QHash<int, QByteArray> roleNames();
 
+    // Slots
+    void socialNetworkInitializedChangedHandler();
+    void socialNetworkDestroyedHandler();
+    void filterDestroyedHandler();
+
     // Filters and sorters
-    static void filters_append(QDeclarativeListProperty<FilterInterface> *list, FilterInterface *filter);
-    static FilterInterface *filters_at(QDeclarativeListProperty<FilterInterface> *list, int index);
-    static void filters_clear(QDeclarativeListProperty<FilterInterface> *list);
-    static int filters_count(QDeclarativeListProperty<FilterInterface> *list);
-    QList<FilterInterface*> filters;
+//    static void filters_append(QDeclarativeListProperty<FilterInterface> *list, FilterInterface *filter);
+//    static FilterInterface *filters_at(QDeclarativeListProperty<FilterInterface> *list, int index);
+//    static void filters_clear(QDeclarativeListProperty<FilterInterface> *list);
+//    static int filters_count(QDeclarativeListProperty<FilterInterface> *list);
+//    QList<FilterInterface*> filters;
 
-    static void sorters_append(QDeclarativeListProperty<SorterInterface> *list, SorterInterface *sorter);
-    static SorterInterface *sorters_at(QDeclarativeListProperty<SorterInterface> *list, int index);
-    static void sorters_clear(QDeclarativeListProperty<SorterInterface> *list);
-    static int sorters_count(QDeclarativeListProperty<SorterInterface> *list);
-    QList<SorterInterface*> sorters;
+//    static void sorters_append(QDeclarativeListProperty<SorterInterface> *list, SorterInterface *sorter);
+//    static SorterInterface *sorters_at(QDeclarativeListProperty<SorterInterface> *list, int index);
+//    static void sorters_clear(QDeclarativeListProperty<SorterInterface> *list);
+//    static int sorters_count(QDeclarativeListProperty<SorterInterface> *list);
+//    QList<SorterInterface*> sorters;
 
-    void resort();
+//    void resort();
 
     // Methods for SNI
-    void setNode(IdentifiableContentItemInterface *newNode);
-    void clean();
-    void setData(const CacheEntry::List &data);
-    void prependData(const CacheEntry::List &data);
-    void appendData(const CacheEntry::List &data);
-    void setStatus(SocialNetworkInterface::Status newStatus);
-    void setError(SocialNetworkInterface::ErrorType newError, const QString &newErrorMessage);
-    void setHavePreviousAndNext(bool newHasPrevious, bool newHasNext);
+    void clear();
+//    void setData(const CacheEntry::List &data);
+//    void prependData(const CacheEntry::List &data);
+//    void appendData(const CacheEntry::List &data);
+//    void setStatus(SocialNetworkInterface::Status newStatus);
+//    void setError(SocialNetworkInterface::ErrorType newError, const QString &newErrorMessage);
+//    void setHavePreviousAndNext(bool newHasPrevious, bool newHasNext);
 
     // Slots
-    void sorterDestroyedHandler(QObject *object);
-
+//    void sorterDestroyedHandler(QObject *object);
+    bool initialized;
     SocialNetworkModelInterface *q_ptr;
     Q_DECLARE_PUBLIC(SocialNetworkModelInterface)
     friend class SocialNetworkInterfacePrivate;

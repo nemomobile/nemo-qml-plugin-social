@@ -83,8 +83,7 @@ int FacebookObjectReferenceInterface::type() const
 */
 QString FacebookObjectReferenceInterface::objectIdentifier() const
 {
-    Q_D(const ContentItemInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
+    return data().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER).toString();
 }
 
 /*!
@@ -93,8 +92,7 @@ QString FacebookObjectReferenceInterface::objectIdentifier() const
 */
 QString FacebookObjectReferenceInterface::objectName() const
 {
-    Q_D(const ContentItemInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME).toString();
 }
 
 /*!
@@ -103,6 +101,5 @@ QString FacebookObjectReferenceInterface::objectName() const
 */
 FacebookInterface::ContentItemType FacebookObjectReferenceInterface::objectType() const
 {
-    Q_D(const ContentItemInterface);
-    return static_cast<FacebookInterface::ContentItemType>(d->data().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE).toInt());
+    return static_cast<FacebookInterface::ContentItemType>(data().value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE).toInt());
 }

@@ -1,0 +1,40 @@
+TEMPLATE = app
+TARGET = simpletests
+
+equals(QT_MAJOR_VERSION, 4): {
+    QT += declarative network
+    CONFIG  += qtestlib
+}
+equals(QT_MAJOR_VERSION, 5): {
+    QT += qml network testlib
+}
+
+
+lessThan(QT_MAJOR_VERSION, 5) {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += QJson
+}
+
+equals(QT_MAJOR_VERSION, 5): DEFINES += QT_VERSION_5
+
+INCLUDEPATH += ../../src/
+
+HEADERS +=  \
+            ../../src/contentiteminterface.h \
+            ../../src/contentiteminterface_p.h \
+            ../../src/identifiablecontentiteminterface.h \
+            ../../src/identifiablecontentiteminterface_p.h \
+            ../../src/socialnetworkinterface.h \
+            ../../src/socialnetworkinterface_p.h \
+            ../../src/socialnetworkmodelinterface.h \
+            ../../src/socialnetworkmodelinterface_p.h \
+            ../../src/filterinterface.h
+
+SOURCES +=  \
+            ../../src/contentiteminterface.cpp \
+            ../../src/identifiablecontentiteminterface.cpp \
+            ../../src/socialnetworkinterface.cpp \
+            ../../src/socialnetworkmodelinterface.cpp \
+            ../../src/filterinterface.cpp \
+            main.cpp
+
