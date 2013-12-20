@@ -55,6 +55,7 @@ public:
 private:
     void init();
     static QHash<int, QByteArray> roleNames();
+    bool load(FilterInterface::LoadType loadType);
 
     // Slots
     void socialNetworkInitializedChangedHandler();

@@ -331,6 +331,12 @@ bool IdentifiableContentItemInterface::load()
     return true;
 }
 
+void IdentifiableContentItemInterface::setData(const QVariantMap &data)
+{
+    ContentItemInterface::setData(data);
+    emit loaded();
+}
+
 void IdentifiableContentItemInterface::setError(SocialNetworkInterface::ErrorType error,
                                                 const QString &errorMessage)
 {
@@ -349,6 +355,8 @@ void IdentifiableContentItemInterface::setError(SocialNetworkInterface::ErrorTyp
         d->errorMessage = errorMessage;
         emit errorMessageChanged();
     }
+
+    emit loaded();
 }
 
 #include "moc_identifiablecontentiteminterface.cpp"

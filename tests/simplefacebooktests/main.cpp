@@ -45,6 +45,7 @@
 #include <facebook/facebookalbuminterface.h>
 #include <facebook/facebookuserinterface.h>
 #include <facebook/facebookrelateddatafilterinterface.h>
+#include <facebook/facebookinterface_p.h>
 
 class SimpleFacebookTests: public QObject
 {
@@ -389,6 +390,71 @@ private slots:
         facebook->deleteLater();
         filter2->deleteLater();
         model->deleteLater();
+    }
+
+    void testFieldMaker()
+    {
+        // 0 = empty argument
+        // 1 = non-empty
+
+        // 0 0 0
+        QString str = FacebookInterfacePrivate::makeFields(QString(), QString(),
+                                                           QMap<QString, QString>());
+        QVERIFY(str.isEmpty());
+
+        // 1 0 0
+        str = FacebookInterfacePrivate::makeFields("friends", QString(), QMap<QString, QString>());
+        QCOMPARE(str, QLatin1String("id,friends"));
+
+        // 0 1 0
+        str = FacebookInterfacePrivate::makeFields(QString(), "id,name", QMap<QString, QString>());
+        QCOMPARE(str, QLatin1String("id,name"));
+
+        // 0 0 1
+        QMap<QString, QString> arguments;
+        arguments.insert("key", "value");
+        str = FacebookInterfacePrivate::makeFields(QString(), QString(), arguments);
+        QVERIFY(str.isEmpty());
+
+        // 1 1 0
+        str = FacebookInterfacePrivate::makeFields("friends", "id,name", QMap<QString, QString>());
+        QCOMPARE(str, QLatin1String("id,friends.fields(id,name)"));
+
+        // 1 0 1
+        str = FacebookInterfacePrivate::makeFields("friends", QString(), arguments);
+        QCOMPARE(str, QLatin1String("id,friends.key(value)"));
+
+        // 0 1 1
+        str = FacebookInterfacePrivate::makeFields(QString(), "id,name", arguments);
+        QCOMPARE(str, QLatin1String("id,name"));
+
+        // 1 1 1
+        str = FacebookInterfacePrivate::makeFields("friends", "id,name", arguments);
+        QCOMPARE(str, QLatin1String("id,friends.fields(id,name).key(value)"));
+
+        // Test the fields parser
+        // Spaces
+        str = FacebookInterfacePrivate::makeFields(QString(), "     id    ,    name  ",
+                                                   QMap<QString, QString>());
+        QCOMPARE(str, QLatin1String("id,name"));
+
+        // Empty values
+        str = FacebookInterfacePrivate::makeFields(QString(), ",,id,,,name,,",
+                                                   QMap<QString, QString>());
+        QCOMPARE(str, QLatin1String("id,name"));
+
+        // Likes and comments summary
+        str = FacebookInterfacePrivate::makeFields(QString(), "likes",
+                                                   QMap<QString, QString>());
+        QCOMPARE(str, QLatin1String("likes.summary(1)"));
+
+        str = FacebookInterfacePrivate::makeFields(QString(), "comments",
+                                                   QMap<QString, QString>());
+        QCOMPARE(str, QLatin1String("comments.summary(1)"));
+
+        str = FacebookInterfacePrivate::makeFields(QString(), "something,likes,somethingelse,comments,likestest,commentstest",
+                                                   QMap<QString, QString>());
+        QCOMPARE(str, QLatin1String("something,likes.summary(1),somethingelse,comments.summary(1),likestest,commentstest"));
     }
 };
 

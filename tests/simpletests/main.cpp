@@ -80,13 +80,15 @@ public:
     explicit TestFilterInterface(QObject *parent = 0);
     bool isAcceptable(QObject *item, SocialNetworkInterface *socialNetwork) const;
 protected:
-    bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork);
+    bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
+                                LoadType loadType);
     bool performSetItemDataImpl(IdentifiableContentItemInterface *item,
                                 SocialNetworkInterface *socialNetwork,
-                                const QByteArray &data, const QVariantMap &properties);
+                                const QByteArray &data, LoadType loadType,
+                                const QVariantMap &properties);
     bool performSetModelDataImpl(SocialNetworkModelInterface *model,
                                  SocialNetworkInterface *socialNetwork, const QByteArray &data,
-                                 const QVariantMap &properties);
+                                 LoadType loadType, const QVariantMap &properties);
 private:
     Q_DECLARE_PRIVATE(FilterInterface)
 };
@@ -104,7 +106,8 @@ bool TestFilterInterface::isAcceptable(QObject *item, SocialNetworkInterface *so
 }
 
 bool TestFilterInterface::performLoadRequestImpl(QObject *item,
-                                                 SocialNetworkInterface *socialNetwork)
+                                                 SocialNetworkInterface *socialNetwork,
+                                                 LoadType loadType)
 {
     Q_D(FilterInterface);
     TestSocialNetworkInterface *testSni = qobject_cast<TestSocialNetworkInterface *>(socialNetwork);
@@ -112,16 +115,18 @@ bool TestFilterInterface::performLoadRequestImpl(QObject *item,
         return false;
     }
 
-    return d->addHandle(testSni->get(this), item, socialNetwork);
+    return d->addHandle(testSni->get(this), item, socialNetwork, loadType);
 }
 
 bool TestFilterInterface::performSetItemDataImpl(IdentifiableContentItemInterface *item,
                                                  SocialNetworkInterface *socialNetwork,
                                                  const QByteArray &data,
+                                                 LoadType loadType,
                                                  const QVariantMap &properties)
 {
     Q_UNUSED(socialNetwork)
     Q_UNUSED(data)
+    Q_UNUSED(loadType)
     Q_UNUSED(properties)
     QVariantMap dataMap;
     dataMap.insert(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID, 0);
@@ -132,12 +137,13 @@ bool TestFilterInterface::performSetItemDataImpl(IdentifiableContentItemInterfac
 
 bool TestFilterInterface::performSetModelDataImpl(SocialNetworkModelInterface *model,
                                                   SocialNetworkInterface *socialNetwork,
-                                                  const QByteArray &data,
+                                                  const QByteArray &data, LoadType loadType,
                                                   const QVariantMap &properties)
 {
     Q_UNUSED(model)
     Q_UNUSED(socialNetwork)
     Q_UNUSED(data)
+    Q_UNUSED(loadType)
     Q_UNUSED(properties)
     return true;
 }

@@ -209,7 +209,6 @@ Item {
                         Qt.quit()
                     } else if (model.which == -2) {
                         if(!portraitUser.asked) {
-                            portraitUser.asked = true
                             portraitUser.load()
                             root.whichActive = -1
                         } else {
@@ -226,7 +225,6 @@ Item {
                         user.load()
                     } else if(model.which == -4) {
                         if (!nsuffysUser.asked) {
-                            nsuffysUser.asked = true
                             root.whichActive = -4
                             nsuffysUser.load()
                         }
@@ -306,11 +304,11 @@ Item {
         onBackClicked: back(5)
     }
 
-//    FacebookPostOffsetedCommentsList {
-//        id: offsetedCommentsList
-//        visible: whichActive == 12
-//        onBackClicked: back(0)
-//    }
+    FacebookPostOffsetedCommentsList {
+        id: offsetedCommentsList
+        visible: whichActive == 12
+        onBackClicked: back(0)
+    }
 
     SocialNetworkModel {
         id: filterDestructionTestModel
@@ -331,8 +329,9 @@ Item {
             console.debug("User picture: " + picture.url)
         }
 
-        onStatusChanged: {
-            if (status == Facebook.Idle && asked) {
+        onLoaded: {
+            if (status == Facebook.Idle) {
+                asked = true
                 displayPortraitUrl()
                 root.whichActive = 0
             }
@@ -357,6 +356,9 @@ Item {
             if (status == Facebook.Idle) {
                 displayUser()
                 root.whichActive = 0
+            } else if (status == Facebook.Error) {
+                console.debug("Error !")
+                root.whichActive = 0
             }
         }
     }
@@ -371,9 +373,13 @@ Item {
 
         property bool asked: false
 
-        onStatusChanged: {
-            if (status == Facebook.Idle && asked) {
+        onLoaded: {
+            if (status == Facebook.Idle) {
+                asked = true
                 console.debug("Test user retrieved: " + nsuffysUser.name)
+                root.whichActive = 0
+            } else if (status == Facebook.Error) {
+                console.debug("Error !")
                 root.whichActive = 0
             }
         }

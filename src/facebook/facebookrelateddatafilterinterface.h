@@ -41,6 +41,8 @@ class FacebookRelatedDataFilterInterface : public FilterInterface
     Q_OBJECT
     Q_PROPERTY(QString identifier READ identifier WRITE setIdentifier NOTIFY identifierChanged)
     Q_PROPERTY(QString fields READ fields WRITE setFields NOTIFY fieldsChanged)
+    Q_PROPERTY(int limit READ limit WRITE setLimit NOTIFY limitChanged)
+    Q_PROPERTY(int offset READ offset WRITE setOffset NOTIFY offsetChanged)
     Q_PROPERTY(FacebookInterface::ConnectionType connection READ connection WRITE setConnection
                NOTIFY connectionChanged)
 public:
@@ -51,6 +53,10 @@ public:
     void setIdentifier(const QString &identifier);
     QString fields() const;
     void setFields(const QString &fields);
+    int limit() const;
+    void setLimit(int limit);
+    int offset() const;
+    void setOffset(int offset);
     FacebookInterface::ConnectionType connection() const;
     void setConnection(FacebookInterface::ConnectionType connection);
 
@@ -60,12 +66,15 @@ public:
 Q_SIGNALS:
     void identifierChanged();
     void fieldsChanged();
+    void limitChanged();
+    void offsetChanged();
     void connectionChanged();
 protected:
-    bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork);
+    bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
+                                LoadType loadType);
     bool performSetModelDataImpl(SocialNetworkModelInterface *model,
                                  SocialNetworkInterface *socialNetwork, const QByteArray &data,
-                                 const QVariantMap &properties);
+                                 LoadType loadType, const QVariantMap &properties);
 private:
     Q_DECLARE_PRIVATE(FacebookRelatedDataFilterInterface)
 };
