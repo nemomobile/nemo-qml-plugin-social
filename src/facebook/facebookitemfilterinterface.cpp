@@ -110,25 +110,28 @@ bool FacebookItemFilterInterface::isAcceptable(QObject *item,
 }
 
 bool FacebookItemFilterInterface::performLoadRequestImpl(QObject *item,
-                                                         SocialNetworkInterface *socialNetwork)
+                                                         SocialNetworkInterface *socialNetwork,
+                                                         LoadType loadType)
 {
     Q_D(FacebookItemFilterInterface);
+    Q_UNUSED(loadType)
     FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
     if (!facebook) {
         return false;
     }
 
     return d->addHandle(facebook->get(this, d->identifier, QString(), d->fields), item,
-                        socialNetwork);
+                        socialNetwork, loadType);
 }
 
 bool FacebookItemFilterInterface::performSetItemDataImpl(IdentifiableContentItemInterface *item,
                                                          SocialNetworkInterface *socialNetwork,
-                                                         const QByteArray &data,
+                                                         const QByteArray &data, LoadType loadType,
                                                          const QVariantMap &properties)
 {
     Q_UNUSED(socialNetwork)
     Q_UNUSED(properties)
+    Q_UNUSED(loadType)
     bool ok = false;
     QVariantMap dataMap = IdentifiableContentItemInterfacePrivate::parseReplyData(data, &ok);
 

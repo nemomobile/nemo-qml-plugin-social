@@ -96,10 +96,12 @@ public:
     Q_INVOKABLE bool load();
 
     // Non QML API
+    void setData(const QVariantMap &data);
     void setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage);
 
 
 Q_SIGNALS:
+    void loaded();
     void responseReceived(const QVariantMap &data);
     void identifierChanged();
     void filterChanged();

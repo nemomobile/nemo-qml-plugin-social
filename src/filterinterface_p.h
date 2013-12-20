@@ -33,18 +33,20 @@
 #include <QtCore/QObject>
 #include <QtCore/QVariantMap>
 
+#include "filterinterface.h"
+
 template<class T> bool testType(QObject *object)
 {
     return qobject_cast<T *>(object);
 }
 
 class SocialNetworkInterface;
-class FilterInterface;
 class FilterInterfacePrivate
 {
 public:
     explicit FilterInterfacePrivate(FilterInterface *q);
-    bool addHandle(QObject *handle, QObject *item, SocialNetworkInterface *socialNetwork);
+    bool addHandle(QObject *handle, QObject *item, SocialNetworkInterface *socialNetwork,
+                   FilterInterface::LoadType loadType);
     void addHandleProperties(QObject *handle, const QVariantMap &properties);
 protected:
     FilterInterface * const q_ptr;
@@ -57,6 +59,7 @@ private:
     QMap<QObject *, QObject *> handlesToItemMap;
     QMap<QObject *, SocialNetworkInterface *> handlesToSniMap;
     QMap<QObject *, QVariantMap> handlesToPropertiesMap;
+    QMap<QObject *, FilterInterface::LoadType> handlesToLoadTypeMap;
     QMultiMap<QObject *, QObject *> sniToHandlesMap;
     QMap<QObject *, QObject *> itemToHandleMap;
 };

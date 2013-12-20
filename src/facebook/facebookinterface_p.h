@@ -44,10 +44,17 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QSslError>
 
+#include "facebookobjectreferenceinterface.h"
+#include "facebookalbuminterface.h"
+#include "facebookcommentinterface.h"
+#include "facebooklikeinterface.h"
+#include "facebooknotificationinterface.h"
+#include "facebookphotointerface.h"
+#include "facebookpostinterface.h"
+#include "facebookuserinterface.h"
+
 typedef QPair<QString, QString> StringPair;
 typedef QMultiMap<int, StringPair> RequestFieldsMap;
-
-class ContentItemInterface;
 
 class FacebookInterfacePrivate : public SocialNetworkInterfacePrivate
 {
@@ -72,12 +79,108 @@ public:
     explicit FacebookInterfacePrivate(FacebookInterface *q);
     QNetworkReply * performRequest(const QString &identifier, const QString &graph = QString(),
                                    const QString &fields = QString(),
-                                   const QMap<QString, QString> &arguments = QMap<QString, QString>());
+                                   const QMap<QString, QString> &arguments = QMap<QString, QString>(),
+                                   const QMap<QString, QString> &genericArguments = QMap<QString, QString>());
 
     QString accessToken;
     QString currentUserIdentifier;
 
-    static QString makeFields(const QString &path, const QString &fields);
+    // Build "fields" argument
+    static QString makeFields(const QString &path, const QString &fields,
+                              const QMap<QString, QString> &arguments);
+
+    // Get the type of an item associated to a connection type
+    // and also get the path in the API.
+    static inline void typeAndPath(FacebookInterface::ConnectionType connection,
+                                   FacebookInterface::ContentItemType &contentType,
+                                   QString &path)
+    {
+        switch (connection) {
+            case FacebookInterface::Albums:
+                path = QLatin1String("albums");
+                contentType = FacebookInterface::Album;
+                break;
+            case FacebookInterface::Comments:
+                path = QLatin1String("comments");
+                contentType = FacebookInterface::Comment;
+                break;
+            case FacebookInterface::Feed:
+                path = QLatin1String("feed");
+                contentType = FacebookInterface::Post;
+                break;
+            case FacebookInterface::Friends:
+                path = QLatin1String("friends");
+                contentType = FacebookInterface::User;
+                break;
+            case FacebookInterface::Home:
+                path = QLatin1String("home");
+                contentType = FacebookInterface::Post;
+                break;
+            case FacebookInterface::Likes:
+                path = QLatin1String("likes");
+                contentType = FacebookInterface::Like;
+                break;
+            case FacebookInterface::Notifications:
+                path = QLatin1String("notifications");
+                contentType = FacebookInterface::Notification;
+                break;
+            case FacebookInterface::Photos:
+                path = QLatin1String("photos");
+                contentType = FacebookInterface::Photo;
+                break;
+            default:
+                qWarning() << "Invalid connection";
+                contentType = FacebookInterface::Unknown;
+                break;
+        }
+    }
+
+    // Create an item
+    static inline ContentItemInterface * createItem(FacebookInterface::ContentItemType &contentType,
+                                                    const QVariantMap &data,
+                                                    SocialNetworkInterface *socialNetwork,
+                                                    QObject *parent = 0)
+    {
+        ContentItemInterface *item = 0;
+
+        switch (contentType) {
+        case FacebookInterface::ObjectReference:
+            item = new FacebookObjectReferenceInterface(parent);
+            break;
+        case FacebookInterface::Album:
+            item = new FacebookAlbumInterface(parent);
+            break;
+        case FacebookInterface::Comment:
+            item = new FacebookCommentInterface(parent);
+            break;
+        case FacebookInterface::Like:
+            item = new FacebookLikeInterface(parent);
+            break;
+        case FacebookInterface::Notification:
+            item = new FacebookNotificationInterface(parent);
+            break;
+        case FacebookInterface::Photo:
+            item = new FacebookPhotoInterface(parent);
+            break;
+        case FacebookInterface::Post:
+            item = new FacebookPostInterface(parent);
+            break;
+        case FacebookInterface::User:
+            item = new FacebookUserInterface(parent);
+            break;
+        default:
+            break;
+        }
+
+        if (item) {
+            item->setSocialNetwork(socialNetwork);
+            item->setData(data);
+            item->classBegin();
+            item->componentComplete();
+        }
+
+        return item;
+    }
 
 
 protected:

@@ -28,7 +28,6 @@ HEADERS += \
     $$PWD/facebookuserpictureinterface.h \
     $$PWD/facebookitemfilterinterface.h \
     $$PWD/facebookrelateddatafilterinterface.h
-#    $$PWD/facebookcommentfilterinterface.h
 
 SOURCES += \
     $$PWD/facebookinterface.cpp \
@@ -49,4 +48,3 @@ SOURCES += \
     $$PWD/facebookuserpictureinterface.cpp \
     $$PWD/facebookitemfilterinterface.cpp \
     $$PWD/facebookrelateddatafilterinterface.cpp
-#    $$PWD/facebookcommentfilterinterface.cpp

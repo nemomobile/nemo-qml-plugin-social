@@ -43,27 +43,37 @@ class FilterInterface : public QObject
 {
     Q_OBJECT
 public:
+    enum LoadType {
+        Load,
+        LoadPrevious,
+        LoadNext
+    };
+
     explicit FilterInterface(QObject *parent = 0);
     virtual ~FilterInterface();
 
     // Non QML API
     // Used by items
     virtual bool isAcceptable(QObject *item, SocialNetworkInterface *socialNetwork) const;
-    virtual bool performLoadRequest(QObject *item, SocialNetworkInterface *socialNetwork);
+    virtual bool performLoadRequest(QObject *item, SocialNetworkInterface *socialNetwork,
+                                    LoadType loadType = Load);
 
     // Used by SNI
     bool performSetData(QObject *handle, const QByteArray &data);
     bool performSetError(QObject *handle, SocialNetworkInterface::ErrorType error,
                          const QString &errorMessage);
 protected:
-    virtual bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork);
+    virtual bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
+                                        LoadType loadType);
     virtual bool performSetItemDataImpl(IdentifiableContentItemInterface *item,
                                         SocialNetworkInterface *socialNetwork,
                                         const QByteArray &data,
+                                        LoadType loadType,
                                         const QVariantMap &properties);
     virtual bool performSetModelDataImpl(SocialNetworkModelInterface *model,
                                          SocialNetworkInterface *socialNetwork,
                                          const QByteArray &data,
+                                         LoadType loadType,
                                          const QVariantMap &properties);
     explicit FilterInterface(FilterInterfacePrivate &dd, QObject *parent = 0);
     QScopedPointer<FilterInterfacePrivate> d_ptr;

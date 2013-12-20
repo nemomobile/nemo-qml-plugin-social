@@ -52,7 +52,8 @@ public:
     // Non QML API
     // Used by items
     bool isAcceptable(QObject *item, SocialNetworkInterface *socialNetwork) const;
-    bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork);
+    bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
+                                LoadType loadType);
 
 Q_SIGNALS:
     void identifierChanged();
@@ -61,7 +62,8 @@ Q_SIGNALS:
 protected:
     bool performSetItemDataImpl(IdentifiableContentItemInterface *item,
                                 SocialNetworkInterface *socialNetwork,
-                                const QByteArray &data, const QVariantMap &properties);
+                                const QByteArray &data, LoadType loadType,
+                                const QVariantMap &properties);
 private:
     Q_DECLARE_PRIVATE(FacebookItemFilterInterface)
 

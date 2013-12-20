@@ -81,7 +81,8 @@ FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
 QNetworkReply * FacebookInterfacePrivate::performRequest(const QString &identifier,
                                                          const QString &graph,
                                                          const QString &fields,
-                                                         const QMap<QString, QString> &arguments)
+                                                         const QMap<QString, QString> &arguments,
+                                                         const QMap<QString, QString> &genericArguments)
 {
     QList<QPair<QString, QString> > queryItems;
     if (!accessToken.isEmpty()) {
@@ -89,8 +90,15 @@ QNetworkReply * FacebookInterfacePrivate::performRequest(const QString &identifi
     }
 
     QStringList argumentsKey = arguments.keys();
+    if (graph.isEmpty()) {
+        foreach (const QString &key, argumentsKey) {
+            queryItems.append(qMakePair<QString, QString>(key, arguments.value(key)));
+        }
+    }
+
+    argumentsKey = genericArguments.keys();
     foreach (const QString &key, argumentsKey) {
-        queryItems.append(qMakePair<QString, QString>(key, arguments.value(key)));
+        queryItems.append(qMakePair<QString, QString>(key, genericArguments.value(key)));
     }
 
     QUrl url;
@@ -100,7 +108,8 @@ QNetworkReply * FacebookInterfacePrivate::performRequest(const QString &identifi
         url.setPath(QLatin1String("/") + identifier);
     }
 
-    QString trueFields = makeFields(graph, fields);
+    QString trueFields = makeFields(graph, fields, arguments);
+
     queryItems.append(qMakePair<QString, QString>(FACEBOOK_ONTOLOGY_METADATA_FIELDS, trueFields));
 
 
@@ -116,30 +125,49 @@ QNetworkReply * FacebookInterfacePrivate::performRequest(const QString &identifi
     return reply;
 }
 
-QString FacebookInterfacePrivate::makeFields(const QString &path, const QString &fields)
+QString FacebookInterfacePrivate::makeFields(const QString &path, const QString &fields,
+                                             const QMap<QString, QString> &arguments)
 {
-    QString returnedFields = path;
-    if (!fields.isEmpty()) {
-        if (!path.isEmpty()) {
-            returnedFields.append(".fields(");
+    // Four cases here
+    // 1. path empty, fields empty: return an empty string
+    // 2. path empty, fields non-empty: return "field1,field2"
+    // 3. path non-empty, fields empty: return "id,path.argument(val)..."
+    // 4. path non-empty, fields non-empty: return "id,path.fields(field1,field2).argument(val)..."
+    if (path.isEmpty() && fields.isEmpty()) {
+        return QString();
+    }
+
+    QString processedArguments;
+    // We consider arguments as part of the related data query
+    for (QMap<QString, QString>::ConstIterator i = arguments.constBegin();
+         i != arguments.constEnd(); i++) {
+        processedArguments.append(QString(".%1(%2)").arg(i.key(), i.value()));
+    }
+
+    if (fields.isEmpty()) {
+        return QString("id,%1%2").arg(path, processedArguments);
+    }
+
+    QStringList splittedFields = fields.split(",");
+    QStringList updatedSplittedFields;
+    foreach (QString splittedField, splittedFields) {
+        QString trimmedField = splittedField.trimmed();
+        if (trimmedField == FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES
+            || trimmedField == FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS) {
+            trimmedField.append(QString(".%1(1)").arg(FACEBOOK_ONTOLOGY_CONNECTIONS_SUMMARY));
         }
-        QStringList splittedFields = fields.split(",");
-        QStringList updatedFields;
-        foreach (QString splittedField, splittedFields) {
-            QString trimmedField = splittedField.trimmed();
-            if (trimmedField == FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES
-                || trimmedField == FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS) {
-                trimmedField.append(QString(".%1(1)").arg(FACEBOOK_ONTOLOGY_CONNECTIONS_SUMMARY));
-            }
-            updatedFields.append(trimmedField);
-        }
-        returnedFields.append(updatedFields.join(","));
-        if (!path.isEmpty()) {
-            returnedFields.append("),id");
+        if (!trimmedField.isEmpty()) {
+            updatedSplittedFields.append(trimmedField);
         }
     }
 
-    return returnedFields;
+    QString updatedFields = updatedSplittedFields.join(",");
+    if (path.isEmpty()) {
+        return updatedFields;
+    }
+
+    QString returned = QString("id,%1.fields(%2)%3").arg(path, updatedFields, processedArguments);
+    return returned;
 }
 
 QByteArray FacebookInterfacePrivate::preprocessData(const QByteArray &data)
@@ -1550,10 +1578,10 @@ QObject * FacebookInterface::get(FilterInterface *filter, const QString &identif
     // Create a different request to get the "dual query"
     // We don't perform dual query in case of graphs
     if (d->currentUserIdentifier == FACEBOOK_ME && identifier != FACEBOOK_ME) {
-        QMap<QString, QString> newArguments = arguments;
-        newArguments.insert(QLatin1String("ids"),
-                            QString(QLatin1String("%1,%2")).arg(identifier, FACEBOOK_ME));
-        reply = d->performRequest(QString(), graph, fields, newArguments);
+        QMap<QString, QString> genericArguments;
+        genericArguments.insert(QLatin1String("ids"),
+                                QString(QLatin1String("%1,%2")).arg(identifier, FACEBOOK_ME));
+        reply = d->performRequest(QString(), graph, fields, arguments, genericArguments);
     } else {
         reply = d->performRequest(identifier, graph, fields, arguments);
     }

@@ -317,6 +317,8 @@ void ContentItemInterface::setData(const QVariantMap &data)
         d->m_data = data;
         d->emitPropertyChangeSignals(oldData, data);
         emit dataChanged();
+    } else {
+        d->emitPropertyChangeSignals(data, data);
     }
 }
 

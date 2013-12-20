@@ -106,13 +106,16 @@ public:
     Q_INVOKABLE QObject * relatedItem(int index) const;
 
     Q_INVOKABLE bool load();
-//    Q_INVOKABLE void loadNext();
-//    Q_INVOKABLE void loadPrevious();
+    Q_INVOKABLE bool loadPrevious();
+    Q_INVOKABLE bool loadNext();
 
     // Non QML API
     void setModelData(const QList<ContentItemInterface *> &data);
+    void prependModelData(const QList<ContentItemInterface *> &data);
+    void appendModelData(const QList<ContentItemInterface *> &data);
     QVariantMap extraData() const;
     void setExtraData(const QVariantMap &extraData);
+    void setPagination(bool hasPrevious, bool hasNext);
     void setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage);
 public Q_SLOTS:
     void clear();
@@ -126,7 +129,6 @@ Q_SIGNALS:
     void hasPreviousChanged();
     void hasNextChanged();
     void countChanged();
-
 protected:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QHash<int, QByteArray> roleNames() const;

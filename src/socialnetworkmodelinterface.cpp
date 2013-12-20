@@ -99,6 +99,49 @@ QHash<int, QByteArray> SocialNetworkModelInterfacePrivate::roleNames()
     return roles;
 }
 
+bool SocialNetworkModelInterfacePrivate::load(FilterInterface::LoadType loadType)
+{
+    Q_Q(SocialNetworkModelInterface);
+    if (status == SocialNetworkInterface::Initializing) {
+        qWarning()<< Q_FUNC_INFO
+                  << "Cannot load SocialNetworkModelInterface: did you set socialNetwork ?";
+        return false;
+    }
+
+    if (status == SocialNetworkInterface::Busy
+            || status == SocialNetworkInterface::Invalid) {
+        qWarning() << Q_FUNC_INFO
+                   << "Cannot load SocialNetworkModelInterface: status is Busy/Invalid";
+        return false;
+    }
+
+    if (!filter) {
+        qWarning() << Q_FUNC_INFO << "Cannot load SocialNetworkModelInterface: No filter set";
+        return false;
+    }
+
+
+    if (!socialNetwork) {
+        qWarning() << Q_FUNC_INFO << "Cannot load SocialNetworkModelInterface: No socialNetwork set";
+        return false;
+    }
+
+    if (!filter->isAcceptable(q, socialNetwork)) {
+        qWarning() << Q_FUNC_INFO << "Cannot load SocialNetworkModelInterface: invalid filter";
+        return false;
+    }
+
+
+    if (!filter->performLoadRequest(q, socialNetwork, loadType)) {
+        qWarning() << Q_FUNC_INFO << "Failed to perform load request";
+        return false;
+    }
+
+    status = SocialNetworkInterface::Busy;
+    emit q->statusChanged();
+    return true;
+}
+
 ///*! \internal */
 //void SocialNetworkModelInterfacePrivate::filters_append(QDeclarativeListProperty<FilterInterface> *list,
 //                                                        FilterInterface *filter)
@@ -534,44 +577,19 @@ QObject * SocialNetworkModelInterface::relatedItem(int index) const
 bool SocialNetworkModelInterface::load()
 {
     Q_D(SocialNetworkModelInterface);
-    if (d->status == SocialNetworkInterface::Initializing) {
-        qWarning()<< Q_FUNC_INFO
-                  << "Cannot load SocialNetworkModelInterface: did you set socialNetwork ?";
-        return false;
-    }
+    return d->load(FilterInterface::Load);
+}
 
-    if (d->status == SocialNetworkInterface::Busy
-            || d->status == SocialNetworkInterface::Invalid) {
-        qWarning() << Q_FUNC_INFO
-                   << "Cannot load SocialNetworkModelInterface: status is Busy/Invalid";
-        return false;
-    }
+bool SocialNetworkModelInterface::loadPrevious()
+{
+    Q_D(SocialNetworkModelInterface);
+    return d->load(FilterInterface::LoadPrevious);
+}
 
-    if (!d->filter) {
-        qWarning() << Q_FUNC_INFO << "Cannot load SocialNetworkModelInterface: No filter set";
-        return false;
-    }
-
-
-    if (!d->socialNetwork) {
-        qWarning() << Q_FUNC_INFO << "Cannot load SocialNetworkModelInterface: No socialNetwork set";
-        return false;
-    }
-
-    if (!d->filter->isAcceptable(this, d->socialNetwork)) {
-        qWarning() << Q_FUNC_INFO << "Cannot load SocialNetworkModelInterface: invalid filter";
-        return false;
-    }
-
-
-    if (!d->filter->performLoadRequest(this, d->socialNetwork)) {
-        qWarning() << Q_FUNC_INFO << "Failed to perform load request";
-        return false;
-    }
-
-    d->status = SocialNetworkInterface::Busy;
-    emit statusChanged();
-    return true;
+bool SocialNetworkModelInterface::loadNext()
+{
+    Q_D(SocialNetworkModelInterface);
+    return d->load(FilterInterface::LoadNext);
 }
 
 //void SocialNetworkModelInterface::populate()
@@ -612,6 +630,8 @@ bool SocialNetworkModelInterface::load()
 //    }
 //}
 
+
+
 void SocialNetworkModelInterface::setModelData(const QList<ContentItemInterface *> &data)
 {
     Q_D(SocialNetworkModelInterface);
@@ -636,6 +656,40 @@ void SocialNetworkModelInterface::setModelData(const QList<ContentItemInterface 
     }
 }
 
+void SocialNetworkModelInterface::prependModelData(const QList<ContentItemInterface *> &data)
+{
+    Q_D(SocialNetworkModelInterface);
+    if (data.count() > 0) {
+        beginInsertRows(QModelIndex(), 0, data.count() - 1);
+        QList<ContentItemInterface *> oldData = d->modelData;
+        d->modelData = data;
+        d->modelData.append(oldData);
+        emit countChanged();
+        endInsertRows();
+    }
+
+    if (d->status == SocialNetworkInterface::Busy) {
+        d->status = SocialNetworkInterface::Idle;
+        emit statusChanged();
+    }
+}
+
+void SocialNetworkModelInterface::appendModelData(const QList<ContentItemInterface *> &data)
+{
+    Q_D(SocialNetworkModelInterface);
+    if (data.count() > 0) {
+        beginInsertRows(QModelIndex(), rowCount(), rowCount() + data.count() - 1);
+        d->modelData.append(data);
+        emit countChanged();
+        endInsertRows();
+    }
+
+    if (d->status == SocialNetworkInterface::Busy) {
+        d->status = SocialNetworkInterface::Idle;
+        emit statusChanged();
+    }
+}
+
 QVariantMap SocialNetworkModelInterface::extraData() const
 {
     Q_D(const SocialNetworkModelInterface);
@@ -646,6 +700,20 @@ void SocialNetworkModelInterface::setExtraData(const QVariantMap &extraData)
 {
     Q_D(SocialNetworkModelInterface);
     d->extraData = extraData;
+}
+
+void SocialNetworkModelInterface::setPagination(bool hasPrevious, bool hasNext)
+{
+    Q_D(SocialNetworkModelInterface);
+    if (d->hasPrevious != hasPrevious) {
+        d->hasPrevious = hasPrevious;
+        emit hasPreviousChanged();
+    }
+
+    if (d->hasNext != hasNext) {
+        d->hasNext = hasNext;
+        emit hasNextChanged();
+    }
 }
 
 void SocialNetworkModelInterface::setError(SocialNetworkInterface::ErrorType error,

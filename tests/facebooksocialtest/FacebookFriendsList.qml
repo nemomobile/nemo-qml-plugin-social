@@ -48,6 +48,7 @@ Item {
         filter: FacebookRelatedDataFilter {
             id: filter
             connection: Facebook.Friends
+            limit: 50
          }
     }
 

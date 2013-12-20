@@ -44,14 +44,17 @@ FilterInterfacePrivate::FilterInterfacePrivate(FilterInterface *q)
 }
 
 bool FilterInterfacePrivate::addHandle(QObject *handle, QObject *item,
-                                       SocialNetworkInterface *socialNetwork)
+                                       SocialNetworkInterface *socialNetwork,
+                                       FilterInterface::LoadType loadType)
 {
-    if (handlesToItemMap.contains(handle) || handlesToSniMap.contains(handle)) {
+    if (handlesToItemMap.contains(handle) || handlesToSniMap.contains(handle)
+        || handlesToLoadTypeMap.contains(handle)) {
         return false;
     }
 
     handlesToItemMap.insert(handle, item);
     handlesToSniMap.insert(handle, socialNetwork);
+    handlesToLoadTypeMap.insert(handle, loadType);
     sniToHandlesMap.insert(socialNetwork, handle);
     itemToHandleMap.insert(item, handle);
     return true;
@@ -59,7 +62,8 @@ bool FilterInterfacePrivate::addHandle(QObject *handle, QObject *item,
 
 void FilterInterfacePrivate::addHandleProperties(QObject *handle, const QVariantMap &properties)
 {
-    if (handlesToItemMap.contains(handle) || handlesToSniMap.contains(handle)) {
+    if (handlesToItemMap.contains(handle) || handlesToSniMap.contains(handle)
+        || handlesToLoadTypeMap.contains(handle)) {
         return;
     }
 
@@ -86,6 +90,7 @@ void FilterInterfacePrivate::itemDestroyedHandler(QObject *object)
         SocialNetworkInterface *socialNetwork = handlesToSniMap.value(handle);
         handlesToItemMap.remove(handle);
         handlesToSniMap.remove(handle);
+        handlesToLoadTypeMap.remove(handle);
         handlesToPropertiesMap.remove(handle);
         sniToHandlesMap.remove(socialNetwork, handle);
         itemToHandleMap.remove(object);
@@ -113,10 +118,11 @@ bool FilterInterface::isAcceptable(QObject *item, SocialNetworkInterface *social
     return false;
 }
 
-bool FilterInterface::performLoadRequest(QObject *item, SocialNetworkInterface *socialNetwork)
+bool FilterInterface::performLoadRequest(QObject *item, SocialNetworkInterface *socialNetwork,
+                                         LoadType loadType)
 {
 
-    bool ok = performLoadRequestImpl(item, socialNetwork);
+    bool ok = performLoadRequestImpl(item, socialNetwork, loadType);
     if (ok) {
         connect(socialNetwork, SIGNAL(destroyed(QObject*)),
                 this, SLOT(socialNetworkDestroyedHandler(QObject*)));
@@ -128,6 +134,7 @@ bool FilterInterface::performLoadRequest(QObject *item, SocialNetworkInterface *
 bool FilterInterface::performSetData(QObject *handle, const QByteArray &data)
 {
     Q_D(FilterInterface);
+    // TODO: merge the 3 maps to one
     if (!d->handlesToItemMap.contains(handle)) {
         return false;
     }
@@ -136,9 +143,15 @@ bool FilterInterface::performSetData(QObject *handle, const QByteArray &data)
         return false;
     }
 
+    if (!d->handlesToLoadTypeMap.contains(handle)) {
+        return false;
+    }
+
     QVariantMap properties = d->handlesToPropertiesMap.value(handle);
     SocialNetworkInterface *socialNetwork = d->handlesToSniMap.value(handle);
     socialNetwork->disconnect(this);
+
+    LoadType loadType = d->handlesToLoadTypeMap.value(handle, Load);
 
     QObject *rawItem = d->handlesToItemMap.value(handle);
     IdentifiableContentItemInterface *item
@@ -147,15 +160,16 @@ bool FilterInterface::performSetData(QObject *handle, const QByteArray &data)
 
     bool ok = false;
     if (item) {
-        ok = performSetItemDataImpl(item, socialNetwork, data, properties);
+        ok = performSetItemDataImpl(item, socialNetwork, data, loadType, properties);
     }
     if (model) {
-        ok = performSetModelDataImpl(model, socialNetwork, data, properties);
+        ok = performSetModelDataImpl(model, socialNetwork, data, loadType, properties);
     }
 
     d->handlesToItemMap.remove(handle);
     d->handlesToSniMap.remove(handle);
     d->handlesToPropertiesMap.remove(handle);
+    d->handlesToLoadTypeMap.remove(handle);
     d->sniToHandlesMap.remove(socialNetwork, handle);
     d->itemToHandleMap.remove(rawItem);
     return ok;
@@ -170,6 +184,10 @@ bool FilterInterface::performSetError(QObject *handle, SocialNetworkInterface::E
     }
 
     if (!d->handlesToSniMap.contains(handle)) {
+        return false;
+    }
+
+    if (!d->handlesToLoadTypeMap.contains(handle)) {
         return false;
     }
 
@@ -191,36 +209,43 @@ bool FilterInterface::performSetError(QObject *handle, SocialNetworkInterface::E
     d->handlesToItemMap.remove(handle);
     d->handlesToSniMap.remove(handle);
     d->handlesToPropertiesMap.remove(handle);
+    d->handlesToLoadTypeMap.remove(handle);
     d->sniToHandlesMap.remove(socialNetwork, handle);
     d->itemToHandleMap.remove(rawItem);
     return true;
 }
 
-bool FilterInterface::performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork)
+bool FilterInterface::performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
+                                             LoadType loadType)
 {
     Q_UNUSED(item)
     Q_UNUSED(socialNetwork)
+    Q_UNUSED(loadType)
     return false;
 }
 
 bool FilterInterface::performSetItemDataImpl(IdentifiableContentItemInterface *item,
                                              SocialNetworkInterface *socialNetwork,
-                                             const QByteArray &data, const QVariantMap &properties)
+                                             const QByteArray &data, LoadType loadType,
+                                             const QVariantMap &properties)
 {
     Q_UNUSED(item)
     Q_UNUSED(socialNetwork)
     Q_UNUSED(data)
+    Q_UNUSED(loadType)
     Q_UNUSED(properties)
     return false;
 }
 
 bool FilterInterface::performSetModelDataImpl(SocialNetworkModelInterface *model,
                                               SocialNetworkInterface *socialNetwork,
-                                              const QByteArray &data, const QVariantMap &properties)
+                                              const QByteArray &data, LoadType loadType,
+                                              const QVariantMap &properties)
 {
     Q_UNUSED(model)
     Q_UNUSED(socialNetwork)
     Q_UNUSED(data)
+    Q_UNUSED(loadType)
     Q_UNUSED(properties)
     return false;
 }

@@ -96,7 +96,7 @@ public:
     Q_INVOKABLE IdentifiableContentItemInterface * asIdentifiable();
 
     // Non QML API
-    void setData(const QVariantMap &data);
+    virtual void setData(const QVariantMap &data);
 
 Q_SIGNALS:
     void socialNetworkChanged();
