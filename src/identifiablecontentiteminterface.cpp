@@ -341,9 +341,9 @@ void IdentifiableContentItemInterface::setError(SocialNetworkInterface::ErrorTyp
                                                 const QString &errorMessage)
 {
     Q_D(IdentifiableContentItemInterface);
-    if (d->status != SocialNetworkInterface::Error) {
-        d->status = SocialNetworkInterface::Error;
-        emit statusChanged();
+    if (d->errorMessage != errorMessage) {
+        d->errorMessage = errorMessage;
+        emit errorMessageChanged();
     }
 
     if (d->error != error) {
@@ -351,9 +351,9 @@ void IdentifiableContentItemInterface::setError(SocialNetworkInterface::ErrorTyp
         emit errorChanged();
     }
 
-    if (d->errorMessage != errorMessage) {
-        d->errorMessage = errorMessage;
-        emit errorMessageChanged();
+    if (d->status != SocialNetworkInterface::Error) {
+        d->status = SocialNetworkInterface::Error;
+        emit statusChanged();
     }
 
     emit loaded();
