@@ -66,7 +66,7 @@ class SocialNetworkModelInterface: public QAbstractListModel, public QDeclarativ
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(bool hasPrevious READ hasPrevious NOTIFY hasPreviousChanged)
     Q_PROPERTY(bool hasNext READ hasNext NOTIFY hasNextChanged)
-//    Q_PROPERTY(QDeclarativeListProperty<SorterInterface> sorters READ sorters)
+    Q_PROPERTY(QDeclarativeListProperty<SorterInterface> sorters READ sorters)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 public:
     enum Roles {
@@ -99,7 +99,7 @@ public:
     bool hasPrevious() const;
     bool hasNext() const;
 
-//    QDeclarativeListProperty<SorterInterface> sorters();
+    QDeclarativeListProperty<SorterInterface> sorters();
     int count() const;
 
     // Invokable API
@@ -133,14 +133,14 @@ protected:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QHash<int, QByteArray> roleNames() const;
 #endif
-//    bool event(QEvent *e);
+    bool event(QEvent *e);
     QScopedPointer<SocialNetworkModelInterfacePrivate> d_ptr;
 private:
     Q_DECLARE_PRIVATE(SocialNetworkModelInterface)
     Q_PRIVATE_SLOT(d_func(), void socialNetworkInitializedChangedHandler())
     Q_PRIVATE_SLOT(d_func(), void socialNetworkDestroyedHandler())
     Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler())
-//    Q_PRIVATE_SLOT(d_func(), void sorterDestroyedHandler(QObject*))
+    Q_PRIVATE_SLOT(d_func(), void sorterDestroyedHandler(QObject*))
 };
 
 #endif // SOCIALNETWORKMODELINTERFACE_H
