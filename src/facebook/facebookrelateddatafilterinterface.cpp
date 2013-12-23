@@ -396,6 +396,8 @@ bool FacebookRelatedDataFilterInterface::performSetModelDataImpl(SocialNetworkMo
         extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS,
                          model->extraData().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS));
         break;
+    default:
+        break;
     }
     model->setPagination(hasPrevious, hasNext);
     model->setExtraData(extraData);
@@ -410,6 +412,8 @@ bool FacebookRelatedDataFilterInterface::performSetModelDataImpl(SocialNetworkMo
         break;
     case FilterInterface::LoadNext:
         model->appendModelData(modelData);
+        break;
+    default:
         break;
     }
 
