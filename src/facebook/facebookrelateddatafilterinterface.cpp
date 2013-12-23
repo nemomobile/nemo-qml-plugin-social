@@ -384,20 +384,14 @@ bool FacebookRelatedDataFilterInterface::performSetModelDataImpl(SocialNetworkMo
     extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS, previousExtra);
     extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT, nextExtra);
 
-    // Set some information about the model (pagination) and populate model
-    // depending on the type of load
+    // Set some information about the model (pagination)
     switch (loadType) {
-    case FilterInterface::Load:
-        model->setModelData(modelData);
-        break;
     case FilterInterface::LoadPrevious:
-        model->prependModelData(modelData);
         hasNext = model->hasNext();
         extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT,
                          model->extraData().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT));
         break;
     case FilterInterface::LoadNext:
-        model->appendModelData(modelData);
         hasPrevious = model->hasPrevious();
         extraData.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS,
                          model->extraData().value(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS));
@@ -405,5 +399,19 @@ bool FacebookRelatedDataFilterInterface::performSetModelDataImpl(SocialNetworkMo
     }
     model->setPagination(hasPrevious, hasNext);
     model->setExtraData(extraData);
+
+    // Populate model depending on the type of load
+    switch (loadType) {
+    case FilterInterface::Load:
+        model->setModelData(modelData);
+        break;
+    case FilterInterface::LoadPrevious:
+        model->prependModelData(modelData);
+        break;
+    case FilterInterface::LoadNext:
+        model->appendModelData(modelData);
+        break;
+    }
+
     return true;
 }

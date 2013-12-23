@@ -720,9 +720,10 @@ void SocialNetworkModelInterface::setError(SocialNetworkInterface::ErrorType err
                                            const QString &errorMessage)
 {
     Q_D(SocialNetworkModelInterface);
-    if (d->status != SocialNetworkInterface::Error) {
-        d->status = SocialNetworkInterface::Error;
-        emit statusChanged();
+
+    if (d->errorMessage != errorMessage) {
+        d->errorMessage = errorMessage;
+        emit errorMessageChanged();
     }
 
     if (d->error != error) {
@@ -730,9 +731,9 @@ void SocialNetworkModelInterface::setError(SocialNetworkInterface::ErrorType err
         emit errorChanged();
     }
 
-    if (d->errorMessage != errorMessage) {
-        d->errorMessage = errorMessage;
-        emit errorMessageChanged();
+    if (d->status != SocialNetworkInterface::Error) {
+        d->status = SocialNetworkInterface::Error;
+        emit statusChanged();
     }
 }
 
