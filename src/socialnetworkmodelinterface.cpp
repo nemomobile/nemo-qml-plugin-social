@@ -12,8 +12,8 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * The names of its contributors may not be used to endorse or promote 
- *     products derived from this software without specific prior written 
+ *   * The names of its contributors may not be used to endorse or promote
+ *     products derived from this software without specific prior written
  *     permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -27,7 +27,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
- */ 
+ */
 
 #include "socialnetworkmodelinterface.h"
 #include "socialnetworkinterface_p.h"
@@ -38,12 +38,32 @@
 
 #include "socialnetworkmodelinterface_p.h"
 
+class SorterFunctor
+{
+public:
+    explicit SorterFunctor(SorterInterface *sorter);
+    bool operator()(ContentItemInterface *first, ContentItemInterface *second) const;
+private:
+    SorterInterface *m_sorter;
+};
+
+SorterFunctor::SorterFunctor(SorterInterface *sorter):
+    m_sorter(sorter)
+{
+}
+
+bool SorterFunctor::operator()(ContentItemInterface *first, ContentItemInterface *second) const
+{
+    return m_sorter->firstLessThanSecond(first->data(), second->data());
+}
+
+
 SocialNetworkModelInterfacePrivate::SocialNetworkModelInterfacePrivate(SocialNetworkModelInterface *q)
     : status(SocialNetworkInterface::Initializing)
     , error(SocialNetworkInterface::NoError)
     , socialNetwork(0), filter(0)
     , hasPrevious(false), hasNext(false)
-//    , resortUpdatePosted(false)
+    , resortUpdatePosted(false)
     , initialized(false)
     , q_ptr(q)
 {
@@ -180,64 +200,64 @@ bool SocialNetworkModelInterfacePrivate::load(FilterInterface::LoadType loadType
 //}
 
 ///*! \internal */
-//void SocialNetworkModelInterfacePrivate::sorters_append(QDeclarativeListProperty<SorterInterface> *list,
-//                                                   SorterInterface *sorter)
-//{
-//    SocialNetworkModelInterface *model = qobject_cast<SocialNetworkModelInterface *>(list->object);
-//    if (model && sorter) {
-//        QObject::connect(sorter, SIGNAL(destroyed(QObject*)),
-//                         model, SLOT(sorterDestroyedHandler(QObject*)));
-//        model->d_func()->sorters.append(sorter);
-//        if (!model->d_func()->resortUpdatePosted) {
-//            model->d_func()->resortUpdatePosted = true;
-//            QCoreApplication::instance()->postEvent(model, new QEvent(QEvent::User));
-//        }
-//    }
-//}
+void SocialNetworkModelInterfacePrivate::sorters_append(QDeclarativeListProperty<SorterInterface> *list,
+                                                   SorterInterface *sorter)
+{
+    SocialNetworkModelInterface *model = qobject_cast<SocialNetworkModelInterface *>(list->object);
+    if (model && sorter) {
+        QObject::connect(sorter, SIGNAL(destroyed(QObject*)),
+                         model, SLOT(sorterDestroyedHandler(QObject*)));
+        model->d_func()->sorters.append(sorter);
+        if (!model->d_func()->resortUpdatePosted) {
+            model->d_func()->resortUpdatePosted = true;
+            QCoreApplication::instance()->postEvent(model, new QEvent(QEvent::User));
+        }
+    }
+}
 
 ///*! \internal */
-//SorterInterface *SocialNetworkModelInterfacePrivate::sorters_at(QDeclarativeListProperty<SorterInterface> *list, int index)
-//{
-//    SocialNetworkModelInterface *model = qobject_cast<SocialNetworkModelInterface *>(list->object);
-//    if (model && model->d_func()->sorters.count() > index && index >= 0)
-//        return model->d_func()->sorters.at(index);
-//    return 0;
-//}
+SorterInterface *SocialNetworkModelInterfacePrivate::sorters_at(QDeclarativeListProperty<SorterInterface> *list, int index)
+{
+    SocialNetworkModelInterface *model = qobject_cast<SocialNetworkModelInterface *>(list->object);
+    if (model && model->d_func()->sorters.count() > index && index >= 0)
+        return model->d_func()->sorters.at(index);
+    return 0;
+}
 
 ///*! \internal */
-//void SocialNetworkModelInterfacePrivate::sorters_clear(QDeclarativeListProperty<SorterInterface> *list)
-//{
-//    SocialNetworkModelInterface *model = qobject_cast<SocialNetworkModelInterface *>(list->object);
-//    if (model) {
-//        model->d_func()->sorters.clear();
-//        if (!model->d_func()->resortUpdatePosted) {
-//            model->d_func()->resortUpdatePosted = true;
-//            QCoreApplication::instance()->postEvent(model, new QEvent(QEvent::User));
-//        }
-//    }
-//}
+void SocialNetworkModelInterfacePrivate::sorters_clear(QDeclarativeListProperty<SorterInterface> *list)
+{
+    SocialNetworkModelInterface *model = qobject_cast<SocialNetworkModelInterface *>(list->object);
+    if (model) {
+        model->d_func()->sorters.clear();
+        if (!model->d_func()->resortUpdatePosted) {
+            model->d_func()->resortUpdatePosted = true;
+            QCoreApplication::instance()->postEvent(model, new QEvent(QEvent::User));
+        }
+    }
+}
 
 ///*! \internal */
-//int SocialNetworkModelInterfacePrivate::sorters_count(QDeclarativeListProperty<SorterInterface> *list)
-//{
-//    SocialNetworkModelInterface *model = qobject_cast<SocialNetworkModelInterface *>(list->object);
-//    if (model)
-//        return model->d_func()->sorters.count();
-//    return 0;
-//}
+int SocialNetworkModelInterfacePrivate::sorters_count(QDeclarativeListProperty<SorterInterface> *list)
+{
+    SocialNetworkModelInterface *model = qobject_cast<SocialNetworkModelInterface *>(list->object);
+    if (model)
+        return model->d_func()->sorters.count();
+    return 0;
+}
 
-//void SocialNetworkModelInterfacePrivate::resort()
-//{
-//    Q_Q(SocialNetworkModelInterface);
-//    if (sorters.isEmpty()) {
-//        return;
-//    }
-//    foreach (SorterInterface *sorter, sorters) {
-//        SorterFunctor sorterFunctor(sorter);
-//        std::stable_sort(modelData.begin(), modelData.end(), sorterFunctor);
-//    }
-//    emit q->dataChanged(q->index(0), q->index(modelData.count() - 1));
-//}
+void SocialNetworkModelInterfacePrivate::resort()
+{
+    Q_Q(SocialNetworkModelInterface);
+    if (sorters.isEmpty()) {
+        return;
+    }
+    foreach (SorterInterface *sorter, sorters) {
+        SorterFunctor sorterFunctor(sorter);
+        std::stable_sort(modelData.begin(), modelData.end(), sorterFunctor);
+    }
+    emit q->dataChanged(q->index(0), q->index(modelData.count() - 1));
+}
 
 void SocialNetworkModelInterfacePrivate::clear()
 {
@@ -340,18 +360,18 @@ void SocialNetworkModelInterfacePrivate::clear()
 //    }
 //}
 
-//void SocialNetworkModelInterfacePrivate::sorterDestroyedHandler(QObject *object)
-//{
-//    Q_Q(SocialNetworkModelInterface);
-//    SorterInterface *sorter = static_cast<SorterInterface *>(object);
-//    sorters.removeAll(sorter);
+void SocialNetworkModelInterfacePrivate::sorterDestroyedHandler(QObject *object)
+{
+    Q_Q(SocialNetworkModelInterface);
+    SorterInterface *sorter = static_cast<SorterInterface *>(object);
+    sorters.removeAll(sorter);
 
-//    // We should resort with the new filters
-//    if (!resortUpdatePosted) {
-//        resortUpdatePosted = true;
-//        QCoreApplication::instance()->postEvent(q, new QEvent(QEvent::User));
-//    }
-//}
+    // We should resort with the new filters
+    if (!resortUpdatePosted) {
+        resortUpdatePosted = true;
+        QCoreApplication::instance()->postEvent(q, new QEvent(QEvent::User));
+    }
+}
 
 //----------------------------------------------------
 
@@ -529,23 +549,23 @@ bool SocialNetworkModelInterface::hasNext() const
     return d->hasNext;
 }
 
-///*!
-//    \qmlproperty QDeclarativeListProperty<Sorter> SocialNetwork::sorters
-//    Holds the list of sorters which will be applied to the related content
-//    of the node.  The order of sorters in the list is important, as it
-//    defines which sorting is applied first.
+/*!
+    \qmlproperty QDeclarativeListProperty<Sorter> SocialNetwork::sorters
+    Holds the list of sorters which will be applied to the related content
+    of the node.  The order of sorters in the list is important, as it
+    defines which sorting is applied first.
 
-//    Specific implementations of the SocialNetwork interface may not support
-//    certain standard sorter types, or they may not support sorting at all.
-//*/
-//QDeclarativeListProperty<SorterInterface> SocialNetworkModelInterface::sorters()
-//{
-//    return QDeclarativeListProperty<SorterInterface>(this, 0,
-//            &SocialNetworkModelInterfacePrivate::sorters_append,
-//            &SocialNetworkModelInterfacePrivate::sorters_count,
-//            &SocialNetworkModelInterfacePrivate::sorters_at,
-//            &SocialNetworkModelInterfacePrivate::sorters_clear);
-//}
+    Specific implementations of the SocialNetwork interface may not support
+    certain standard sorter types, or they may not support sorting at all.
+*/
+QDeclarativeListProperty<SorterInterface> SocialNetworkModelInterface::sorters()
+{
+    return QDeclarativeListProperty<SorterInterface>(this, 0,
+            &SocialNetworkModelInterfacePrivate::sorters_append,
+            &SocialNetworkModelInterfacePrivate::sorters_count,
+            &SocialNetworkModelInterfacePrivate::sorters_at,
+            &SocialNetworkModelInterfacePrivate::sorters_clear);
+}
 
 int SocialNetworkModelInterface::count() const
 {
@@ -650,6 +670,8 @@ void SocialNetworkModelInterface::setModelData(const QList<ContentItemInterface 
         endInsertRows();
     }
 
+    d->resort();
+
     if (d->status == SocialNetworkInterface::Busy) {
         d->status = SocialNetworkInterface::Idle;
         emit statusChanged();
@@ -668,6 +690,8 @@ void SocialNetworkModelInterface::prependModelData(const QList<ContentItemInterf
         endInsertRows();
     }
 
+    d->resort();
+
     if (d->status == SocialNetworkInterface::Busy) {
         d->status = SocialNetworkInterface::Idle;
         emit statusChanged();
@@ -683,6 +707,8 @@ void SocialNetworkModelInterface::appendModelData(const QList<ContentItemInterfa
         emit countChanged();
         endInsertRows();
     }
+
+    d->resort();
 
     if (d->status == SocialNetworkInterface::Busy) {
         d->status = SocialNetworkInterface::Idle;
@@ -750,15 +776,15 @@ QHash<int, QByteArray> SocialNetworkModelInterface::roleNames() const
 }
 #endif
 
-//bool SocialNetworkModelInterface::event(QEvent *e)
-//{
-//    Q_D(SocialNetworkModelInterface);
-//    if (e->type() == QEvent::User) {
-//        d->resortUpdatePosted = false;
-//        d->resort();
-//        return true;
-//    }
-//    return QObject::event(e);
-//}
+bool SocialNetworkModelInterface::event(QEvent *e)
+{
+    Q_D(SocialNetworkModelInterface);
+    if (e->type() == QEvent::User) {
+        d->resortUpdatePosted = false;
+        d->resort();
+        return true;
+    }
+    return QObject::event(e);
+}
 
 #include "moc_socialnetworkmodelinterface.cpp"

@@ -50,6 +50,8 @@ static const int DATA_VALUE = 42;
 // A set of simple tests that covers tricky areas, like initialization
 // flow of components, and destruction of one of them when loading.
 
+// TODO write tests for sorters
+
 class TestSocialNetworkInterface: public SocialNetworkInterface
 {
     Q_OBJECT

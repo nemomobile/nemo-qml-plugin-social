@@ -51,7 +51,7 @@ public:
     bool hasNext;
     QList<ContentItemInterface *> modelData;
     QVariantMap extraData;
-//    bool resortUpdatePosted;
+    bool resortUpdatePosted;
 private:
     void init();
     static QHash<int, QByteArray> roleNames();
@@ -69,13 +69,13 @@ private:
 //    static int filters_count(QDeclarativeListProperty<FilterInterface> *list);
 //    QList<FilterInterface*> filters;
 
-//    static void sorters_append(QDeclarativeListProperty<SorterInterface> *list, SorterInterface *sorter);
-//    static SorterInterface *sorters_at(QDeclarativeListProperty<SorterInterface> *list, int index);
-//    static void sorters_clear(QDeclarativeListProperty<SorterInterface> *list);
-//    static int sorters_count(QDeclarativeListProperty<SorterInterface> *list);
-//    QList<SorterInterface*> sorters;
+    static void sorters_append(QDeclarativeListProperty<SorterInterface> *list, SorterInterface *sorter);
+    static SorterInterface *sorters_at(QDeclarativeListProperty<SorterInterface> *list, int index);
+    static void sorters_clear(QDeclarativeListProperty<SorterInterface> *list);
+    static int sorters_count(QDeclarativeListProperty<SorterInterface> *list);
+    QList<SorterInterface*> sorters;
 
-//    void resort();
+    void resort();
 
     // Methods for SNI
     void clear();
@@ -87,7 +87,7 @@ private:
 //    void setHavePreviousAndNext(bool newHasPrevious, bool newHasNext);
 
     // Slots
-//    void sorterDestroyedHandler(QObject *object);
+    void sorterDestroyedHandler(QObject *object);
     bool initialized;
     SocialNetworkModelInterface *q_ptr;
     Q_DECLARE_PUBLIC(SocialNetworkModelInterface)
