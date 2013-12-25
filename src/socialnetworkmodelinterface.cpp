@@ -603,13 +603,21 @@ bool SocialNetworkModelInterface::load()
 bool SocialNetworkModelInterface::loadPrevious()
 {
     Q_D(SocialNetworkModelInterface);
-    return d->load(FilterInterface::LoadPrevious);
+    if (d->hasPrevious) {
+        return d->load(FilterInterface::LoadPrevious);
+    } else {
+        return false;
+    }
 }
 
 bool SocialNetworkModelInterface::loadNext()
 {
     Q_D(SocialNetworkModelInterface);
-    return d->load(FilterInterface::LoadNext);
+    if (d->hasNext) {
+        return d->load(FilterInterface::LoadNext);
+    } else {
+        return false;
+    }
 }
 
 //void SocialNetworkModelInterface::populate()
