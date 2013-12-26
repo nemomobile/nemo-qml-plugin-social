@@ -107,3 +107,10 @@ QString FacebookLikeInterface::userName() const
     return data().value(FACEBOOK_ONTOLOGY_LIKE_USERNAME).toString();
 }
 
+
+FacebookLikeInterface::FacebookLikeInterface(FacebookLikeInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

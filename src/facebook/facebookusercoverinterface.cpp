@@ -127,3 +127,10 @@ int FacebookUserCoverInterface::offsetY() const
     return -1;
 }
 
+
+FacebookUserCoverInterface::FacebookUserCoverInterface(FacebookUserCoverInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

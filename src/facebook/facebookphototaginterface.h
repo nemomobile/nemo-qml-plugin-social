@@ -77,6 +77,8 @@ Q_SIGNALS:
     void xChanged();
     void yChanged();
     void createdTimeChanged();
+protected:
+    explicit FacebookPhotoTagInterface(FacebookPhotoTagInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookPhotoTagInterface)
 };

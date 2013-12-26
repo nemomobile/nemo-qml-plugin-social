@@ -837,3 +837,14 @@ QUrl FacebookUserInterface::website() const
     return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_USER_WEBSITE).toString().toLocal8Bit());
 }
 
+
+FacebookUserInterface::FacebookUserInterface(FacebookUserInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookUserInterface);
+    d->cover = new FacebookUserCoverInterface(this);
+    d->hometown = new FacebookObjectReferenceInterface(this);
+    d->location = new FacebookObjectReferenceInterface(this);
+    d->picture = new FacebookUserPictureInterface(this);
+    d->significantOther = new FacebookObjectReferenceInterface(this);
+}

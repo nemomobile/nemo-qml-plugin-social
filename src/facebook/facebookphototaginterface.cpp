@@ -195,3 +195,9 @@ QString FacebookPhotoTagInterface::createdTime() const
     return data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_CREATEDTIME).toString();
 }
 
+
+FacebookPhotoTagInterface::FacebookPhotoTagInterface(FacebookPhotoTagInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Implement initialization of custom attributes if needed
+}

@@ -89,6 +89,8 @@ Q_SIGNALS:
     void titleChanged();
     void linkChanged();
     void unreadChanged();
+protected:
+    explicit FacebookNotificationInterface(FacebookNotificationInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookNotificationInterface)
 };

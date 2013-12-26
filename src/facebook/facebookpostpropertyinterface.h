@@ -65,6 +65,8 @@ public:
 Q_SIGNALS:
     void nameChanged();
     void textChanged();
+protected:
+    explicit FacebookPostPropertyInterface(FacebookPostPropertyInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookPostPropertyInterface)
 };

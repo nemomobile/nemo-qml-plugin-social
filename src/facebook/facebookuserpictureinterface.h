@@ -65,6 +65,8 @@ public:
 Q_SIGNALS:
     void urlChanged();
     void isSilhouetteChanged();
+protected:
+    explicit FacebookUserPictureInterface(FacebookUserPictureInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookUserPictureInterface)
 };
