@@ -309,3 +309,12 @@ int FacebookNotificationInterface::unread() const
     return -1;
 }
 
+
+FacebookNotificationInterface::FacebookNotificationInterface(FacebookNotificationInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookNotificationInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+    d->to = new FacebookObjectReferenceInterface(this);
+    d->application = new FacebookObjectReferenceInterface(this);
+}

@@ -1074,3 +1074,10 @@ int FacebookPhotoInterface::commentsCount() const
     return d->commentsCount;
 }
 
+
+FacebookPhotoInterface::FacebookPhotoInterface(FacebookPhotoInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookPhotoInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+}

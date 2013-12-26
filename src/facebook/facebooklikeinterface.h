@@ -65,6 +65,8 @@ public:
 Q_SIGNALS:
     void userIdentifierChanged();
     void userNameChanged();
+protected:
+    explicit FacebookLikeInterface(FacebookLikeInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookLikeInterface)
 };

@@ -718,3 +718,10 @@ int FacebookAlbumInterface::commentsCount() const
     return d->commentsCount;
 }
 
+
+FacebookAlbumInterface::FacebookAlbumInterface(FacebookAlbumInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookAlbumInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+}

@@ -1135,3 +1135,11 @@ int FacebookPostInterface::commentsCount() const
     return d->commentsCount;
 }
 
+
+FacebookPostInterface::FacebookPostInterface(FacebookPostInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookPostInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+    d->application = new FacebookObjectReferenceInterface(this);
+}

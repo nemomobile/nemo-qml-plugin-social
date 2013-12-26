@@ -156,6 +156,8 @@ Q_SIGNALS:
     void likedChanged();
     void likesCountChanged();
     void commentsCountChanged();
+protected:
+    explicit FacebookPostInterface(FacebookPostInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookPostInterface)
 };

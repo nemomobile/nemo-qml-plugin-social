@@ -420,3 +420,10 @@ bool FacebookCommentInterface::liked() const
     return d->liked;
 }
 
+
+FacebookCommentInterface::FacebookCommentInterface(FacebookCommentInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookCommentInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+}

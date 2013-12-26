@@ -68,6 +68,8 @@ Q_SIGNALS:
     void sourceChanged();
     void widthChanged();
     void heightChanged();
+protected:
+    explicit FacebookPhotoImageInterface(FacebookPhotoImageInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookPhotoImageInterface)
 };

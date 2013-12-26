@@ -107,3 +107,10 @@ QString FacebookPostPropertyInterface::text() const
     return data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT).toString();
 }
 
+
+FacebookPostPropertyInterface::FacebookPostPropertyInterface(FacebookPostPropertyInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

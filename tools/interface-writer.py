@@ -192,6 +192,8 @@ def generate(structure_file):
     for property in struct.interfaceProperties:
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
         header += "    void " + propertyName + "Changed();\n"
+    header += "protected:\n"
+    header += "    explicit " + className + "(" + className + "Private &dd, QObject *parent = 0);\n"
     header += "private:\n"
     header += "    Q_DECLARE_PRIVATE(" + className + ")\n"
     header += "};\n"
@@ -627,6 +629,20 @@ const QVariantMap &newData);\n"
     if len(struct.extraSource) > 0:
         source += indent(struct.extraPublic, 0)
         source += "\n"
+        
+    source += "\n"
+    source += className + "::" + className + "(" + className + "Private &dd, QObject *parent)\n"
+    if struct.identifiable:
+        source += "    : IdentifiableContentItemInterface(dd, parent)\n"
+    else:
+        source += "    : ContentItemInterface(dd, parent)\n"
+    source += "{\n"
+    if "constructor" in patcherDataSource["markers"]:
+        source += patcherDataSource["data"]["constructor"]
+    else:
+        source += "    // TODO Rerun generator scripts to copy the content\n"
+        source += "    // of the default constructor to the D-pointer constructor\n"
+    source += "}\n"
 
     try:
         f = open(className.lower() + ".cpp", "w")

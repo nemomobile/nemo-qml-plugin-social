@@ -107,3 +107,10 @@ QString FacebookPostActionInterface::link() const
     return data().value(FACEBOOK_ONTOLOGY_POST_ACTION_LINK).toString();
 }
 
+
+FacebookPostActionInterface::FacebookPostActionInterface(FacebookPostActionInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

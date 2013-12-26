@@ -173,6 +173,8 @@ Q_SIGNALS:
     void religionChanged();
     void significantOtherChanged();
     void websiteChanged();
+protected:
+    explicit FacebookUserInterface(FacebookUserInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookUserInterface)
 };

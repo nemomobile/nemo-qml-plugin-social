@@ -107,3 +107,10 @@ bool FacebookUserPictureInterface::isSilhouette() const
     return data().value(FACEBOOK_ONTOLOGY_USER_PICTURE_ISSILHOUETTE).toString() == QLatin1String("true");
 }
 
+
+FacebookUserPictureInterface::FacebookUserPictureInterface(FacebookUserPictureInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

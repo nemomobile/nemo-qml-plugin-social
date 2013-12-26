@@ -65,6 +65,8 @@ public:
 Q_SIGNALS:
     void nameChanged();
     void linkChanged();
+protected:
+    explicit FacebookPostActionInterface(FacebookPostActionInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookPostActionInterface)
 };
