@@ -56,10 +56,11 @@ public:
 protected:
     bool initialized;
     ContentItemInterface * const q_ptr;
+    // Slots
+    virtual void socialNetworkDestroyedHandler();
 private:
     // Slots
     void socialNetworkInitializedChangedHandler();
-    void socialNetworkDestroyedHandler();
     Q_DECLARE_PUBLIC(ContentItemInterface)
     QVariantMap m_data;
 };

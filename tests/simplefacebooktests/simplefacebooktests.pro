@@ -82,3 +82,6 @@ SOURCES +=  \
             ../../src/facebook/facebookrelateddatafilterinterface.cpp \
             main.cpp
 
+RESOURCES += \
+    res.qrc
+

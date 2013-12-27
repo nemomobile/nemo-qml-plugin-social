@@ -84,6 +84,7 @@ public:
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
+#endif
     // Invokable API.
     Q_INVOKABLE bool like();
     Q_INVOKABLE bool unlike();
@@ -93,7 +94,6 @@ public:
     Q_INVOKABLE bool untagText(const QString &text);
     Q_INVOKABLE bool uploadComment(const QString &message);
     Q_INVOKABLE bool removeComment(const QString &commentIdentifier);
-#endif
 
     // Accessors
     FacebookObjectReferenceInterface * from() const;

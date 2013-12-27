@@ -89,6 +89,7 @@ int FacebookUserPictureInterface::type() const
 #if 0
 
 #endif
+
 /*!
     \qmlproperty QUrl FacebookUserPicture::url
     Holds the url to the image source of the picture.

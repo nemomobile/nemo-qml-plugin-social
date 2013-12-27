@@ -122,7 +122,7 @@
             "name": "uploadPhoto",
             "parameters": [
                 {
-                    "type": "QUrl",
+                    "type": "QString",
                     "name": "source",
                     "is_const": true,
                     "is_reference": true

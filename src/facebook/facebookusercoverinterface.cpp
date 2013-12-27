@@ -94,6 +94,7 @@ int FacebookUserCoverInterface::type() const
 #if 0
 
 #endif
+
 /*!
     \qmlproperty QString FacebookUserCover::photoIdentifier
     Holds the identifier of the cover photo

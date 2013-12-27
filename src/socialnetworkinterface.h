@@ -120,8 +120,10 @@ protected:
 private:
     Q_DECLARE_PRIVATE(SocialNetworkInterface)
     Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler(QObject*))
+    Q_PRIVATE_SLOT(d_func(), void itemDestroyedHandler(QObject*))
 //    Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler(QObject*))
     Q_PRIVATE_SLOT(d_func(), void finishedHandler())
+    Q_PRIVATE_SLOT(d_func(), void actionFinishedHandler())
 //    Q_PRIVATE_SLOT(d_func(), void itemDataChangedHandler())
 //    Q_PRIVATE_SLOT(d_func(), void modelDestroyedHandler(QObject*))
 };

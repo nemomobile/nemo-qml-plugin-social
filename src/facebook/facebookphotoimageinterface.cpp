@@ -93,6 +93,7 @@ int FacebookPhotoImageInterface::type() const
 #if 0
 
 #endif
+
 /*!
     \qmlproperty QUrl FacebookPhotoImage::source
     Holds the source of the image

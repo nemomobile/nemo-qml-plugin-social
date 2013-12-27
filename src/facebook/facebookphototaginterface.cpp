@@ -125,6 +125,7 @@ int FacebookPhotoTagInterface::type() const
 #if 0
 
 #endif
+
 /*!
     \qmlproperty QString FacebookPhotoTag::userIdentifier
     Holds the identifier of the tagged entity

@@ -507,7 +507,7 @@ bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
 // >>> removeComment
 }
 /*!
-    \qmlmethod bool FacebookAlbum::uploadPhoto(const QUrl &source, const QString &message)
+    \qmlmethod bool FacebookAlbum::uploadPhoto(const QString &source, const QString &message)
     Initiates a "post photo" operation on the album.  The photo will
     be loaded from the local filesystem and uploaded to Facebook with
     its caption set to the given \a message.
@@ -522,7 +522,7 @@ bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
     will contain the \c id of the newly uploaded photo.
     */
 
-bool FacebookAlbumInterface::uploadPhoto(const QUrl &source, const QString &message)
+bool FacebookAlbumInterface::uploadPhoto(const QString &source, const QString &message)
 {
 // <<< uploadPhoto
     Q_D(FacebookAlbumInterface);
@@ -574,6 +574,117 @@ bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
 }
 
 #endif
+/*!
+    \qmlmethod bool FacebookAlbum::like()
+    Initiates a "like" operation on the album.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookAlbumInterface::like()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runLike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::unlike()
+    Initiates a "delete like" operation on the album.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookAlbumInterface::unlike()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUnlike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::uploadComment(const QString &message)
+    Initiates a "post comment" operation on the album.  The comment
+    will contain the specified \a message.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded comment.*/
+
+bool FacebookAlbumInterface::uploadComment(const QString &message)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadComment(socialNetwork(), this, message);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::removeComment(const QString &commentIdentifier)
+    Initiates a "delete comment" operation on the comment specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemoveComment(socialNetwork(), this, commentIdentifier);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::uploadPhoto(const QString &source, const QString &message)
+    Initiates a "post photo" operation on the album.  The photo will
+    be loaded from the local filesystem and uploaded to Facebook with
+    its caption set to the given \a message.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded photo.
+    */
+
+bool FacebookAlbumInterface::uploadPhoto(const QString &source, const QString &message)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadPhoto(socialNetwork(), this, source, message);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::removePhoto(const QString &photoIdentifier)
+    Initiates a "delete photo" operation on the photo specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemovePhoto(socialNetwork(), this, photoIdentifier);
+}
+
 /*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookAlbum::from
     Holds a reference to the user or profile which created the album.

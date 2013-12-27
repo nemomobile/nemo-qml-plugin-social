@@ -77,6 +77,11 @@ class IdentifiableContentItemInterface : public ContentItemInterface
     Q_PROPERTY(SocialNetworkInterface::Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(SocialNetworkInterface::ErrorType error READ error NOTIFY errorChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
+    Q_PROPERTY(SocialNetworkInterface::Status actionStatus READ actionStatus
+               NOTIFY actionStatusChanged)
+    Q_PROPERTY(SocialNetworkInterface::ErrorType actionError READ actionError
+               NOTIFY actionErrorChanged)
+    Q_PROPERTY(QString actionErrorMessage READ actionErrorMessage NOTIFY actionErrorMessageChanged)
 
 public:
     explicit IdentifiableContentItemInterface(QObject *parent = 0);
@@ -91,6 +96,9 @@ public:
     SocialNetworkInterface::Status status() const;
     SocialNetworkInterface::ErrorType error() const;
     QString errorMessage() const;
+    SocialNetworkInterface::Status actionStatus() const;
+    SocialNetworkInterface::ErrorType actionError() const;
+    QString actionErrorMessage() const;
 
     // Invokable API
     Q_INVOKABLE bool load();
@@ -98,18 +106,26 @@ public:
     // Non QML API
     void setData(const QVariantMap &data);
     void setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage);
+    void setActionComplete();
+    void setActionError(SocialNetworkInterface::ErrorType actionError,
+                        const QString &actionErrorMessage);
 
 
 Q_SIGNALS:
-    void loaded();
+    void loaded(bool ok);
+    void actionComplete(bool ok);
     void responseReceived(const QVariantMap &data);
     void identifierChanged();
     void filterChanged();
     void statusChanged();
     void errorChanged();
     void errorMessageChanged();
+    void actionStatusChanged();
+    void actionErrorChanged();
+    void actionErrorMessageChanged();
 
 protected:
+    bool prepareAction();
     explicit IdentifiableContentItemInterface(IdentifiableContentItemInterfacePrivate &dd,
                                               QObject *parent = 0);
 private:

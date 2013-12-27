@@ -66,14 +66,14 @@ public:
         ReloadAction,
         LikeAction,
         DeleteLikeAction,
-        TagAction,
-        DeleteTagAction,
         UploadCommentAction,
         DeleteCommentAction,
+        UploadAlbumAction,
+        DeleteAlbumAction,
         UploadPhotoAction,
         DeletePhotoAction,
-        UploadAlbumAction,
-        DeleteAlbumAction
+        TagAction,
+        DeleteTagAction
     };
 
     explicit FacebookInterfacePrivate(FacebookInterface *q);
@@ -81,6 +81,14 @@ public:
                                    const QString &fields = QString(),
                                    const QMap<QString, QString> &arguments = QMap<QString, QString>(),
                                    const QMap<QString, QString> &genericArguments = QMap<QString, QString>());
+    QNetworkReply * performPostRequest(const QString &identifier, const QString &graph,
+                                       const QMap<QString, QString> &arguments = QMap<QString, QString>(),
+                                       const QByteArray &postData = QByteArray());
+    QNetworkReply * performPhotoPostRequest(const QString &identifier, const QString &graph,
+                                            const QString &source,
+                                            const QMap<QString, QString> &arguments = QMap<QString, QString>());
+    QNetworkReply * performDeleteRequest(const QString &identifier, const QString &graph = QString(),
+                                         const QMap<QString, QString> &arguments = QMap<QString, QString>());
 
     QString accessToken;
     QString currentUserIdentifier;
@@ -182,9 +190,48 @@ public:
         return item;
     }
 
+    // Actions
+    static bool runLike(SocialNetworkInterface *socialNetwork,
+                        IdentifiableContentItemInterface *item);
+    static bool runUnlike(SocialNetworkInterface *socialNetwork,
+                          IdentifiableContentItemInterface *item);
+    static bool runUploadComment(SocialNetworkInterface *socialNetwork,
+                                 IdentifiableContentItemInterface *item,
+                                 const QString &message);
+    static bool runRemoveComment(SocialNetworkInterface *socialNetwork,
+                                 IdentifiableContentItemInterface *item,
+                                 const QString &commentIdentifier);
+    static bool runUploadAlbum(SocialNetworkInterface *socialNetwork,
+                               IdentifiableContentItemInterface *item,
+                               const QString &name, const QString &message,
+                               const QVariantMap &privacy);
+    static bool runRemoveAlbum(SocialNetworkInterface *socialNetwork,
+                               IdentifiableContentItemInterface *item,
+                               const QString &albumIdentifier);
+    static bool runUploadPhoto(SocialNetworkInterface *socialNetwork,
+                               IdentifiableContentItemInterface *item,
+                               const QString &source, const QString &message);
+    static bool runRemovePhoto(SocialNetworkInterface *socialNetwork,
+                               IdentifiableContentItemInterface *item,
+                               const QString &photoIdentifier);
+    static bool runTagUser(SocialNetworkInterface *socialNetwork,
+                           IdentifiableContentItemInterface *item,
+                           const QString &userId, float xOffset, float yOffset);
+    static bool runUntagUser(SocialNetworkInterface *socialNetwork,
+                             IdentifiableContentItemInterface *item,
+                             const QString &userId);
+    static bool runTagText(SocialNetworkInterface *socialNetwork,
+                           IdentifiableContentItemInterface *item,
+                           const QString &text, float xOffset, float yOffset);
+    static bool runUntagText(SocialNetworkInterface *socialNetwork,
+                             IdentifiableContentItemInterface *item,
+                             const QString &text);
+
 
 protected:
     QByteArray preprocessData(const QByteArray &data);
+    void performAction(IdentifiableContentItemInterface *item,
+                       const QVariantMap &properties);
     // Reimplemented
 //    void populateDataForNode(Node::Ptr node);
 //    void populateRelatedDataforNode(Node::Ptr node);

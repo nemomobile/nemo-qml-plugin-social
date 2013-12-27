@@ -334,6 +334,39 @@ bool FacebookCommentInterface::unlike()
 
 #endif
 /*!
+    \qmlmethod bool FacebookComment::like()
+    Initiates a "like" operation on the comment.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the comment will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookCommentInterface::like()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runLike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookComment::unlike()
+    Initiates a "delete like" operation on the comment.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the comment will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookCommentInterface::unlike()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUnlike(socialNetwork(), this);
+}
+
+/*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookComment::from
     Holds a reference to the user or profile which uploaded this comment.
 */

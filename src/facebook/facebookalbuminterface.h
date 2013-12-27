@@ -80,14 +80,14 @@ public:
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
+#endif
     // Invokable API.
     Q_INVOKABLE bool like();
     Q_INVOKABLE bool unlike();
     Q_INVOKABLE bool uploadComment(const QString &message);
     Q_INVOKABLE bool removeComment(const QString &commentIdentifier);
-    Q_INVOKABLE bool uploadPhoto(const QUrl &source, const QString &message = QString());
+    Q_INVOKABLE bool uploadPhoto(const QString &source, const QString &message = QString());
     Q_INVOKABLE bool removePhoto(const QString &photoIdentifier);
-#endif
 
     // Accessors
     FacebookObjectReferenceInterface * from() const;

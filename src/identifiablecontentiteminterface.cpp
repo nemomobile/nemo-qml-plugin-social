@@ -43,6 +43,8 @@ IdentifiableContentItemInterfacePrivate
     : ContentItemInterfacePrivate(q)
     , status(SocialNetworkInterface::Initializing)
     , error(SocialNetworkInterface::NoError)
+    , actionStatus(SocialNetworkInterface::Idle)
+    , actionError(SocialNetworkInterface::NoError)
     , filter(0)
 {
 }
@@ -92,7 +94,7 @@ void IdentifiableContentItemInterfacePrivate::emitPropertyChangeSignals(const QV
     // finally, as all derived classes must do, call super class implementation.
     ContentItemInterfacePrivate::emitPropertyChangeSignals(oldData, newData);
 
-    if (status == SocialNetworkInterface::Busy) {
+    if (status != SocialNetworkInterface::Idle) {
         status = SocialNetworkInterface::Idle;
         emit q->statusChanged();
     }
@@ -123,6 +125,15 @@ void IdentifiableContentItemInterfacePrivate::initializationComplete()
 
     // Finally, as all derived classes must do, call super class implementation.
     ContentItemInterfacePrivate::initializationComplete();
+}
+
+void IdentifiableContentItemInterfacePrivate::socialNetworkDestroyedHandler()
+{
+    Q_Q(IdentifiableContentItemInterface);
+    if (actionStatus != SocialNetworkInterface::Idle) {
+        q->setActionError(SocialNetworkInterface::OtherError, "SocialNetwork is destroyed during request");
+    }
+    ContentItemInterfacePrivate::socialNetworkDestroyedHandler();
 }
 
 void IdentifiableContentItemInterfacePrivate::filterDestroyedHandler()
@@ -288,6 +299,24 @@ QString IdentifiableContentItemInterface::errorMessage() const
     return d->errorMessage;
 }
 
+SocialNetworkInterface::Status IdentifiableContentItemInterface::actionStatus() const
+{
+    Q_D(const IdentifiableContentItemInterface);
+    return d->actionStatus;
+}
+
+SocialNetworkInterface::ErrorType IdentifiableContentItemInterface::actionError() const
+{
+    Q_D(const IdentifiableContentItemInterface);
+    return d->actionError;
+}
+
+QString IdentifiableContentItemInterface::actionErrorMessage() const
+{
+    Q_D(const IdentifiableContentItemInterface);
+    return d->actionErrorMessage;
+}
+
 
 bool IdentifiableContentItemInterface::load()
 {
@@ -334,7 +363,7 @@ bool IdentifiableContentItemInterface::load()
 void IdentifiableContentItemInterface::setData(const QVariantMap &data)
 {
     ContentItemInterface::setData(data);
-    emit loaded();
+    emit loaded(true);
 }
 
 void IdentifiableContentItemInterface::setError(SocialNetworkInterface::ErrorType error,
@@ -356,7 +385,66 @@ void IdentifiableContentItemInterface::setError(SocialNetworkInterface::ErrorTyp
         emit statusChanged();
     }
 
-    emit loaded();
+    emit loaded(false);
+}
+
+void IdentifiableContentItemInterface::setActionComplete()
+{
+    Q_D(IdentifiableContentItemInterface);
+    if (d->actionStatus != SocialNetworkInterface::Idle) {
+        d->actionStatus = SocialNetworkInterface::Idle;
+        emit actionStatusChanged();
+    }
+    emit actionComplete(true);
+}
+
+void IdentifiableContentItemInterface::setActionError(SocialNetworkInterface::ErrorType actionError,
+                                                      const QString &actionErrorMessage)
+{
+    Q_D(IdentifiableContentItemInterface);
+    if (d->actionErrorMessage != actionErrorMessage) {
+        d->actionErrorMessage = actionErrorMessage;
+        emit actionErrorMessageChanged();
+    }
+
+    if (d->actionError != actionError) {
+        d->actionError = actionError;
+        emit actionErrorChanged();
+    }
+
+    if (d->actionStatus != SocialNetworkInterface::Error) {
+        d->actionStatus = SocialNetworkInterface::Error;
+        emit actionStatusChanged();
+    }
+
+    emit actionComplete(false);
+}
+
+bool IdentifiableContentItemInterface::prepareAction()
+{
+    Q_D(IdentifiableContentItemInterface);
+    if (d->status == SocialNetworkInterface::Initializing) {
+        qWarning()<< Q_FUNC_INFO
+                  << "Cannot perform action: did you set socialNetwork ?";
+        return false;
+    }
+
+    if (d->status == SocialNetworkInterface::Busy
+            || d->status == SocialNetworkInterface::Invalid
+            || d->actionStatus == SocialNetworkInterface::Busy
+            || d->actionStatus == SocialNetworkInterface::Invalid) {
+        qWarning() << Q_FUNC_INFO << "Cannot perform action: status is Busy/Invalid";
+        return false;
+    }
+
+    if (!d->socialNetwork) {
+        qWarning() << Q_FUNC_INFO << "Cannot load IdentifiableContentItem: No socialNetwork set";
+        return false;
+    }
+
+    d->actionStatus = SocialNetworkInterface::Busy;
+    emit actionStatusChanged();
+    return true;
 }
 
 #include "moc_identifiablecontentiteminterface.cpp"

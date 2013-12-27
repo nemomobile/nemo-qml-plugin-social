@@ -56,6 +56,7 @@ private:
     QString m_lastName;
     QString m_identifier;
 private slots:
+
     void initTestCase()
     {
         QString path = QDir(QCoreApplication::applicationDirPath()).absoluteFilePath("config.ini");
@@ -70,6 +71,7 @@ private slots:
         QVERIFY(!m_firstName.isEmpty());
         QVERIFY(!m_lastName.isEmpty());
     }
+
 
     void testQueryMe()
     {
@@ -455,6 +457,407 @@ private slots:
         str = FacebookInterfacePrivate::makeFields(QString(), "something,likes,somethingelse,comments,likestest,commentstest",
                                                    QMap<QString, QString>());
         QCOMPARE(str, QLatin1String("something,likes.summary(1),somethingelse,comments.summary(1),likestest,commentstest"));
+    }
+
+    void testLikeAction()
+    {
+        // Let's load a post
+        // (Jolla is prebooked)
+        FacebookInterface *facebook = new FacebookInterface(this);
+        facebook->setAccessToken(m_token);
+        facebook->classBegin();
+        facebook->componentComplete();
+
+        FacebookItemFilterInterface *filter = new FacebookItemFilterInterface(this);
+        filter->setIdentifier("324048634313353_603842659667281");
+        filter->setFields("id,likes");
+
+        FacebookPostInterface *item = new FacebookPostInterface(this);
+        item->classBegin();
+        item->componentComplete();
+
+        item->setSocialNetwork(facebook);
+        item->setFilter(filter);
+        item->load();
+        while (item->status() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(item->status(), SocialNetworkInterface::Idle);
+
+
+        for (int i = 0; i < 2; ++i) {
+            // Try to send a like / unlike
+            bool liked = item->liked();
+            qWarning() << "The post is currently liked (before operation):" << liked;
+            int likesCount = item->likesCount();
+            if (!liked) {
+                QVERIFY(item->like());
+            } else {
+                QVERIFY(item->unlike());
+            }
+
+            while (item->actionStatus() == SocialNetworkInterface::Busy) {
+                QTest::qWait(500);
+            }
+            QCOMPARE(item->actionStatus(), SocialNetworkInterface::Idle);
+
+            if (!liked) {
+                QCOMPARE(item->likesCount(), likesCount + 1);
+                QVERIFY(item->liked());
+            } else {
+                QCOMPARE(item->likesCount(), likesCount - 1);
+                QVERIFY(!item->liked());
+            }
+        }
+
+
+        // Let's try to comment
+        QString comment = "Test message please ignore";
+        item->uploadComment(comment);
+        while (item->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(item->actionStatus(), SocialNetworkInterface::Idle);
+
+        // Fetch the comment list
+        FacebookRelatedDataFilterInterface *filter2 = new FacebookRelatedDataFilterInterface(this);
+        filter2->setIdentifier("324048634313353_603842659667281");
+        filter2->setFields("id,message");
+        filter2->setOffset(item->commentsCount());
+        filter2->setConnection(FacebookInterface::Comments);
+
+
+        SocialNetworkModelInterface *model = new SocialNetworkModelInterface(this);
+        model->classBegin();
+        model->componentComplete();
+        model->setSocialNetwork(facebook);
+
+        model->setFilter(filter2);
+        QVERIFY(model->load());
+
+        while (model->status() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(model->status(), SocialNetworkInterface::Idle);
+
+        QString commentIdentifier;
+        for (int i = 0; i < model->count(); i++) {
+            QObject *itemObject = model->relatedItem(i);
+            FacebookCommentInterface *item = qobject_cast<FacebookCommentInterface *>(itemObject);
+            if (item->message() == comment) {
+                commentIdentifier = item->identifier();
+            }
+        }
+
+        QVERIFY(!commentIdentifier.isEmpty());
+        qWarning() << "Found comment identifier:" << commentIdentifier;
+
+        // Remove the posted comment
+        item->removeComment(commentIdentifier);
+        while (item->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(item->actionStatus(), SocialNetworkInterface::Idle);
+    }
+
+    void testAlbumActions() // This do not test expected failures
+    {
+        // Flow is: create album, like and comment it
+        // upload a photo
+        // like and comment the photo
+        // tag and untag the photo
+        // remove the photo
+        // remove album: not possible
+
+        QString albumName = "Test album please ignore";
+        qWarning() << "Be sure that you don't have an album called" << albumName;
+
+        // 0. Get user
+        FacebookInterface *facebook = new FacebookInterface(this);
+        facebook->setAccessToken(m_token);
+        facebook->classBegin();
+        facebook->componentComplete();
+
+        FacebookItemFilterInterface *filter = new FacebookItemFilterInterface(this);
+        filter->setIdentifier(m_identifier);
+        filter->setFields("id");
+
+        FacebookUserInterface *item = new FacebookUserInterface(this);
+        item->classBegin();
+        item->componentComplete();
+
+        item->setSocialNetwork(facebook);
+        item->setFilter(filter);
+        item->load();
+        while (item->status() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(item->status(), SocialNetworkInterface::Idle);
+
+        // 1. Create album
+        QVERIFY(item->uploadAlbum(albumName));
+        while (item->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(item->actionStatus(), SocialNetworkInterface::Idle);
+
+        // 2. Like and unlike the album
+        // Fetch the album list
+        FacebookRelatedDataFilterInterface *albumListFilter = new FacebookRelatedDataFilterInterface(this);
+        albumListFilter->setIdentifier(m_identifier);
+        albumListFilter->setFields("id,name");
+        albumListFilter->setConnection(FacebookInterface::Albums);
+
+
+        SocialNetworkModelInterface *albumModel = new SocialNetworkModelInterface(this);
+        albumModel->classBegin();
+        albumModel->componentComplete();
+        albumModel->setSocialNetwork(facebook);
+
+        albumModel->setFilter(albumListFilter);
+        QVERIFY(albumModel->load());
+
+        while (albumModel->status() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(albumModel->status(), SocialNetworkInterface::Idle);
+
+        FacebookAlbumInterface *album = 0;
+        for (int i = 0; i < albumModel->count(); i++) {
+            QObject *itemObject = albumModel->relatedItem(i);
+            FacebookAlbumInterface *item = qobject_cast<FacebookAlbumInterface *>(itemObject);
+            if (item->name() == albumName) {
+                album = item;
+            }
+        }
+
+        QVERIFY(album);
+        qWarning() << "Found album identifier:" << album->identifier();
+
+        // Likes check
+        for (int i = 0; i < 2; ++i) {
+            // Try to send a like / unlike
+            bool liked = album->liked();
+            qWarning() << "The album is currently liked (before operation):" << liked;
+            int likesCount = album->likesCount();
+            if (!liked) {
+                QVERIFY(album->like());
+            } else {
+                QVERIFY(album->unlike());
+            }
+
+            while (album->actionStatus() == SocialNetworkInterface::Busy) {
+                QTest::qWait(500);
+            }
+            QCOMPARE(album->actionStatus(), SocialNetworkInterface::Idle);
+
+            if (!liked) {
+                QCOMPARE(album->likesCount(), likesCount + 1);
+                QVERIFY(album->liked());
+            } else {
+                QCOMPARE(album->likesCount(), likesCount - 1);
+                QVERIFY(!album->liked());
+            }
+        }
+
+        // 3. Comment and uncomment the album
+        QString comment = "Test message please ignore";
+        QVERIFY(album->uploadComment(comment));
+        while (album->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(album->actionStatus(), SocialNetworkInterface::Idle);
+
+        // Fetch the comment list
+        FacebookRelatedDataFilterInterface *commentFilter = new FacebookRelatedDataFilterInterface(this);
+        commentFilter->setIdentifier(album->identifier());
+        commentFilter->setFields("id,message");
+        commentFilter->setConnection(FacebookInterface::Comments);
+
+
+        SocialNetworkModelInterface *commentModel = new SocialNetworkModelInterface(this);
+        commentModel->classBegin();
+        commentModel->componentComplete();
+        commentModel->setSocialNetwork(facebook);
+
+        commentModel->setFilter(commentFilter);
+        QVERIFY(commentModel->load());
+
+        while (commentModel->status() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(commentModel->status(), SocialNetworkInterface::Idle);
+
+        QString commentIdentifier;
+        for (int i = 0; i < commentModel->count(); i++) {
+            QObject *itemObject = commentModel->relatedItem(i);
+            FacebookCommentInterface *item = qobject_cast<FacebookCommentInterface *>(itemObject);
+            if (item->message() == comment) {
+                commentIdentifier = item->identifier();
+            }
+        }
+
+        QVERIFY(!commentIdentifier.isEmpty());
+        qWarning() << "Found comment identifier:" << commentIdentifier;
+
+        // Remove the posted comment
+        QVERIFY(album->removeComment(commentIdentifier));
+        while (album->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(album->actionStatus(), SocialNetworkInterface::Idle);
+
+        // 4. Upload a photo
+        QVERIFY(album->uploadPhoto(":/test.jpg"));
+        while (album->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(album->actionStatus(), SocialNetworkInterface::Idle);
+
+        // 5. Like and unlike the photo
+        // Fetch the photo list
+        FacebookRelatedDataFilterInterface *photoListFilter = new FacebookRelatedDataFilterInterface(this);
+        photoListFilter->setIdentifier(album->identifier());
+        photoListFilter->setFields("id,name");
+        photoListFilter->setConnection(FacebookInterface::Photos);
+
+
+        SocialNetworkModelInterface *photoModel = new SocialNetworkModelInterface(this);
+        photoModel->classBegin();
+        photoModel->componentComplete();
+        photoModel->setSocialNetwork(facebook);
+
+        photoModel->setFilter(photoListFilter);
+        QVERIFY(photoModel->load());
+
+        while (photoModel->status() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(photoModel->status(), SocialNetworkInterface::Idle);
+
+        FacebookPhotoInterface *photo = 0;
+        QVERIFY(photoModel->count() > 0);
+        photo = qobject_cast<FacebookPhotoInterface *>(photoModel->relatedItem(0));
+        QVERIFY(photo);
+
+        // Likes check
+        for (int i = 0; i < 2; ++i) {
+            // Try to send a like / unlike
+            bool liked = photo->liked();
+            qWarning() << "The photo is currently liked (before operation):" << liked;
+            int likesCount = photo->likesCount();
+            if (!liked) {
+                QVERIFY(photo->like());
+            } else {
+                QVERIFY(photo->unlike());
+            }
+
+            while (photo->actionStatus() == SocialNetworkInterface::Busy) {
+                QTest::qWait(500);
+            }
+            QCOMPARE(photo->actionStatus(), SocialNetworkInterface::Idle);
+
+            if (!liked) {
+                QCOMPARE(photo->likesCount(), likesCount + 1);
+                QVERIFY(photo->liked());
+            } else {
+                QCOMPARE(photo->likesCount(), likesCount - 1);
+                QVERIFY(!photo->liked());
+            }
+        }
+
+        // 6. Comment and uncomment the photo
+        QVERIFY(photo->uploadComment(comment));
+        while (photo->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(photo->actionStatus(), SocialNetworkInterface::Idle);
+
+        // Fetch the comment list
+        commentFilter->setIdentifier(photo->identifier());
+        commentFilter->setFields("id,message");
+        commentFilter->setConnection(FacebookInterface::Comments);
+
+        commentModel->setFilter(commentFilter);
+        QVERIFY(commentModel->load());
+
+        while (commentModel->status() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(commentModel->status(), SocialNetworkInterface::Idle);
+
+        commentIdentifier.clear();
+        for (int i = 0; i < commentModel->count(); i++) {
+            QObject *itemObject = commentModel->relatedItem(i);
+            FacebookCommentInterface *item = qobject_cast<FacebookCommentInterface *>(itemObject);
+            if (item->message() == comment) {
+                commentIdentifier = item->identifier();
+            }
+        }
+
+        QVERIFY(!commentIdentifier.isEmpty());
+        qWarning() << "Found comment identifier:" << commentIdentifier;
+
+        // Remove the posted comment
+        QVERIFY(photo->removeComment(commentIdentifier));
+        while (photo->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(photo->actionStatus(), SocialNetworkInterface::Idle);
+
+        // 7. Tag user on the photo
+        // Let's tag Fake Chris. This will fail if Fake Chris is not your friend.
+        QVERIFY(photo->tagUser("100005045024027", 0.5, 0.5));
+        while (photo->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(photo->actionStatus(), SocialNetworkInterface::Idle);
+
+        // Let's also tag something meaningless
+        QString tagMessage = "Test tag";
+        QVERIFY(photo->tagText(tagMessage, 0.25, 0.75));
+        while (photo->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(photo->actionStatus(), SocialNetworkInterface::Idle);
+
+        // 8. Delete tag
+        QVERIFY(photo->untagUser("100005045024027"));
+        while (photo->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        // Facebook API do not support this
+        QEXPECT_FAIL("", "Facebook API limits this call", Continue);
+        QCOMPARE(photo->actionStatus(), SocialNetworkInterface::Idle);
+
+        QVERIFY(photo->untagText(tagMessage));
+        while (photo->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        // Facebook API do not support this
+        QEXPECT_FAIL("", "Facebook API limits this call", Continue);
+        QCOMPARE(photo->actionStatus(), SocialNetworkInterface::Idle);
+
+        // 9. Delete photo
+        album->removePhoto(photo->identifier());
+        while (item->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        QCOMPARE(item->actionStatus(), SocialNetworkInterface::Idle);
+
+        // 10. Delete album
+        item->removeAlbum(album->identifier());
+        while (item->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(500);
+        }
+        // Facebook API do not support this
+        QEXPECT_FAIL("", "Facebook API limits this call", Continue);
+        QCOMPARE(item->actionStatus(), SocialNetworkInterface::Idle);
+    }
+
+    void testAlbumActionsExpectedFailure()
+    {
+        // TODO
     }
 };
 
