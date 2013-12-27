@@ -228,6 +228,7 @@ bool FacebookNotificationInterface::reload(const QStringList &whichFields)
 #if 0
 
 #endif
+
 /*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookNotification::from
     Holds a reference to the person or profile whose action triggered the notification.

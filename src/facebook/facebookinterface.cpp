@@ -66,11 +66,11 @@
 #include <QtDebug>
 
 #define FACEBOOK_ME QLatin1String("me")
+static const char *ACTION_KEY = "action";
 //#define GETTING_ME_KEY QLatin1String("getting_me")
 //#define PERFORM_ADDITIONAL_LOADING QLatin1String("perform_additional_loading")
 //#define PERFORM_TYPE_LOADING QLatin1String("perform_type_loading")
 //#define PAGING_HAVE_KEY QLatin1String("have")
-
 
 FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
     : SocialNetworkInterfacePrivate(q)
@@ -125,6 +125,160 @@ QNetworkReply * FacebookInterfacePrivate::performRequest(const QString &identifi
     return reply;
 }
 
+QNetworkReply * FacebookInterfacePrivate::performPostRequest(const QString &identifier,
+                                                             const QString &graph,
+                                                             const QMap<QString, QString> &arguments,
+                                                             const QByteArray &postData)
+{
+    QList<QPair<QString, QString> > queryItems;
+    if (!accessToken.isEmpty()) {
+        queryItems.append(qMakePair<QString, QString>(QLatin1String("access_token"), accessToken));
+    }
+
+    QStringList argumentsKey = arguments.keys();
+    foreach (const QString &key, argumentsKey) {
+        queryItems.append(qMakePair<QString, QString>(key, arguments.value(key)));
+    }
+
+    QUrl url;
+    url.setScheme("https");
+    url.setHost("graph.facebook.com");
+    if (!identifier.isEmpty()) {
+        if (graph.isEmpty()) {
+            url.setPath(QString("/%1").arg(identifier));
+        } else {
+            url.setPath(QString("/%1/%2").arg(identifier, graph));
+        }
+    }
+
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QUrlQuery query;
+    query.setQueryItems(queryItems);
+    url.setQuery(query);
+#else
+    url.setQueryItems(queryItems);
+#endif
+    QNetworkRequest request (url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    QNetworkReply *reply = networkAccessManager->post(request, postData);
+    return reply;
+}
+
+QNetworkReply * FacebookInterfacePrivate::performPhotoPostRequest(const QString &identifier,
+                                                                  const QString &graph,
+                                                                  const QString &source,
+                                                                  const QMap<QString, QString> &arguments)
+{
+    Q_Q(FacebookInterface);
+    // the implementation code for this function is taken from the transfer engine
+    QUrl url;
+    url.setScheme("https");
+    url.setHost("graph.facebook.com");
+    if (!identifier.isEmpty()) {
+        if (graph.isEmpty()) {
+            url.setPath(QString("/%1").arg(identifier));
+        } else {
+            url.setPath(QString("/%1/%2").arg(identifier, graph));
+        }
+    }
+
+    QString multipartBoundary = QLatin1String("-------Sska2129ifcalksmqq3");
+    QString mimeType = QLatin1String("image/jpeg");
+    if (source.endsWith("png")) {
+        mimeType = QLatin1String("image/png"); // XXX TODO: more mimetypes?  better way to do this?
+    }
+
+    QFile file(source, q);
+    if(!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "Error opening image file:" << source;
+        return 0;
+    }
+
+    QByteArray imageData(file.readAll());
+    file.close();
+
+    QFileInfo info(source);
+
+    // TODO: use a QHttpMultipart for readability ?
+    // Fill in the image data first
+    QByteArray postData;
+    postData.append("--"+multipartBoundary+"\r\n");
+    postData.append("Content-Disposition: form-data; name=\"access_token\"\r\n\r\n");
+    postData.append(accessToken);
+    postData.append("\r\n");
+
+    // Actually the title isn't used
+    postData.append("--"+multipartBoundary+"\r\n");
+    postData.append("Content-Disposition: form-data; name=\"message\"\r\n\r\n");
+    postData.append(arguments.value("message"));
+    postData.append("\r\n");
+
+    postData.append("--"+multipartBoundary+"\r\n");
+    postData.append("Content-Disposition: form-data; name=\"source\"; filename=\""+info.fileName()+"\"\r\n");
+    postData.append("Content-Type:"+mimeType+"\r\n\r\n");
+    postData.append(imageData);
+    postData.append("\r\n");
+
+    postData.append("--"+multipartBoundary+"\r\n");
+    postData.append("Content-Disposition: form-data; name=\"privacy\"\r\n\r\n");
+    postData.append(QString("{\'value\':\'ALL_FRIENDS\'}"));
+    postData.append("\r\n");
+    postData.append("--"+multipartBoundary+"\r\n");
+
+    // Header required
+    QNetworkRequest request;
+    request.setUrl(url);
+    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Accept-Language", "en-us,en;q=0.5");
+    request.setRawHeader("Accept-Encoding", "gzip,deflate");
+    request.setRawHeader("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+    request.setRawHeader("Keep-Alive", "300");
+    request.setRawHeader("Connection", "keep-alive");
+    request.setRawHeader("Content-Type",QString("multipart/form-data; boundary="+multipartBoundary).toLatin1());
+    request.setHeader(QNetworkRequest::ContentLengthHeader, postData.size());
+
+    return networkAccessManager->post(request, postData);
+}
+
+QNetworkReply * FacebookInterfacePrivate::performDeleteRequest(const QString &identifier,
+                                                               const QString &graph,
+                                                               const QMap<QString, QString> &arguments)
+{
+    QList<QPair<QString, QString> > queryItems;
+    if (!accessToken.isEmpty()) {
+        queryItems.append(qMakePair<QString, QString>(QLatin1String("access_token"), accessToken));
+    }
+
+    QStringList argumentsKey = arguments.keys();
+    foreach (const QString &key, argumentsKey) {
+        queryItems.append(qMakePair<QString, QString>(key, arguments.value(key)));
+    }
+
+    QUrl url;
+    url.setScheme("https");
+    url.setHost("graph.facebook.com");
+    if (!identifier.isEmpty()) {
+        if (graph.isEmpty()) {
+            url.setPath(QString("/%1").arg(identifier));
+        } else {
+            url.setPath(QString("/%1/%2").arg(identifier, graph));
+        }
+    }
+
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QUrlQuery query;
+    query.setQueryItems(queryItems);
+    url.setQuery(query);
+#else
+    url.setQueryItems(queryItems);
+#endif
+    QNetworkRequest request (url);
+    QNetworkReply *reply = networkAccessManager->deleteResource(request);
+    return reply;
+}
+
 QString FacebookInterfacePrivate::makeFields(const QString &path, const QString &fields,
                                              const QMap<QString, QString> &arguments)
 {
@@ -169,6 +323,299 @@ QString FacebookInterfacePrivate::makeFields(const QString &path, const QString 
     QString returned = QString("id,%1.fields(%2)%3").arg(path, updatedFields, processedArguments);
     return returned;
 }
+
+bool FacebookInterfacePrivate::runLike(SocialNetworkInterface *socialNetwork,
+                                       IdentifiableContentItemInterface *item)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::LikeAction);
+
+    QNetworkReply *reply = facebookPrivate->performPostRequest(item->identifier(),
+                                                               FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runUnlike(SocialNetworkInterface *socialNetwork,
+                                         IdentifiableContentItemInterface *item)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::DeleteLikeAction);
+
+    QNetworkReply *reply = facebookPrivate->performDeleteRequest(item->identifier(),
+                                                                 FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runUploadComment(SocialNetworkInterface *socialNetwork,
+                                                IdentifiableContentItemInterface *item,
+                                                const QString &message)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::UploadCommentAction);
+
+    QMap<QString, QString> postData;
+    postData.insert(FACEBOOK_ONTOLOGY_COMMENT_MESSAGE, message);
+
+    QNetworkReply *reply = facebookPrivate->performPostRequest(item->identifier(),
+                                                               FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS,
+                                                               postData);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runRemoveComment(SocialNetworkInterface *socialNetwork,
+                                                IdentifiableContentItemInterface *item,
+                                                const QString &commentIdentifier)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::DeleteCommentAction);
+
+    QNetworkReply *reply = facebookPrivate->performDeleteRequest(commentIdentifier);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runUploadAlbum(SocialNetworkInterface *socialNetwork,
+                                              IdentifiableContentItemInterface *item,
+                                              const QString &name, const QString &message,
+                                              const QVariantMap &privacy)
+{
+    Q_UNUSED(privacy)
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::UploadAlbumAction);
+
+    // TODO privacy
+    QMap<QString, QString> postData;
+    postData.insert(FACEBOOK_ONTOLOGY_ALBUM_NAME, name);
+    if (!message.isEmpty()) {
+        postData.insert(FACEBOOK_ONTOLOGY_POST_MESSAGE, message);
+    }
+
+    QNetworkReply *reply = facebookPrivate->performPostRequest(item->identifier(),
+                                                               FACEBOOK_ONTOLOGY_CONNECTIONS_ALBUMS,
+                                                               postData);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runRemoveAlbum(SocialNetworkInterface *socialNetwork,
+                                              IdentifiableContentItemInterface *item,
+                                              const QString &albumIdentifier)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    qWarning() << "Facebook do not support this API call for non-authorized clients. "\
+                  "This will probably fail.";
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::DeleteAlbumAction);
+
+    QNetworkReply *reply = facebookPrivate->performDeleteRequest(albumIdentifier);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runUploadPhoto(SocialNetworkInterface *socialNetwork,
+                                              IdentifiableContentItemInterface *item,
+                                              const QString &source, const QString &message)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::UploadPhotoAction);
+
+    QMap<QString, QString> postData;
+    if (!message.isEmpty()) {
+        postData.insert(FACEBOOK_ONTOLOGY_POST_MESSAGE, message);
+    }
+
+    QNetworkReply *reply = facebookPrivate->performPhotoPostRequest(item->identifier(),
+                                                                    FACEBOOK_ONTOLOGY_CONNECTIONS_PHOTOS,
+                                                                    source, postData);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runRemovePhoto(SocialNetworkInterface *socialNetwork,
+                                              IdentifiableContentItemInterface *item,
+                                              const QString &photoIdentifier)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::DeleteAlbumAction);
+
+    QNetworkReply *reply = facebookPrivate->performDeleteRequest(photoIdentifier);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runTagUser(SocialNetworkInterface *socialNetwork,
+                                          IdentifiableContentItemInterface *item,
+                                          const QString &userId, float xOffset, float yOffset)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::TagAction);
+
+    QMap<QString, QString> postData;
+    postData.insert(FACEBOOK_ONTOLOGY_POST_TO, userId);
+    if (xOffset > 0) {
+        postData.insert(FACEBOOK_ONTOLOGY_PHOTO_TAG_X, QString::number(xOffset));
+    }
+    if (yOffset > 0) {
+        postData.insert(FACEBOOK_ONTOLOGY_PHOTO_TAG_Y, QString::number(yOffset));
+    }
+
+    QNetworkReply *reply = facebookPrivate->performPostRequest(item->identifier(),
+                                                               FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS,
+                                                               postData);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runUntagUser(SocialNetworkInterface *socialNetwork,
+                                            IdentifiableContentItemInterface *item,
+                                            const QString &userId)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    qWarning() << "Facebook do not support this API call for non-authorized clients. "\
+                  "This will probably fail.";
+
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::DeleteTagAction);
+
+    QString graph = QString("%1/%2").arg(FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS, userId);
+    QNetworkReply *reply = facebookPrivate->performDeleteRequest(item->identifier(), graph);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runTagText(SocialNetworkInterface *socialNetwork,
+                                          IdentifiableContentItemInterface *item,
+                                          const QString &text, float xOffset, float yOffset)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::TagAction);
+
+    QMap<QString, QString> postData;
+    postData.insert("tag_text", text);
+    if (xOffset > 0) {
+        postData.insert(FACEBOOK_ONTOLOGY_PHOTO_TAG_X, QString::number(xOffset));
+    }
+    if (yOffset > 0) {
+        postData.insert(FACEBOOK_ONTOLOGY_PHOTO_TAG_Y, QString::number(yOffset));
+    }
+
+    QNetworkReply *reply = facebookPrivate->performPostRequest(item->identifier(),
+                                                               FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS,
+                                                               postData);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+bool FacebookInterfacePrivate::runUntagText(SocialNetworkInterface *socialNetwork,
+                                            IdentifiableContentItemInterface *item,
+                                            const QString &text)
+{
+    FacebookInterface *facebook = qobject_cast<FacebookInterface *>(socialNetwork);
+    if (!facebook) {
+        qWarning() << "Failed to perform action: social network is not Facebook";
+        return false;
+    }
+
+    qWarning() << "Facebook do not support this API call for non-authorized clients. "\
+                  "This will probably fail.";
+
+
+    FacebookInterfacePrivate *facebookPrivate = facebook->d_func();
+
+    QVariantMap properties;
+    properties.insert(ACTION_KEY, FacebookInterfacePrivate::DeleteTagAction);
+
+    QMap<QString, QString> deleteData;
+    deleteData.insert("tag_text", text);
+
+    QNetworkReply *reply = facebookPrivate->performDeleteRequest(item->identifier(),
+                                                                 FACEBOOK_ONTOLOGY_CONNECTIONS_TAGS,
+                                                                 deleteData);
+    return facebookPrivate->runAction(reply, item, properties);
+}
+
+
+
 
 QByteArray FacebookInterfacePrivate::preprocessData(const QByteArray &data)
 {
@@ -217,6 +664,103 @@ QByteArray FacebookInterfacePrivate::preprocessData(const QByteArray &data)
         emit q->currentUserIdentifierChanged();
     }
     return data;
+}
+
+void FacebookInterfacePrivate::performAction(IdentifiableContentItemInterface *item,
+                                             const QVariantMap &properties)
+{
+    int action = properties.value(ACTION_KEY).toInt();
+    switch (action) {
+    case LikeAction: {
+            // We update item to automatically mark it as liked
+            QVariantMap data = item->data();
+            QVariantMap likes = data.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES).toMap();
+            QVariantMap summary = likes.value(FACEBOOK_ONTOLOGY_METADATA_SUMMARY).toMap();
+
+            // Increment likes count
+            int likesCount = summary.value(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT).toInt();
+            likesCount ++;
+            summary.insert(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT, likesCount);
+            likes.insert(FACEBOOK_ONTOLOGY_METADATA_SUMMARY, summary);
+
+            // Add me as a liker
+            QVariantList likesPeople = likes.value(FACEBOOK_ONTOLOGY_METADATA_DATA).toList();
+            QVariantMap me;
+            me.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, currentUserIdentifier);
+            likesPeople.prepend(me);
+            likes.insert(FACEBOOK_ONTOLOGY_METADATA_DATA, likesPeople);
+            data.insert(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES, likes);
+
+            item->setData(data);
+        }
+
+        break;
+    case DeleteLikeAction: {
+            // We update item to automatically mark it as not liked
+            QVariantMap data = item->data();
+            QVariantMap likes = data.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES).toMap();
+            QVariantMap summary = likes.value(FACEBOOK_ONTOLOGY_METADATA_SUMMARY).toMap();
+
+            // Decrement likes count
+            int likesCount = summary.value(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT).toInt();
+            likesCount --;
+            summary.insert(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT, likesCount);
+            likes.insert(FACEBOOK_ONTOLOGY_METADATA_SUMMARY, summary);
+
+            // Remove me as a liker
+            QVariantList likesPeople = likes.value(FACEBOOK_ONTOLOGY_METADATA_DATA).toList();
+            QVariantList newLikesPeople;
+            foreach (const QVariant &person, likesPeople) {
+                QVariantMap personMap = person.toMap();
+                if (personMap.value(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER) != currentUserIdentifier) {
+                    newLikesPeople.append(personMap);
+                }
+            }
+
+            likes.insert(FACEBOOK_ONTOLOGY_METADATA_DATA, newLikesPeople);
+            data.insert(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES, likes);
+
+            item->setData(data);
+        }
+
+        break;
+
+    case UploadCommentAction: {
+            // We update item to automatically mark it as commented
+            QVariantMap data = item->data();
+            QVariantMap comments = data.value(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS).toMap();
+            QVariantMap summary = comments.value(FACEBOOK_ONTOLOGY_METADATA_SUMMARY).toMap();
+
+            // Increment comments count
+            int commentsCount = summary.value(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT).toInt();
+            commentsCount ++;
+            summary.insert(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT, commentsCount);
+            comments.insert(FACEBOOK_ONTOLOGY_METADATA_SUMMARY, summary);
+            data.insert(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS, comments);
+
+            item->setData(data);
+        }
+        break;
+
+    case DeleteCommentAction: {
+            // We update item to automatically mark it as not commented
+            QVariantMap data = item->data();
+            QVariantMap comments = data.value(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS).toMap();
+            QVariantMap summary = comments.value(FACEBOOK_ONTOLOGY_METADATA_SUMMARY).toMap();
+
+            // Decrement comments count
+            int commentsCount = summary.value(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT).toInt();
+            commentsCount --;
+            summary.insert(FACEBOOK_ONTOLOGY_METADATA_TOTALCOUNT, commentsCount);
+            comments.insert(FACEBOOK_ONTOLOGY_METADATA_SUMMARY, summary);
+            data.insert(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS, comments);
+
+            item->setData(data);
+        }
+        break;
+    }
+
+    item->setActionComplete();
 }
 
 //void FacebookInterfacePrivate::populateDataForNode(Node::Ptr node)

@@ -89,6 +89,7 @@ int FacebookLikeInterface::type() const
 #if 0
 
 #endif
+
 /*!
     \qmlproperty QString FacebookLike::userIdentifier
     Holds the identifier of the user who liked an entry

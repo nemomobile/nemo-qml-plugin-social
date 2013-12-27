@@ -55,12 +55,18 @@ public:
 
     SocialNetworkInterface::Status status;
     SocialNetworkInterface::ErrorType error;
+    QString errorMessage;
+    SocialNetworkInterface::Status actionStatus;
+    SocialNetworkInterface::ErrorType actionError;
+    QString actionErrorMessage;
     QString identifier;
     FilterInterface *filter;
-    QString errorMessage;
 
 //    bool needsLoad;
 
+protected:
+    // Slots
+    void socialNetworkDestroyedHandler();
 
 private:
     // Slots

@@ -447,7 +447,7 @@ bool FacebookUserInterface::reload(const QStringList &whichFields)
 #endif
 #if 0
 /*!
-    \qmlmethod bool FacebookUser::uploadPhoto(const QUrl &source, const QString &message)
+    \qmlmethod bool FacebookUser::uploadPhoto(const QString &source, const QString &message)
     Initiates a "post photo" operation on the user.  The photo will
     be loaded from the local filesystem and uploaded to Facebook with
     its caption set to the given \a message. It will be uploaded to
@@ -463,7 +463,7 @@ bool FacebookUserInterface::reload(const QStringList &whichFields)
     will contain the \c id of the newly uploaded photo.
     */
 
-bool FacebookUserInterface::uploadPhoto(const QUrl &source, const QString &message)
+bool FacebookUserInterface::uploadPhoto(const QString &source, const QString &message)
 {
 // <<< uploadPhoto
     Q_D(FacebookUserInterface);
@@ -577,6 +577,87 @@ bool FacebookUserInterface::removeAlbum(const QString &albumIdentifier)
 }
 
 #endif
+/*!
+    \qmlmethod bool FacebookUser::uploadPhoto(const QString &source, const QString &message)
+    Initiates a "post photo" operation on the user.  The photo will
+    be loaded from the local filesystem and uploaded to Facebook with
+    its caption set to the given \a message. It will be uploaded to
+    the default album of the user.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the user will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded photo.
+    */
+
+bool FacebookUserInterface::uploadPhoto(const QString &source, const QString &message)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadPhoto(socialNetwork(), this, source, message);
+}
+/*!
+    \qmlmethod bool FacebookUser::removePhoto(const QString &photoIdentifier)
+    Initiates a "delete photo" operation on the photo specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the user will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookUserInterface::removePhoto(const QString &photoIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemovePhoto(socialNetwork(), this, photoIdentifier);
+}
+/*!
+    \qmlmethod bool FacebookUser::uploadAlbum(const QString &name, const QString &message, const QVariantMap &privacy)
+    Initiates a "post album" operation on the user.  The album
+    will be created with the given \a name and be described by the
+    given \a message, and will have the specified \a privacy.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the user will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded album.*/
+
+bool FacebookUserInterface::uploadAlbum(const QString &name, const QString &message, const QVariantMap &privacy)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadAlbum(socialNetwork(), this, name, message, privacy);
+}
+/*!
+    \qmlmethod bool FacebookUser::removeAlbum(const QString &albumIdentifier)
+    Initiates a "delete album" operation on the album specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the user will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookUserInterface::removeAlbum(const QString &albumIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemoveAlbum(socialNetwork(), this, albumIdentifier);
+}
+
 /*!
     \qmlproperty QString FacebookUser::name
     Holds the full name of the user.

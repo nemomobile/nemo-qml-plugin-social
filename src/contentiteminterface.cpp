@@ -157,6 +157,12 @@ QVariantMap ContentItemInterfacePrivate::parseReplyData(const QByteArray &replyD
     return data.toMap();
 }
 
+void ContentItemInterfacePrivate::socialNetworkDestroyedHandler()
+{
+    Q_Q(ContentItemInterface);
+    q->setSocialNetwork(0);
+}
+
 void ContentItemInterfacePrivate::socialNetworkInitializedChangedHandler()
 {
     Q_Q(ContentItemInterface);
@@ -168,12 +174,6 @@ void ContentItemInterfacePrivate::socialNetworkInitializedChangedHandler()
             initializationComplete();
         }
     }
-}
-
-void ContentItemInterfacePrivate::socialNetworkDestroyedHandler()
-{
-    Q_Q(ContentItemInterface);
-    q->setSocialNetwork(0);
 }
 
 /*!

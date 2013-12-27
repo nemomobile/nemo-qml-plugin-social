@@ -95,6 +95,8 @@ public:
     explicit SocialNetworkInterfacePrivate(SocialNetworkInterface *q);
     virtual ~SocialNetworkInterfacePrivate();
     void runReply(QNetworkReply *reply, FilterInterface *filter);
+    bool runAction(QNetworkReply *reply, IdentifiableContentItemInterface *item,
+                   const QVariantMap &properties);
     QNetworkAccessManager *networkAccessManager;
 protected:
     // Functions to be reimplemented
@@ -140,7 +142,7 @@ protected:
 
     // Aliases map
 //    QMap<QString, QString> aliases;
-//private:
+private:
     // Used by NSMI
 //    void populate(SocialNetworkModelInterface *model, const QString &identifier, int type,
 //                  const QList<FilterInterface *> &filters, bool reload = false);
@@ -153,7 +155,9 @@ protected:
 
     // Slots
     void filterDestroyedHandler(QObject *object);
+    void itemDestroyedHandler(QObject *object);
     void finishedHandler();
+    void actionFinishedHandler();
 //    void finishedHandler();
 //    void errorHandler(QNetworkReply::NetworkError networkError);
 //    void sslErrorsHandler(const QList<QSslError> &sslErrors);
@@ -176,6 +180,11 @@ protected:
 
 protected:
     virtual QByteArray preprocessData(const QByteArray &data);
+    virtual void performAction(IdentifiableContentItemInterface *item,
+                               const QVariantMap &properties);
+    // Reimplement to handle action
+
+
     SocialNetworkInterface * const q_ptr;
 private:
     // Attributes
@@ -184,8 +193,15 @@ private:
 //    Node::List nodes;
 //    QList<SocialNetworkModelInterface *> models;
 //    QMap<QNetworkReply *, Node::Ptr> replyToNodeMap;
+
+    // Used by item loading (filters)
     QMap<QNetworkReply *, FilterInterface *> replyToFilterMap;
     QMultiMap<QObject *,QNetworkReply *> filterToReplyMap;
+
+    // Used by actions
+    QMap<QNetworkReply *, IdentifiableContentItemInterface *> replyToItemMap;
+    QMap<QNetworkReply *, QVariantMap> replyToActionPropertiesMap;
+    QMap<QObject *,QNetworkReply *> itemToReplyMap;
 
     // Arbitrary request handler
     ArbitraryRequestHandler *arbitraryRequestHandler;

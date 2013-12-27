@@ -36,7 +36,7 @@
 
 //#include "contentiteminterface.h"
 #include "contentiteminterface_p.h"
-//#include "identifiablecontentiteminterface.h"
+#include "identifiablecontentiteminterface.h"
 
 #include "util_p.h"
 
@@ -224,13 +224,42 @@ void SocialNetworkInterfacePrivate::runReply(QNetworkReply *reply, FilterInterfa
                      q, SLOT(filterDestroyedHandler(QObject*)));
 }
 
+bool SocialNetworkInterfacePrivate::runAction(QNetworkReply *reply,
+                                              IdentifiableContentItemInterface *item,
+                                              const QVariantMap &properties)
+{
+    Q_Q(SocialNetworkInterface);
+    if (!reply) {
+        return false;
+    }
+
+
+    replyToItemMap.insert(reply, item);
+    replyToActionPropertiesMap.insert(reply, properties);
+    itemToReplyMap.insert(item, reply);
+    QObject::connect(reply, SIGNAL(finished()), q, SLOT(actionFinishedHandler()));
+    QObject::connect(item, SIGNAL(destroyed(QObject*)),
+                     q, SLOT(itemDestroyedHandler(QObject*)));
+    return true;
+}
+
 void SocialNetworkInterfacePrivate::filterDestroyedHandler(QObject *object)
 {
     foreach (QNetworkReply *reply, filterToReplyMap.values(object)) {
+        replyToFilterMap.remove(reply);
         reply->deleteLater();
     }
 
     filterToReplyMap.remove(object);
+}
+
+void SocialNetworkInterfacePrivate::itemDestroyedHandler(QObject *object)
+{
+    QNetworkReply *reply = itemToReplyMap.value(object);
+    replyToItemMap.remove(reply);
+    replyToActionPropertiesMap.remove(reply);
+    reply->deleteLater();
+    itemToReplyMap.remove(object);
 }
 
 void SocialNetworkInterfacePrivate::finishedHandler()
@@ -263,10 +292,53 @@ void SocialNetworkInterfacePrivate::finishedHandler()
     reply->deleteLater();
 }
 
+void SocialNetworkInterfacePrivate::actionFinishedHandler()
+{
+    Q_Q(SocialNetworkInterface);
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(q->sender());
+    if (!reply) {
+        return;
+    }
+
+    if (!replyToItemMap.contains(reply) || !replyToActionPropertiesMap.contains(reply)) {
+        qWarning() << "Reply received but no item or property associated";
+        return;
+    }
+
+    IdentifiableContentItemInterface *item = replyToItemMap.value(reply);
+    QVariantMap properties = replyToActionPropertiesMap.value(reply);
+
+    QByteArray data = reply->readAll();
+    if (reply->error() != QNetworkReply::NoError) {
+        QString errorMessage = networkErrorString(reply->error());
+        if (!data.isEmpty()) {
+            errorMessage.append(QString(" Downloaded data: %1").arg(QString(data)));
+        }
+        item->setActionError(SocialNetworkInterface::RequestError, errorMessage);
+    } else {
+        performAction(item, properties);
+    }
+
+    replyToItemMap.remove(reply);
+    replyToActionPropertiesMap.remove(reply);
+    itemToReplyMap.remove(item);
+    reply->deleteLater();
+}
 
 QByteArray SocialNetworkInterfacePrivate::preprocessData(const QByteArray &data)
 {
     return data;
+}
+
+void SocialNetworkInterfacePrivate::performAction(IdentifiableContentItemInterface *item,
+                                                  const QVariantMap &properties)
+{
+    // This function is not implemented, and will leave the
+    // IdentifiableContentItemInterface in a Busy state. Be sure to call
+    // IdentifiableContentItemInterface::setActionComplete or
+    // IdentifiableContentItemInterface::setError to set the loading status
+    Q_UNUSED(item)
+    Q_UNUSED(properties)
 }
 
 //----------------------------------------------------

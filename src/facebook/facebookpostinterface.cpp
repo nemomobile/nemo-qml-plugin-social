@@ -852,6 +852,77 @@ bool FacebookPostInterface::removeComment(const QString &commentIdentifier)
 
 #endif
 /*!
+    \qmlmethod bool FacebookPost::like()
+    Initiates a "like" operation on the post.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the post will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPostInterface::like()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runLike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookPost::unlike()
+    Initiates a "delete like" operation on the post.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the post will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPostInterface::unlike()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUnlike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookPost::uploadComment(const QString &message)
+    Initiates a "post comment" operation on the post.  The comment
+    will contain the specified \a message.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the post will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded comment.*/
+
+bool FacebookPostInterface::uploadComment(const QString &message)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadComment(socialNetwork(), this, message);
+}
+/*!
+    \qmlmethod bool FacebookPost::removeComment(const QString &commentIdentifier)
+    Initiates a "delete comment" operation on the comment specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the post will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPostInterface::removeComment(const QString &commentIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemoveComment(socialNetwork(), this, commentIdentifier);
+}
+
+/*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookPost::from
     Holds a reference to the user or profile which uploaded this post.
 */

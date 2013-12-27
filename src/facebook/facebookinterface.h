@@ -37,7 +37,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QString>
 
-class QNetworkReply;
+//class QNetworkReply;
 //class FacebookObjectReferenceInterface;
 
 /*

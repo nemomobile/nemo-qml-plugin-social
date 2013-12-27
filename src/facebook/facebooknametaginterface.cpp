@@ -102,6 +102,7 @@ int FacebookNameTagInterface::type() const
 #if 0
 
 #endif
+
 /*!
     \qmlproperty QString FacebookNameTag::userIdentifier
     Holds the identifier of the tagged entity

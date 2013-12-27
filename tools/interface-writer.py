@@ -162,6 +162,7 @@ def generate(structure_file):
         header += "    Q_INVOKABLE bool remove();\n"
         header += "    Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());\n"
         header += "\n"
+        header += "#endif\n"
         header += "    // Invokable API.\n"
         for method in struct.methods:
             header += "    Q_INVOKABLE bool " + method.name + "("
@@ -177,7 +178,6 @@ def generate(structure_file):
                 parameterList.append(parameterName)
             header += ", ".join(parameterList)
             header += ");\n"
-        header += "#endif\n"
         header += "\n"
     
     header += "    // Accessors\n"
@@ -591,6 +591,44 @@ const QVariantMap &newData);\n"
     source += "\n"
 
     source += "#endif\n"
+    
+    # TODO: remove previous tests when these methods are fully implemented
+    # Methods
+    for method in struct.methods:
+        signature = "bool " + className + "::" + method.name + "("
+        docSignature = "bool " + qmlClassName + "::" + method.name + "("
+        parameterList = []
+        for parameter in method.parameters:
+            parameterName = getParameterType(parameter)
+            if parameterName[-1] != "*" and parameterName[-1] != "&":
+                parameterName += " "
+            parameterName += parameter.name
+            parameterList.append(parameterName)
+        signature += ", ".join(parameterList)
+        signature += ")"
+        docSignature += ", ".join(parameterList)
+        docSignature += ")"
+        
+        arguments = []
+        arguments.append("socialNetwork()")
+        arguments.append("this")
+        for parameter in method.parameters:
+            arguments.append(parameter.name)
+        
+        source += "/*!\n"
+        source += "    \\qmlmethod " + docSignature + "\n"
+        source += indent(method.doc, 1)
+        source += "*/\n"
+        source += "\n"
+        source += signature + "\n"
+        source += "{\n"
+        source += "    if (!prepareAction()) {\n"
+        source += "        return false;\n"
+        source += "    }\n"
+        source += "    return " + writerhelper.socialNetwork() + "InterfacePrivate::run"
+        source += method.name[0].upper() + method.name[1:] + "(" + ", ".join(arguments) + ");\n"
+        source += "}\n"
+    source += "\n"
     
     
     

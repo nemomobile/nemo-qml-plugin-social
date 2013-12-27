@@ -89,6 +89,7 @@ int FacebookPostPropertyInterface::type() const
 #if 0
 
 #endif
+
 /*!
     \qmlproperty QString FacebookPostProperty::name
     Holds the name of the property

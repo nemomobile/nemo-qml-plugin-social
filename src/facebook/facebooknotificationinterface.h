@@ -68,8 +68,8 @@ public:
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
-    // Invokable API.
 #endif
+    // Invokable API.
 
     // Accessors
     FacebookObjectReferenceInterface * from() const;

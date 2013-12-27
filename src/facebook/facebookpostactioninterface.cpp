@@ -89,6 +89,7 @@ int FacebookPostActionInterface::type() const
 #if 0
 
 #endif
+
 /*!
     \qmlproperty QString FacebookPostAction::name
     Holds the name of the action

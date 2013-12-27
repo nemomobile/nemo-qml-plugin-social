@@ -52,27 +52,56 @@ static const int DATA_VALUE = 42;
 
 // TODO write tests for sorters
 
+class TestSocialNetworkInterface;
+class TestSocialNetworkInterfacePrivate: public SocialNetworkInterfacePrivate
+{
+public:
+    explicit TestSocialNetworkInterfacePrivate(TestSocialNetworkInterface *q);
+protected:
+    void performAction(IdentifiableContentItemInterface *item, const QVariantMap &properties);
+};
+
 class TestSocialNetworkInterface: public SocialNetworkInterface
 {
     Q_OBJECT
 public:
     explicit TestSocialNetworkInterface(QObject *parent = 0);
     QObject * get(FilterInterface *filter);
+    void performDummyAction(IdentifiableContentItemInterface *item);
 private:
-    Q_DECLARE_PRIVATE(SocialNetworkInterface)
+    Q_DECLARE_PRIVATE(TestSocialNetworkInterface)
 };
 
+TestSocialNetworkInterfacePrivate::TestSocialNetworkInterfacePrivate(TestSocialNetworkInterface *q)
+    : SocialNetworkInterfacePrivate(q)
+{
+}
+
+void TestSocialNetworkInterfacePrivate::performAction(IdentifiableContentItemInterface *item,
+                                                      const QVariantMap &properties)
+{
+    Q_UNUSED(properties)
+    item->setActionComplete();
+}
+
 TestSocialNetworkInterface::TestSocialNetworkInterface(QObject *parent)
-    : SocialNetworkInterface(parent)
+    : SocialNetworkInterface(*(new TestSocialNetworkInterfacePrivate(this)), parent)
 {
 }
 
 QObject *TestSocialNetworkInterface::get(FilterInterface *filter)
 {
-    Q_D(SocialNetworkInterface);
+    Q_D(TestSocialNetworkInterface);
     QNetworkReply *reply = d->networkAccessManager->get(QNetworkRequest(QUrl("http://jolla.com")));
     d->runReply(reply, filter);
     return reply;
+}
+
+void TestSocialNetworkInterface::performDummyAction(IdentifiableContentItemInterface *item)
+{
+    Q_D(TestSocialNetworkInterface);
+    QNetworkReply *reply = d->networkAccessManager->get(QNetworkRequest(QUrl("http://jolla.com")));
+    d->runAction(reply, item, QVariantMap());
 }
 
 class TestFilterInterface: public FilterInterface
@@ -200,6 +229,25 @@ bool TestContentItemInterface::isComplete() const
     return d->initializationCompleteValue;
 }
 
+
+class TestIdentifiableContentItemInterface: public IdentifiableContentItemInterface
+{
+    Q_OBJECT
+public:
+    explicit TestIdentifiableContentItemInterface(QObject *parent = 0);
+    void dummyAction();
+};
+
+TestIdentifiableContentItemInterface::TestIdentifiableContentItemInterface(QObject *parent)
+    : IdentifiableContentItemInterface(parent)
+{
+}
+
+void TestIdentifiableContentItemInterface::dummyAction()
+{
+    prepareAction();
+    qobject_cast<TestSocialNetworkInterface *>(socialNetwork())->performDummyAction(this);
+}
 
 class SimpleTests: public QObject
 {
@@ -520,7 +568,7 @@ private slots:
 
         QSignalSpy spy1 (sni, SIGNAL(destroyed()));
         sni->deleteLater();
-        QTest::qWait(100); // Run the event loop
+        QTest::qWait(1); // Run the event loop
         QCOMPARE(spy1.count(), 1);
 
         while (icii->status() == SocialNetworkInterface::Busy) {
@@ -547,7 +595,7 @@ private slots:
 
         QSignalSpy spy2 (tfi, SIGNAL(destroyed()));
         tfi->deleteLater();
-        QTest::qWait(100); // Run the event loop
+        QTest::qWait(1); // Run the event loop
         QCOMPARE(spy2.count(), 1);
 
         while (icii->status() == SocialNetworkInterface::Busy) {
@@ -574,7 +622,7 @@ private slots:
 
         QSignalSpy spy3 (icii, SIGNAL(destroyed()));
         icii->deleteLater();
-        QTest::qWait(100); // Run the event loop
+        QTest::qWait(1); // Run the event loop
         QCOMPARE(spy3.count(), 1);
 
         // Wait for downloaded stuff, even if it won't be used
@@ -611,7 +659,7 @@ private slots:
 
         QSignalSpy spy1 (sni, SIGNAL(destroyed()));
         sni->deleteLater();
-        QTest::qWait(100); // Run the event loop
+        QTest::qWait(1); // Run the event loop
         QCOMPARE(spy1.count(), 1);
 
         while (snmi->status() == SocialNetworkInterface::Busy) {
@@ -638,7 +686,7 @@ private slots:
 
         QSignalSpy spy2 (tfi, SIGNAL(destroyed()));
         tfi->deleteLater();
-        QTest::qWait(100); // Run the event loop
+        QTest::qWait(1); // Run the event loop
         QCOMPARE(spy2.count(), 1);
 
         while (snmi->status() == SocialNetworkInterface::Busy) {
@@ -665,7 +713,7 @@ private slots:
 
         QSignalSpy spy3 (snmi, SIGNAL(destroyed()));
         snmi->deleteLater();
-        QTest::qWait(100); // Run the event loop
+        QTest::qWait(1); // Run the event loop
         QCOMPARE(spy3.count(), 1);
 
         // Wait for downloaded stuff, even if it won't be used
@@ -674,6 +722,62 @@ private slots:
 
         tfi->deleteLater();
         sni->deleteLater();
+    }
+
+    void testDestructionAndAction()
+    {
+        // We have to test two possibilities:
+        // SNI is destroyed first
+        // ICII is destroyed first
+        TestSocialNetworkInterface *sni = new TestSocialNetworkInterface(this);
+        sni->classBegin();
+        sni->componentComplete();
+
+        TestIdentifiableContentItemInterface *icii = new TestIdentifiableContentItemInterface(this);
+        icii->classBegin();
+        icii->componentComplete();
+        icii->setSocialNetwork(sni);
+
+        icii->dummyAction();
+
+        while (icii->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(1000);
+        }
+
+        QCOMPARE(icii->actionStatus(), SocialNetworkInterface::Idle);
+
+        // Let's destroy SNI
+        icii->dummyAction();
+        QSignalSpy spy1 (sni, SIGNAL(destroyed()));
+        sni->deleteLater();
+        QTest::qWait(1); // Run the event loop
+        QCOMPARE(spy1.count(), 1);
+
+        while (icii->actionStatus() == SocialNetworkInterface::Busy) {
+            QTest::qWait(1000);
+        }
+
+        QCOMPARE(icii->actionStatus(), SocialNetworkInterface::Error);
+
+        sni = new TestSocialNetworkInterface(this);
+        sni->classBegin();
+        sni->componentComplete();
+
+        icii = new TestIdentifiableContentItemInterface(this);
+        icii->classBegin();
+        icii->componentComplete();
+        icii->setSocialNetwork(sni);
+
+        // Let's destroy ICII
+        icii->dummyAction();
+        QSignalSpy spy2 (icii, SIGNAL(destroyed()));
+        icii->deleteLater();
+        QTest::qWait(1); // Run the event loop
+        QCOMPARE(spy2.count(), 1);
+
+        // Wait for downloaded stuff, even if it won't be used
+        // Check if there is no crash
+        QTest::qWait(5000);
     }
 };
 
