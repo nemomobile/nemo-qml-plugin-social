@@ -231,7 +231,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
             QVariantMap toMap = toEntry.toMap();
             FacebookObjectReferenceInterface *toInterface = new FacebookObjectReferenceInterface(q);
             toMap.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
-            toInterface->setData(newToMap);
+            toInterface->setData(toMap);
             to.append(toInterface);
         }
 
@@ -355,7 +355,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
             FacebookObjectReferenceInterface *withtagsInterface = new FacebookObjectReferenceInterface(q);
             withTagsMap.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
             withtagsInterface->setData(withTagsMap);
-            to.append(withtagsInterface);
+            withTags.append(withtagsInterface);
         }
 
         // Emit change signal
