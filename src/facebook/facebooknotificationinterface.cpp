@@ -46,11 +46,13 @@ FacebookNotificationInterfacePrivate::FacebookNotificationInterfacePrivate(Faceb
 {
 }
 
+#if 0
 void FacebookNotificationInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
 // >>> finishedHandler
 }
+#endif
 void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                                      const QVariantMap &newData)
 {
@@ -91,7 +93,7 @@ void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVari
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
+        from->setData(newFromData);
         emit q->fromChanged();
     }
 
@@ -108,7 +110,7 @@ void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVari
         newToData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
         newToData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newToId);
         newToData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newToName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(to, newToData);
+        to->setData(newToData);
         emit q->toChanged();
     }
 
@@ -125,7 +127,7 @@ void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVari
         newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Application);
         newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newApplicationId);
         newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newApplicationName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(application, newApplicationData);
+        application->setData(newApplicationData);
         emit q->applicationChanged();
     }
 // >>> emitPropertyChangeSignals
@@ -205,6 +207,7 @@ int FacebookNotificationInterface::type() const
     return FacebookInterface::Notification;
 }
 
+#if 0
 /*! \reimp */
 bool FacebookNotificationInterface::remove()
 {
@@ -221,6 +224,10 @@ bool FacebookNotificationInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+#endif
+#if 0
+
+#endif
 
 /*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookNotification::from
@@ -258,8 +265,7 @@ FacebookObjectReferenceInterface * FacebookNotificationInterface::application() 
 */
 QString FacebookNotificationInterface::createdTime() const
 {
-    Q_D(const FacebookNotificationInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_CREATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_CREATEDTIME).toString();
 }
 
 /*!
@@ -268,8 +274,7 @@ QString FacebookNotificationInterface::createdTime() const
 */
 QString FacebookNotificationInterface::updatedTime() const
 {
-    Q_D(const FacebookNotificationInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_UPDATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_UPDATEDTIME).toString();
 }
 
 /*!
@@ -278,8 +283,7 @@ QString FacebookNotificationInterface::updatedTime() const
 */
 QString FacebookNotificationInterface::title() const
 {
-    Q_D(const FacebookNotificationInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_TITLE).toString();
+    return data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_TITLE).toString();
 }
 
 /*!
@@ -288,8 +292,7 @@ QString FacebookNotificationInterface::title() const
 */
 QUrl FacebookNotificationInterface::link() const
 {
-    Q_D(const FacebookNotificationInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_LINK).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -298,8 +301,7 @@ QUrl FacebookNotificationInterface::link() const
 */
 int FacebookNotificationInterface::unread() const
 {
-    Q_D(const FacebookNotificationInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_NOTIFICATION_UNREAD).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -308,3 +310,12 @@ int FacebookNotificationInterface::unread() const
     return -1;
 }
 
+
+FacebookNotificationInterface::FacebookNotificationInterface(FacebookNotificationInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookNotificationInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+    d->to = new FacebookObjectReferenceInterface(this);
+    d->application = new FacebookObjectReferenceInterface(this);
+}

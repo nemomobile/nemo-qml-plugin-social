@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
+ * Copyright (C) 2013 Jolla Ltd. <lucien.xu@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -29,46 +29,44 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef FACEBOOKPOSTACTIONINTERFACE_H
-#define FACEBOOKPOSTACTIONINTERFACE_H
+#ifndef FACEBOOKITEMFILTERINTERFACE_H
+#define FACEBOOKITEMFILTERINTERFACE_H
 
-#include "contentiteminterface.h"
+#include "filterinterface.h"
 
-#include <QtCore/QString>
-
-/*
- * NOTE: if you construct one of these in C++ directly,
- * you MUST call classBegin() and componentCompleted()
- * directly after construction.
- */
-
-/*
- * NOTE: this is an unidentifiable content item which
- * is read only and only creatable by the top level
- * FacebookInterface.
- */
-
-class FacebookPostActionInterfacePrivate;
-class FacebookPostActionInterface: public ContentItemInterface
+class FacebookItemFilterInterfacePrivate;
+class FacebookItemFilterInterface : public FilterInterface
 {
     Q_OBJECT
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
-    Q_PROPERTY(QString link READ link NOTIFY linkChanged)
+    Q_PROPERTY(QString identifier READ identifier WRITE setIdentifier NOTIFY identifierChanged)
+    Q_PROPERTY(QString fields READ fields WRITE setFields NOTIFY fieldsChanged)
 public:
-    explicit FacebookPostActionInterface(QObject *parent = 0);
+    explicit FacebookItemFilterInterface(QObject *parent = 0);
 
-    // Overrides.
-    int type() const;
-    // Accessors
-    QString name() const;
-    QString link() const;
+    // Properties
+    QString identifier() const;
+    void setIdentifier(const QString &identifier);
+    QString fields() const;
+    void setFields(const QString &fields);
+
+    // Non QML API
+    // Used by items
+    bool isAcceptable(QObject *item, SocialNetworkInterface *socialNetwork) const;
+    bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
+                                LoadType loadType);
+
 Q_SIGNALS:
-    void nameChanged();
-    void linkChanged();
+    void identifierChanged();
+    void fieldsChanged();
+
 protected:
-    explicit FacebookPostActionInterface(FacebookPostActionInterfacePrivate &dd, QObject *parent = 0);
+    bool performSetItemDataImpl(IdentifiableContentItemInterface *item,
+                                SocialNetworkInterface *socialNetwork,
+                                const QByteArray &data, LoadType loadType,
+                                const QVariantMap &properties);
 private:
-    Q_DECLARE_PRIVATE(FacebookPostActionInterface)
+    Q_DECLARE_PRIVATE(FacebookItemFilterInterface)
+
 };
 
-#endif // FACEBOOKPOSTACTIONINTERFACE_H
+#endif // FACEBOOKITEMFILTERINTERFACE_H

@@ -86,6 +86,9 @@ int FacebookPostPropertyInterface::type() const
     return FacebookInterface::PostProperty;
 }
 
+#if 0
+
+#endif
 
 /*!
     \qmlproperty QString FacebookPostProperty::name
@@ -93,8 +96,7 @@ int FacebookPostPropertyInterface::type() const
 */
 QString FacebookPostPropertyInterface::name() const
 {
-    Q_D(const FacebookPostPropertyInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_NAME).toString();
 }
 
 /*!
@@ -103,7 +105,13 @@ QString FacebookPostPropertyInterface::name() const
 */
 QString FacebookPostPropertyInterface::text() const
 {
-    Q_D(const FacebookPostPropertyInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_PROPERTY_TEXT).toString();
 }
 
+
+FacebookPostPropertyInterface::FacebookPostPropertyInterface(FacebookPostPropertyInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

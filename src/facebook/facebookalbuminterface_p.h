@@ -40,7 +40,9 @@ class FacebookAlbumInterfacePrivate: public IdentifiableContentItemInterfacePriv
 {
 public:
     explicit FacebookAlbumInterfacePrivate(FacebookAlbumInterface *q);
+#if 0
     void finishedHandler();
+#endif
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     FacebookInterfacePrivate::FacebookAction action;
     FacebookObjectReferenceInterface *from;

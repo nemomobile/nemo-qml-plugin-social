@@ -86,6 +86,9 @@ int FacebookPostActionInterface::type() const
     return FacebookInterface::PostAction;
 }
 
+#if 0
+
+#endif
 
 /*!
     \qmlproperty QString FacebookPostAction::name
@@ -93,8 +96,7 @@ int FacebookPostActionInterface::type() const
 */
 QString FacebookPostActionInterface::name() const
 {
-    Q_D(const FacebookPostActionInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_ACTION_NAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_ACTION_NAME).toString();
 }
 
 /*!
@@ -103,7 +105,13 @@ QString FacebookPostActionInterface::name() const
 */
 QString FacebookPostActionInterface::link() const
 {
-    Q_D(const FacebookPostActionInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_ACTION_LINK).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_ACTION_LINK).toString();
 }
 
+
+FacebookPostActionInterface::FacebookPostActionInterface(FacebookPostActionInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

@@ -38,15 +38,27 @@ Item {
     signal backClicked
     signal showLikesClicked
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
+        model.clear()
+        itemFilter.identifier = nodeId
+        commentsFilter.identifier = nodeId
+        photo.load()
+        model.load()
         view.positionViewAtBeginning()
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [ commentsFilter ]
+        filter: commentsFilter
+    }
+
+    FacebookPhoto {
+        id: photo
+        socialNetwork: facebook
+        filter: FacebookItemFilter {
+            id: itemFilter
+            fields: "id,likes,comments"
+        }
     }
 
     Image {
@@ -60,9 +72,10 @@ Item {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model.node == null ? "... Loading ..."
-              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
-              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
+        text: model.status != SocialNetwork.Idle || photo.status != SocialNetwork.Idle
+              ? "... Loading ..."
+              : "Comments: " + photo.commentsCount
+              + "\nLikes: " + photo.likesCount
     }
 
     Column {

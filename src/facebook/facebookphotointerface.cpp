@@ -49,6 +49,7 @@ FacebookPhotoInterfacePrivate::FacebookPhotoInterfacePrivate(FacebookPhotoInterf
 {
 }
 
+#if 0
 void FacebookPhotoInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
@@ -136,6 +137,7 @@ void FacebookPhotoInterfacePrivate::finishedHandler()
     }
 // >>> finishedHandler
 }
+#endif
 void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                               const QVariantMap &newData)
 {
@@ -196,7 +198,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
+        from->setData(newFromData);
         emit q->fromChanged();
     }
 
@@ -217,7 +219,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         foreach (QVariant tag, newTagsList) {
             QVariantMap tagMap = tag.toMap();
             FacebookPhotoTagInterface *tagInterface = new FacebookPhotoTagInterface(q);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(tagInterface, tagMap);
+            tagInterface->setData(tagMap);
             tags.append(tagInterface);
         }
 
@@ -248,7 +250,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
                 foreach (QVariant nameTag, nameTagList) {
                     QVariantMap nameTagMap = nameTag.toMap();
                     FacebookNameTagInterface *nameTagInterface = new FacebookNameTagInterface(q);
-                    qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(nameTagInterface, nameTagMap);
+                    nameTagInterface->setData(nameTagMap);
                     nameTags.append(nameTagInterface);
                 }
             }
@@ -257,7 +259,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
                 foreach (QVariant nameTag, nameTagList.toList()) {
                     QVariantMap nameTagMap = nameTag.toMap();
                     FacebookNameTagInterface *nameTagInterface = new FacebookNameTagInterface(q);
-                    qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(nameTagInterface, nameTagMap);
+                    nameTagInterface->setData(nameTagMap);
                     nameTags.append(nameTagInterface);
                 }
             }
@@ -282,7 +284,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         foreach (QVariant image, newImagesList) {
             QVariantMap imageMap = image.toMap();
             FacebookPhotoImageInterface *imageInterface = new FacebookPhotoImageInterface(q);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(imageInterface, imageMap);
+            imageInterface->setData(imageMap);
             images.append(imageInterface);
         }
 
@@ -290,14 +292,11 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         emit q->imagesChanged();
     }
 
-    // Check if we are in the second phase (getting info about likes and comments)
-    bool isSecondPhase = newData.contains(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE);
-
     // Check if the user liked this photo
     QString currentUserIdentifier
             = qobject_cast<FacebookInterface*>(q->socialNetwork())->currentUserIdentifier();
     bool newLiked = false;
-    int newLikesCount = isSecondPhase ? 0 : -1;
+    int newLikesCount = 0;
     QVariant likes = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
     if (!likes.isNull()) {
         QVariantMap likesMap = likes.toMap();
@@ -331,7 +330,7 @@ void FacebookPhotoInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     }
 
     // Check infos about comments
-    int newCommentsCount = isSecondPhase ? 0 : -1;
+    int newCommentsCount = 0;
     QVariant comments = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS);
     if (!comments.isNull()) {
         QVariantMap commentsMap = comments.toMap();
@@ -598,6 +597,7 @@ int FacebookPhotoInterface::type() const
     return FacebookInterface::Photo;
 }
 
+#if 0
 /*! \reimp */
 bool FacebookPhotoInterface::remove()
 {
@@ -614,6 +614,8 @@ bool FacebookPhotoInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+#endif
+#if 0
 /*!
     \qmlmethod bool FacebookPhoto::like()
     Initiates a "like" operation on the photo.
@@ -883,6 +885,154 @@ bool FacebookPhotoInterface::removeComment(const QString &commentIdentifier)
 // >>> removeComment
 }
 
+#endif
+/*!
+    \qmlmethod bool FacebookPhoto::like()
+    Initiates a "like" operation on the photo.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the photo will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPhotoInterface::like()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runLike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookPhoto::unlike()
+    Initiates a "delete like" operation on the photo.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the photo will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPhotoInterface::unlike()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUnlike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookPhoto::tagUser(const QString &userId, float xOffset, float yOffset)
+    Initiates a "tag user" operation on the photo.  The user specified
+    by the given \a userId will be tagged into the photo at the position
+    specified by the given \a xOffset and \a yOffset.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the photo will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.*/
+
+bool FacebookPhotoInterface::tagUser(const QString &userId, float xOffset, float yOffset)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runTagUser(socialNetwork(), this, userId, xOffset, yOffset);
+}
+/*!
+    \qmlmethod bool FacebookPhoto::untagUser(const QString &userId)
+    Initiates a "delete tag" operation on the tag which tags the
+    user specified by the given \a userId into the photo.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the photo will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPhotoInterface::untagUser(const QString &userId)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUntagUser(socialNetwork(), this, userId);
+}
+/*!
+    \qmlmethod bool FacebookPhoto::tagText(const QString &text, float xOffset, float yOffset)
+    Initiates a "tag text" operation on the photo.  The position
+    specified by the given \a xOffset and \a yOffset will be tagged
+    with the specified \a text.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the photo will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.*/
+
+bool FacebookPhotoInterface::tagText(const QString &text, float xOffset, float yOffset)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runTagText(socialNetwork(), this, text, xOffset, yOffset);
+}
+/*!
+    \qmlmethod bool FacebookPhoto::untagText(const QString &text)
+    Initiates a "delete tag" operation on the tag specified by
+    the given text.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the photo will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPhotoInterface::untagText(const QString &text)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUntagText(socialNetwork(), this, text);
+}
+/*!
+    \qmlmethod bool FacebookPhoto::uploadComment(const QString &message)
+    Initiates a "post comment" operation on the photo.  The comment
+    will contain the specified \a message.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the photo will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded comment.*/
+
+bool FacebookPhotoInterface::uploadComment(const QString &message)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadComment(socialNetwork(), this, message);
+}
+/*!
+    \qmlmethod bool FacebookPhoto::removeComment(const QString &commentIdentifier)
+    Initiates a "delete comment" operation on the comment specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the photo will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPhotoInterface::removeComment(const QString &commentIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemoveComment(socialNetwork(), this, commentIdentifier);
+}
+
 /*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookPhoto::from
     Holds a reference to the user or profile which uploaded this photo.
@@ -913,8 +1063,7 @@ QDeclarativeListProperty<FacebookPhotoTagInterface> FacebookPhotoInterface::tags
 */
 QString FacebookPhotoInterface::name() const
 {
-    Q_D(const FacebookPhotoInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_NAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_PHOTO_NAME).toString();
 }
 
 /*!
@@ -937,8 +1086,7 @@ QDeclarativeListProperty<FacebookNameTagInterface> FacebookPhotoInterface::nameT
 */
 QUrl FacebookPhotoInterface::icon() const
 {
-    Q_D(const FacebookPhotoInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_PHOTO_ICON).toString().toLocal8Bit());
 }
 
 /*!
@@ -947,8 +1095,7 @@ QUrl FacebookPhotoInterface::icon() const
 */
 QUrl FacebookPhotoInterface::picture() const
 {
-    Q_D(const FacebookPhotoInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_PHOTO_PICTURE).toString().toLocal8Bit());
 }
 
 /*!
@@ -957,8 +1104,7 @@ QUrl FacebookPhotoInterface::picture() const
 */
 QUrl FacebookPhotoInterface::source() const
 {
-    Q_D(const FacebookPhotoInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_PHOTO_SOURCE).toString().toLocal8Bit());
 }
 
 /*!
@@ -967,8 +1113,7 @@ QUrl FacebookPhotoInterface::source() const
 */
 int FacebookPhotoInterface::height() const
 {
-    Q_D(const FacebookPhotoInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_HEIGHT).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_PHOTO_HEIGHT).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -983,8 +1128,7 @@ int FacebookPhotoInterface::height() const
 */
 int FacebookPhotoInterface::width() const
 {
-    Q_D(const FacebookPhotoInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_PHOTO_WIDTH).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -1015,8 +1159,7 @@ QDeclarativeListProperty<FacebookPhotoImageInterface> FacebookPhotoInterface::im
 */
 QUrl FacebookPhotoInterface::link() const
 {
-    Q_D(const FacebookPhotoInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_PHOTO_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -1027,8 +1170,7 @@ QUrl FacebookPhotoInterface::link() const
 */
 QVariantMap FacebookPhotoInterface::place() const
 {
-    Q_D(const FacebookPhotoInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_PLACE).toMap();
+    return data().value(FACEBOOK_ONTOLOGY_PHOTO_PLACE).toMap();
 }
 
 /*!
@@ -1037,8 +1179,7 @@ QVariantMap FacebookPhotoInterface::place() const
 */
 QString FacebookPhotoInterface::createdTime() const
 {
-    Q_D(const FacebookPhotoInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_PHOTO_CREATEDTIME).toString();
 }
 
 /*!
@@ -1047,8 +1188,7 @@ QString FacebookPhotoInterface::createdTime() const
 */
 QString FacebookPhotoInterface::updatedTime() const
 {
-    Q_D(const FacebookPhotoInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_PHOTO_UPDATEDTIME).toString();
 }
 
 /*!
@@ -1081,3 +1221,10 @@ int FacebookPhotoInterface::commentsCount() const
     return d->commentsCount;
 }
 
+
+FacebookPhotoInterface::FacebookPhotoInterface(FacebookPhotoInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookPhotoInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+}

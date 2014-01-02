@@ -45,15 +45,16 @@ Item {
     }
 
     function populate(nodeId) {
-        filterDestructionTestModel.nodeIdentifier = nodeId
-        filterDestructionTestModel.filters = [testFilter]
-        filterDestructionTestModel.populate()
+        filterDestructionTestModel.clear()
+        testFilter.identifier = nodeId
+        filterDestructionTestModel.filter = testFilter
+        filterDestructionTestModel.load()
         view.positionViewAtBeginning()
     }
 
-    ContentItemTypeFilter {
+    FacebookRelatedDataFilter {
         id: testFilter
-        type: Facebook.User
+        connection: Facebook.Friends
     }
 
     Text {

@@ -37,20 +37,19 @@ Item {
     anchors.fill: parent
     signal backClicked
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
+        filter.identifier = nodeId
+        model.load()
         view.positionViewAtBeginning()
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.User
-                limit: 50
-            }
-        ]
+        filter: FacebookRelatedDataFilter {
+            id: filter
+            connection: Facebook.Friends
+            limit: 50
+         }
     }
 
     Text {
@@ -85,7 +84,7 @@ Item {
                 FacebookButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Reload"
-                    onClicked: model.repopulate()
+                    onClicked: model.load()
                 }
                 FacebookButton {
                     anchors.horizontalCenter: parent.horizontalCenter

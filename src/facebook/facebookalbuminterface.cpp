@@ -49,6 +49,7 @@ FacebookAlbumInterfacePrivate::FacebookAlbumInterfacePrivate(FacebookAlbumInterf
 {
 }
 
+#if 0
 void FacebookAlbumInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
@@ -129,6 +130,7 @@ void FacebookAlbumInterfacePrivate::finishedHandler()
     }
 // >>> finishedHandler
 }
+#endif
 void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                               const QVariantMap &newData)
 {
@@ -185,7 +187,7 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
+        from->setData(newFromData);
         emit q->fromChanged();
     }
 
@@ -206,14 +208,11 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
         emit q->albumTypeChanged();
     }
 
-    // Check if we are in the second phase (getting info about likes and comments)
-    bool isSecondPhase = newData.contains(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE);
-
     // Check if the user liked this album
     QString currentUserIdentifier
             = qobject_cast<FacebookInterface*>(q->socialNetwork())->currentUserIdentifier();
     bool newLiked = false;
-    int newLikesCount = isSecondPhase ? 0 : -1;
+    int newLikesCount = 0;
     QVariant likes = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
     if (!likes.isNull()) {
         QVariantMap likesMap = likes.toMap();
@@ -247,7 +246,7 @@ void FacebookAlbumInterfacePrivate::emitPropertyChangeSignals(const QVariantMap 
     }
 
     // Check infos about comments
-    int newCommentsCount = isSecondPhase ? 0 : -1;
+    int newCommentsCount = 0;
     QVariant comments = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS);
     if (!comments.isNull()) {
         QVariantMap commentsMap = comments.toMap();
@@ -382,6 +381,7 @@ int FacebookAlbumInterface::type() const
     return FacebookInterface::Album;
 }
 
+#if 0
 /*! \reimp */
 bool FacebookAlbumInterface::remove()
 {
@@ -398,6 +398,8 @@ bool FacebookAlbumInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+#endif
+#if 0
 /*!
     \qmlmethod bool FacebookAlbum::like()
     Initiates a "like" operation on the album.
@@ -505,7 +507,7 @@ bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
 // >>> removeComment
 }
 /*!
-    \qmlmethod bool FacebookAlbum::uploadPhoto(const QUrl &source, const QString &message)
+    \qmlmethod bool FacebookAlbum::uploadPhoto(const QString &source, const QString &message)
     Initiates a "post photo" operation on the album.  The photo will
     be loaded from the local filesystem and uploaded to Facebook with
     its caption set to the given \a message.
@@ -520,7 +522,7 @@ bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
     will contain the \c id of the newly uploaded photo.
     */
 
-bool FacebookAlbumInterface::uploadPhoto(const QUrl &source, const QString &message)
+bool FacebookAlbumInterface::uploadPhoto(const QString &source, const QString &message)
 {
 // <<< uploadPhoto
     Q_D(FacebookAlbumInterface);
@@ -571,6 +573,118 @@ bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
 // >>> removePhoto
 }
 
+#endif
+/*!
+    \qmlmethod bool FacebookAlbum::like()
+    Initiates a "like" operation on the album.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookAlbumInterface::like()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runLike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::unlike()
+    Initiates a "delete like" operation on the album.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookAlbumInterface::unlike()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUnlike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::uploadComment(const QString &message)
+    Initiates a "post comment" operation on the album.  The comment
+    will contain the specified \a message.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded comment.*/
+
+bool FacebookAlbumInterface::uploadComment(const QString &message)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadComment(socialNetwork(), this, message);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::removeComment(const QString &commentIdentifier)
+    Initiates a "delete comment" operation on the comment specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookAlbumInterface::removeComment(const QString &commentIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemoveComment(socialNetwork(), this, commentIdentifier);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::uploadPhoto(const QString &source, const QString &message)
+    Initiates a "post photo" operation on the album.  The photo will
+    be loaded from the local filesystem and uploaded to Facebook with
+    its caption set to the given \a message.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded photo.
+    */
+
+bool FacebookAlbumInterface::uploadPhoto(const QString &source, const QString &message)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadPhoto(socialNetwork(), this, source, message);
+}
+/*!
+    \qmlmethod bool FacebookAlbum::removePhoto(const QString &photoIdentifier)
+    Initiates a "delete photo" operation on the photo specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the album will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookAlbumInterface::removePhoto(const QString &photoIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemovePhoto(socialNetwork(), this, photoIdentifier);
+}
+
 /*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookAlbum::from
     Holds a reference to the user or profile which created the album.
@@ -587,8 +701,7 @@ FacebookObjectReferenceInterface * FacebookAlbumInterface::from() const
 */
 QString FacebookAlbumInterface::name() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_NAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_NAME).toString();
 }
 
 /*!
@@ -597,8 +710,7 @@ QString FacebookAlbumInterface::name() const
 */
 QString FacebookAlbumInterface::description() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_DESCRIPTION).toString();
 }
 
 /*!
@@ -607,8 +719,7 @@ QString FacebookAlbumInterface::description() const
 */
 QUrl FacebookAlbumInterface::link() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_ALBUM_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -617,8 +728,7 @@ QUrl FacebookAlbumInterface::link() const
 */
 QUrl FacebookAlbumInterface::coverPhoto() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_ALBUM_COVERPHOTO).toString().toLocal8Bit());
 }
 
 /*!
@@ -627,8 +737,7 @@ QUrl FacebookAlbumInterface::coverPhoto() const
 */
 QString FacebookAlbumInterface::privacy() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_PRIVACY).toString();
 }
 
 /*!
@@ -637,8 +746,7 @@ QString FacebookAlbumInterface::privacy() const
 */
 int FacebookAlbumInterface::count() const
 {
-    Q_D(const FacebookAlbumInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_ALBUM_COUNT).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -670,8 +778,7 @@ FacebookAlbumInterface::AlbumType FacebookAlbumInterface::albumType() const
 */
 QString FacebookAlbumInterface::createdTime() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_CREATEDTIME).toString();
 }
 
 /*!
@@ -680,8 +787,7 @@ QString FacebookAlbumInterface::createdTime() const
 */
 QString FacebookAlbumInterface::updatedTime() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_UPDATEDTIME).toString();
 }
 
 /*!
@@ -690,8 +796,7 @@ QString FacebookAlbumInterface::updatedTime() const
 */
 bool FacebookAlbumInterface::canUpload() const
 {
-    Q_D(const FacebookAlbumInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString() == QLatin1String("true");
+    return data().value(FACEBOOK_ONTOLOGY_ALBUM_CANUPLOAD).toString() == QLatin1String("true");
 }
 
 /*!
@@ -724,3 +829,10 @@ int FacebookAlbumInterface::commentsCount() const
     return d->commentsCount;
 }
 
+
+FacebookAlbumInterface::FacebookAlbumInterface(FacebookAlbumInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookAlbumInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+}

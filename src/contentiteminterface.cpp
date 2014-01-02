@@ -38,33 +38,18 @@
 #include <QtDebug>
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
 #include <qjson/parser.h>
+#include <qjson/serializer.h>
 #else
 #include <QJsonDocument>
 #endif
 
 ContentItemInterfacePrivate::ContentItemInterfacePrivate(ContentItemInterface *q)
-    : socialNetworkInterface(0), isInitialized(false), q_ptr(q)
+    : socialNetwork(0), initialized(false), q_ptr(q)
 {
 }
 
 ContentItemInterfacePrivate::~ContentItemInterfacePrivate()
 {
-}
-
-QVariantMap ContentItemInterfacePrivate::data() const
-{
-    return m_data;
-}
-
-void ContentItemInterfacePrivate::setData(const QVariantMap &data)
-{
-    Q_Q(ContentItemInterface);
-    if (m_data != data) {
-        QVariantMap oldData = m_data;
-        m_data = data;
-        emitPropertyChangeSignals(oldData, data);
-        emit q->dataChanged();
-    }
 }
 
 /*
@@ -84,6 +69,10 @@ void ContentItemInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &,
 {
     // Default implementation does nothing.
     // All derived-types must call Super::emitPropertyChangeSignals() in their override.
+}
+
+void ContentItemInterfacePrivate::initializationIncomplete()
+{
 }
 
 /*
@@ -128,6 +117,31 @@ QVariant ContentItemInterfacePrivate::parseReplyDataVariant(const QByteArray &re
     return parsed;
 }
 
+QByteArray ContentItemInterfacePrivate::writeReplyData(const QVariantMap &data, bool *ok)
+{
+    QByteArray serialized;
+#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
+    QJson::Serializer jsonSerializer;
+    serialized = jsonSerializer.serialize(data, ok);
+    if (!*ok) {
+        qWarning() << Q_FUNC_INFO << "Error serializing data:" << jsonSerializer.errorMessage();
+    }
+#else
+    QJsonDocument jsonDocument = QJsonDocument::fromVariant(data);
+    *ok = !jsonDocument.isEmpty();
+    if (!*ok) {
+        qWarning() << Q_FUNC_INFO << "Error serializing data";
+    }
+    serialized = jsonDocument.toJson(QJsonDocument::Compact);
+#endif
+
+    if (!*ok) {
+        serialized.clear();
+    }
+
+    return serialized;
+}
+
 QVariantMap ContentItemInterfacePrivate::parseReplyData(const QByteArray &replyData, bool *ok)
 {
     QVariant data = parseReplyDataVariant(replyData, ok);
@@ -143,16 +157,24 @@ QVariantMap ContentItemInterfacePrivate::parseReplyData(const QByteArray &replyD
     return data.toMap();
 }
 
+void ContentItemInterfacePrivate::socialNetworkDestroyedHandler()
+{
+    Q_Q(ContentItemInterface);
+    q->setSocialNetwork(0);
+}
+
 void ContentItemInterfacePrivate::socialNetworkInitializedChangedHandler()
 {
     Q_Q(ContentItemInterface);
-    if (socialNetworkInterface && socialNetworkInterface->isInitialized()) {
-        q->disconnect(socialNetworkInterface);
-        isInitialized = true;
-        initializationComplete();
+    if (socialNetwork && socialNetwork->isInitialized()) {
+        q->disconnect(socialNetwork, SIGNAL(initializedChanged()),
+                      q, SLOT(socialNetworkInitializedChangedHandler()));
+
+        if (initialized) {
+            initializationComplete();
+        }
     }
 }
-
 
 /*!
     \qmltype ContentItem
@@ -195,8 +217,8 @@ void ContentItemInterface::classBegin()
 void ContentItemInterface::componentComplete()
 {
     Q_D(ContentItemInterface);
-    if (d->socialNetworkInterface && d->socialNetworkInterface->isInitialized()) {
-        d->isInitialized = true;
+    d->initialized = true;
+    if (d->socialNetwork && d->socialNetwork->isInitialized()) {
         d->initializationComplete();
     }
 }
@@ -210,26 +232,33 @@ void ContentItemInterface::componentComplete()
 SocialNetworkInterface *ContentItemInterface::socialNetwork() const
 {
     Q_D(const ContentItemInterface);
-    return d->socialNetworkInterface;
+    return d->socialNetwork;
 }
 
 void ContentItemInterface::setSocialNetwork(SocialNetworkInterface *socialNetwork)
 {
     Q_D(ContentItemInterface);
-    if (d->isInitialized) {
-        qWarning() << Q_FUNC_INFO
-                   << "Can't change social network after content item has been initialized!";
-        return;
-    }
+    if (d->socialNetwork != socialNetwork) {
+        if (d->socialNetwork) {
+            // Disconnect from old social network (if needed)
+            d->socialNetwork->disconnect(this);
+        }
 
-    if (d->socialNetworkInterface != socialNetwork) {
-        if (d->socialNetworkInterface)
-            disconnect(d->socialNetworkInterface);
         if (socialNetwork && !socialNetwork->isInitialized()) {
+            // Connects to new social network (if needed)
             connect(socialNetwork, SIGNAL(initializedChanged()),
                     this, SLOT(socialNetworkInitializedChangedHandler()));
+            d->initializationIncomplete();
+        } else if (d->initialized && socialNetwork && socialNetwork->isInitialized()) {
+            // Initialized, so we call initialization complete
+            d->initializationComplete();
         }
-        d->socialNetworkInterface = socialNetwork;
+        d->socialNetwork = socialNetwork;
+        if (d->socialNetwork) {
+            connect(d->socialNetwork, SIGNAL(destroyed()),
+                    this, SLOT(socialNetworkDestroyedHandler()));
+        }
+
         emit socialNetworkChanged();
     }
 }
@@ -256,7 +285,7 @@ int ContentItemInterface::type() const
 QVariantMap ContentItemInterface::data() const
 {
     Q_D(const ContentItemInterface);
-    return d->data();
+    return d->m_data;
 }
 
 /*!
@@ -275,27 +304,22 @@ bool ContentItemInterface::isIdentifiable() const
     Returns the ContentItem as an IdentifiableContentItem if it is
     identifiable, otherwise returns null.
 */
-IdentifiableContentItemInterface *ContentItemInterface::asIdentifiable()
+IdentifiableContentItemInterface * ContentItemInterface::asIdentifiable()
 {
     return qobject_cast<IdentifiableContentItemInterface*>(this);
 }
 
-void ContentItemInterface::setDataPrivate(const QVariantMap &data)
+void ContentItemInterface::setData(const QVariantMap &data)
 {
     Q_D(ContentItemInterface);
-    d->setData(data);
-}
-
-QVariantMap ContentItemInterface::dataPrivate() const
-{
-    Q_D(const ContentItemInterface);
-    return d->data();
-}
-
-bool ContentItemInterface::isInitialized() const
-{
-    Q_D(const ContentItemInterface);
-    return d->isInitialized;
+    if (d->m_data != data) {
+        QVariantMap oldData = d->m_data;
+        d->m_data = data;
+        d->emitPropertyChangeSignals(oldData, data);
+        emit dataChanged();
+    } else {
+        d->emitPropertyChangeSignals(data, data);
+    }
 }
 
 #include "moc_contentiteminterface.cpp"

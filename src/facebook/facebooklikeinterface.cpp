@@ -86,6 +86,9 @@ int FacebookLikeInterface::type() const
     return FacebookInterface::Like;
 }
 
+#if 0
+
+#endif
 
 /*!
     \qmlproperty QString FacebookLike::userIdentifier
@@ -93,8 +96,7 @@ int FacebookLikeInterface::type() const
 */
 QString FacebookLikeInterface::userIdentifier() const
 {
-    Q_D(const FacebookLikeInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER).toString();
+    return data().value(FACEBOOK_ONTOLOGY_LIKE_USERIDENTIFIER).toString();
 }
 
 /*!
@@ -103,7 +105,13 @@ QString FacebookLikeInterface::userIdentifier() const
 */
 QString FacebookLikeInterface::userName() const
 {
-    Q_D(const FacebookLikeInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_LIKE_USERNAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_LIKE_USERNAME).toString();
 }
 
+
+FacebookLikeInterface::FacebookLikeInterface(FacebookLikeInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

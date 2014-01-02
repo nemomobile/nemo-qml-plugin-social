@@ -99,6 +99,9 @@ int FacebookNameTagInterface::type() const
     return FacebookInterface::NameTag;
 }
 
+#if 0
+
+#endif
 
 /*!
     \qmlproperty QString FacebookNameTag::userIdentifier
@@ -106,8 +109,7 @@ int FacebookNameTagInterface::type() const
 */
 QString FacebookNameTagInterface::userIdentifier() const
 {
-    Q_D(const FacebookNameTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_USERIDENTIFIER).toString();
+    return data().value(FACEBOOK_ONTOLOGY_NAME_TAG_USERIDENTIFIER).toString();
 }
 
 /*!
@@ -116,8 +118,7 @@ QString FacebookNameTagInterface::userIdentifier() const
 */
 QString FacebookNameTagInterface::userName() const
 {
-    Q_D(const FacebookNameTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_USERNAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_NAME_TAG_USERNAME).toString();
 }
 
 /*!
@@ -126,8 +127,7 @@ QString FacebookNameTagInterface::userName() const
 */
 QString FacebookNameTagInterface::nameTagType() const
 {
-    Q_D(const FacebookNameTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE).toString();
+    return data().value(FACEBOOK_ONTOLOGY_NAME_TAG_NAMETAGTYPE).toString();
 }
 
 /*!
@@ -136,8 +136,7 @@ QString FacebookNameTagInterface::nameTagType() const
 */
 int FacebookNameTagInterface::offset() const
 {
-    Q_D(const FacebookNameTagInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_NAME_TAG_OFFSET).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -152,8 +151,7 @@ int FacebookNameTagInterface::offset() const
 */
 int FacebookNameTagInterface::length() const
 {
-    Q_D(const FacebookNameTagInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_NAME_TAG_LENGTH).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -162,3 +160,10 @@ int FacebookNameTagInterface::length() const
     return -1;
 }
 
+
+FacebookNameTagInterface::FacebookNameTagInterface(FacebookNameTagInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

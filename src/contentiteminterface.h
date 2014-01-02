@@ -85,17 +85,18 @@ public:
     void classBegin();
     void componentComplete();
 
-    // Property accessors.
+    // Properties
     SocialNetworkInterface *socialNetwork() const;
+    void setSocialNetwork(SocialNetworkInterface *socialNetwork);
     virtual int type() const;
     QVariantMap data() const;
     virtual bool isIdentifiable() const;
 
-    // Property mutators.
-    void setSocialNetwork(SocialNetworkInterface *socialNetwork);
+    // Invokable API
+    Q_INVOKABLE IdentifiableContentItemInterface * asIdentifiable();
 
-    // Invokable api
-    Q_INVOKABLE IdentifiableContentItemInterface *asIdentifiable();
+    // Non QML API
+    virtual void setData(const QVariantMap &data);
 
 Q_SIGNALS:
     void socialNetworkChanged();
@@ -104,14 +105,11 @@ Q_SIGNALS:
 protected:
     explicit ContentItemInterface(ContentItemInterfacePrivate &dd, QObject *parent = 0);
     QScopedPointer<ContentItemInterfacePrivate> d_ptr;
-    bool isInitialized() const; // TODO: Is this method really useful
 
 private:
     Q_DECLARE_PRIVATE(ContentItemInterface)
     Q_PRIVATE_SLOT(d_func(), void socialNetworkInitializedChangedHandler())
-    void setDataPrivate(const QVariantMap &data);
-    QVariantMap dataPrivate() const;
-    friend class SocialNetworkInterface;
+    Q_PRIVATE_SLOT(d_func(), void socialNetworkDestroyedHandler())
 };
 
 Q_DECLARE_METATYPE(ContentItemInterface*)

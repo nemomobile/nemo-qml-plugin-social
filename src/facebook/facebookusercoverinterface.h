@@ -68,6 +68,8 @@ Q_SIGNALS:
     void photoIdentifierChanged();
     void sourceChanged();
     void offsetYChanged();
+protected:
+    explicit FacebookUserCoverInterface(FacebookUserCoverInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookUserCoverInterface)
 };

@@ -106,11 +106,13 @@ public:
 
     // Overrides.
     int type() const;
+#if 0
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
+#endif
     // Invokable API.
-    Q_INVOKABLE bool uploadPhoto(const QUrl &source, const QString &message = QString());
+    Q_INVOKABLE bool uploadPhoto(const QString &source, const QString &message = QString());
     Q_INVOKABLE bool removePhoto(const QString &photoIdentifier);
     Q_INVOKABLE bool uploadAlbum(const QString &name, const QString &message = QString(), const QVariantMap &privacy = QVariantMap());
     Q_INVOKABLE bool removeAlbum(const QString &albumIdentifier);
@@ -171,6 +173,8 @@ Q_SIGNALS:
     void religionChanged();
     void significantOtherChanged();
     void websiteChanged();
+protected:
+    explicit FacebookUserInterface(FacebookUserInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookUserInterface)
 };

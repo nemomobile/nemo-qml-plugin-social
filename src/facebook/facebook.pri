@@ -26,7 +26,8 @@ HEADERS += \
     $$PWD/facebookpostpropertyinterface.h \
     $$PWD/facebookusercoverinterface.h \
     $$PWD/facebookuserpictureinterface.h \
-    $$PWD/facebookcommentfilterinterface.h
+    $$PWD/facebookitemfilterinterface.h \
+    $$PWD/facebookrelateddatafilterinterface.h
 
 SOURCES += \
     $$PWD/facebookinterface.cpp \
@@ -45,4 +46,5 @@ SOURCES += \
     $$PWD/facebookpostpropertyinterface.cpp \
     $$PWD/facebookusercoverinterface.cpp \
     $$PWD/facebookuserpictureinterface.cpp \
-    $$PWD/facebookcommentfilterinterface.cpp
+    $$PWD/facebookitemfilterinterface.cpp \
+    $$PWD/facebookrelateddatafilterinterface.cpp

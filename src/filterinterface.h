@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Jolla Ltd. <chris.adams@jollamobile.com>
+ * Copyright (C) 2013 Jolla Ltd. <lucien.xu@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -34,16 +34,53 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QVariantMap>
+#include "socialnetworkinterface.h"
 
-class SocialNetworkInterfacePrivate;
-class ContentItemInterface;
-
+class IdentifiableContentItemInterface;
+class SocialNetworkModelInterface;
+class FilterInterfacePrivate;
 class FilterInterface : public QObject
 {
     Q_OBJECT
 public:
+    enum LoadType {
+        Load,
+        LoadPrevious,
+        LoadNext
+    };
+
     explicit FilterInterface(QObject *parent = 0);
     virtual ~FilterInterface();
+
+    // Non QML API
+    // Used by items
+    virtual bool isAcceptable(QObject *item, SocialNetworkInterface *socialNetwork) const;
+    virtual bool performLoadRequest(QObject *item, SocialNetworkInterface *socialNetwork,
+                                    LoadType loadType = Load);
+
+    // Used by SNI
+    bool performSetData(QObject *handle, const QByteArray &data);
+    bool performSetError(QObject *handle, SocialNetworkInterface::ErrorType error,
+                         const QString &errorMessage);
+protected:
+    virtual bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
+                                        LoadType loadType);
+    virtual bool performSetItemDataImpl(IdentifiableContentItemInterface *item,
+                                        SocialNetworkInterface *socialNetwork,
+                                        const QByteArray &data,
+                                        LoadType loadType,
+                                        const QVariantMap &properties);
+    virtual bool performSetModelDataImpl(SocialNetworkModelInterface *model,
+                                         SocialNetworkInterface *socialNetwork,
+                                         const QByteArray &data,
+                                         LoadType loadType,
+                                         const QVariantMap &properties);
+    explicit FilterInterface(FilterInterfacePrivate &dd, QObject *parent = 0);
+    QScopedPointer<FilterInterfacePrivate> d_ptr;
+private:
+    Q_DECLARE_PRIVATE(FilterInterface)
+    Q_PRIVATE_SLOT(d_func(), void socialNetworkDestroyedHandler(QObject*))
+    Q_PRIVATE_SLOT(d_func(), void itemDestroyedHandler(QObject*))
 };
 
 #endif // FILTERINTERFACE_H

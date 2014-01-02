@@ -37,26 +37,27 @@ Item {
     anchors.fill: parent
     signal backClicked
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
+        model.clear()
+        filter.identifier = nodeId
+        model.load()
         view.positionViewAtBeginning()
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Like
-            }
-        ]
+        filter: FacebookRelatedDataFilter {
+            id: filter
+            connection: Facebook.Likes
+        }
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "There are " + model.count + " likes"
+        text: model.status != SocialNetwork.Idle
+              ? "... Loading ..." : "There are " + model.count + " likes"
     }
 
     FacebookButton {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Lucien XU <sfietkonstantin@free.fr>
+ * Copyright (C) 2013 Jolla Ltd. <lucien.xu@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -12,9 +12,9 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * The names of its contributors may not be used to endorse or promote 
- *     products derived from this software without specific prior written 
- *     permission.
+ *   * Neither the name of Nemo Mobile nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
+ *     software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,44 +27,39 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
- */ 
+ */
 
-#ifndef FACEBOOKCOMMENTFILTERINTERFACE_H
-#define FACEBOOKCOMMENTFILTERINTERFACE_H
+#include <QtCore/QMap>
+#include <QtCore/QObject>
+#include <QtCore/QVariantMap>
 
 #include "filterinterface.h"
 
-class FacebookCommentFilterInterfacePrivate;
-class FacebookCommentFilterInterface: public FilterInterface
+template<class T> bool testType(QObject *object)
 {
-    Q_OBJECT
-    Q_ENUMS(RetrieveMode)
-    Q_PROPERTY(int limit READ limit WRITE setLimit NOTIFY limitChanged)
-    Q_PROPERTY(int offset READ offset WRITE setOffset NOTIFY offsetChanged)
-    Q_PROPERTY(RetrieveMode retrieveMode READ retrieveMode WRITE setRetrieveMode
-               NOTIFY retrieveModeChanged)
-public:
-    enum RetrieveMode {
-        RetrieveOffset,
-        RetrieveFirst,
-        RetrieveLatest
-    };
-    explicit FacebookCommentFilterInterface(QObject *parent = 0);
-    virtual ~FacebookCommentFilterInterface();
-    int limit() const;
-    void setLimit(int limit);
-    int offset() const;
-    void setOffset(int offset);
-    RetrieveMode retrieveMode() const;
-    void setRetrieveMode(RetrieveMode retrieveMode);
-Q_SIGNALS:
-    void limitChanged();
-    void offsetChanged();
-    void retrieveModeChanged();
-protected:
-    QScopedPointer<FacebookCommentFilterInterfacePrivate> d_ptr;
-private:
-    Q_DECLARE_PRIVATE(FacebookCommentFilterInterface)
-};
+    return qobject_cast<T *>(object);
+}
 
-#endif // FACEBOOKCOMMENTFILTERINTERFACE_H
+class SocialNetworkInterface;
+class FilterInterfacePrivate
+{
+public:
+    explicit FilterInterfacePrivate(FilterInterface *q);
+    bool addHandle(QObject *handle, QObject *item, SocialNetworkInterface *socialNetwork,
+                   FilterInterface::LoadType loadType);
+    void addHandleProperties(QObject *handle, const QVariantMap &properties);
+protected:
+    FilterInterface * const q_ptr;
+private:
+    Q_DECLARE_PUBLIC(FilterInterface)
+    // Slots
+    void socialNetworkDestroyedHandler(QObject *object);
+    void itemDestroyedHandler(QObject *object);
+
+    QMap<QObject *, QObject *> handlesToItemMap;
+    QMap<QObject *, SocialNetworkInterface *> handlesToSniMap;
+    QMap<QObject *, QVariantMap> handlesToPropertiesMap;
+    QMap<QObject *, FilterInterface::LoadType> handlesToLoadTypeMap;
+    QMultiMap<QObject *, QObject *> sniToHandlesMap;
+    QMap<QObject *, QObject *> itemToHandleMap;
+};

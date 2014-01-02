@@ -43,15 +43,16 @@ Item {
     }
 
     function populate(nodeId) {
-        model.nodeIdentifier = nodeId
-        model.populate()
+        model.clear()
+        friendsFilter.identifier = nodeId
+        model.load()
         view.positionViewAtBeginning()
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [ friendsFilter ]
+        filter: friendsFilter
     }
 
     Text {

@@ -48,6 +48,7 @@ FacebookPostInterfacePrivate::FacebookPostInterfacePrivate(FacebookPostInterface
 {
 }
 
+#if 0
 void FacebookPostInterfacePrivate::finishedHandler()
 {
 // <<< finishedHandler
@@ -123,6 +124,7 @@ void FacebookPostInterfacePrivate::finishedHandler()
     }
 // >>> finishedHandler
 }
+#endif
 void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &oldData,
                                                              const QVariantMap &newData)
 {
@@ -207,7 +209,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newFromId);
         newFromData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newFromName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(from, newFromData);
+        from->setData(newFromData);
         emit q->fromChanged();
     }
 
@@ -229,7 +231,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
             QVariantMap toMap = toEntry.toMap();
             FacebookObjectReferenceInterface *toInterface = new FacebookObjectReferenceInterface(q);
             toMap.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(toInterface, toMap);
+            toInterface->setData(toMap);
             to.append(toInterface);
         }
 
@@ -254,7 +256,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
             QVariantMap messageTagMap
                     = newMessageTagsMap.value(offset).toList().first().toMap();
             FacebookNameTagInterface *messageTagInterface = new FacebookNameTagInterface(q);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(messageTagInterface, messageTagMap);
+            messageTagInterface->setData(messageTagMap);
             messageTags.append(messageTagInterface);
         }
 
@@ -277,7 +279,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         foreach (QVariant property, newPropertiesList) {
             QVariantMap propertyMap = property.toMap();
             FacebookPostPropertyInterface *propertyInterface = new FacebookPostPropertyInterface(q);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(propertyInterface, propertyMap);
+            propertyInterface->setData(propertyMap);
             properties.append(propertyInterface);
         }
 
@@ -300,7 +302,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         foreach (QVariant action, newActionsList) {
             QVariantMap actionMap = action.toMap();
             FacebookPostActionInterface *actionInterface = new FacebookPostActionInterface(q);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(actionInterface, actionMap);
+            actionInterface->setData(actionMap);
             actions.append(actionInterface);
         }
 
@@ -325,7 +327,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         foreach (QString offset, newStoryTagsMap.keys()) {
             QVariantMap storyTagMap = newStoryTagsMap.value(offset).toList().first().toMap();
             FacebookNameTagInterface *storyTagInterface = new FacebookNameTagInterface(q);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(storyTagInterface, storyTagMap);
+            storyTagInterface->setData(storyTagMap);
             storyTags.append(storyTagInterface);
         }
 
@@ -352,8 +354,8 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
             QVariantMap withTagsMap = withTagsEntry.toMap();
             FacebookObjectReferenceInterface *withtagsInterface = new FacebookObjectReferenceInterface(q);
             withTagsMap.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::User);
-            qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(withtagsInterface, withTagsMap);
-            to.append(withtagsInterface);
+            withtagsInterface->setData(withTagsMap);
+            withTags.append(withtagsInterface);
         }
 
         // Emit change signal
@@ -373,18 +375,17 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
         newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTTYPE, FacebookInterface::Application);
         newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTIDENTIFIER, newApplicationId);
         newApplicationData.insert(FACEBOOK_ONTOLOGY_OBJECTREFERENCE_OBJECTNAME, newApplicationName);
-        qobject_cast<FacebookInterface*>(q->socialNetwork())->setFacebookContentItemData(application, newApplicationData);
+        application->setData(newApplicationData);
         emit q->applicationChanged();
     }
 
     // Check if we are in the second phase (getting info about likes and comments)
-    bool isSecondPhase = newData.contains(FACEBOOK_ONTOLOGY_METADATA_SECONDPHASE);
 
     // Check if the user liked this post and infos about likes
     QString currentUserIdentifier
             = qobject_cast<FacebookInterface*>(q->socialNetwork())->currentUserIdentifier();
     bool newLiked = false;
-    int newLikesCount = isSecondPhase ? 0 : -1;
+    int newLikesCount = 0;
     QVariant likes = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_LIKES);
     if (!likes.isNull()) {
         QVariantMap likesMap = likes.toMap();
@@ -418,7 +419,7 @@ void FacebookPostInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
     }
 
     // Check infos about comments
-    int newCommentsCount = isSecondPhase ? 0 : -1;
+    int newCommentsCount = 0;
     QVariant comments = newData.value(FACEBOOK_ONTOLOGY_CONNECTIONS_COMMENTS);
     if (!comments.isNull()) {
         QVariantMap commentsMap = comments.toMap();
@@ -723,6 +724,7 @@ int FacebookPostInterface::type() const
     return FacebookInterface::Post;
 }
 
+#if 0
 /*! \reimp */
 bool FacebookPostInterface::remove()
 {
@@ -739,6 +741,8 @@ bool FacebookPostInterface::reload(const QStringList &whichFields)
 // >>> reload
 }
 
+#endif
+#if 0
 /*!
     \qmlmethod bool FacebookPost::like()
     Initiates a "like" operation on the post.
@@ -846,6 +850,78 @@ bool FacebookPostInterface::removeComment(const QString &commentIdentifier)
 // >>> removeComment
 }
 
+#endif
+/*!
+    \qmlmethod bool FacebookPost::like()
+    Initiates a "like" operation on the post.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the post will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPostInterface::like()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runLike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookPost::unlike()
+    Initiates a "delete like" operation on the post.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the post will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPostInterface::unlike()
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUnlike(socialNetwork(), this);
+}
+/*!
+    \qmlmethod bool FacebookPost::uploadComment(const QString &message)
+    Initiates a "post comment" operation on the post.  The comment
+    will contain the specified \a message.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the post will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.
+    
+    Once the network request completes, the \c responseReceived()
+    signal will be emitted.  The \c data parameter of the signal
+    will contain the \c id of the newly uploaded comment.*/
+
+bool FacebookPostInterface::uploadComment(const QString &message)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runUploadComment(socialNetwork(), this, message);
+}
+/*!
+    \qmlmethod bool FacebookPost::removeComment(const QString &commentIdentifier)
+    Initiates a "delete comment" operation on the comment specified by
+    the given \a identifier.
+    
+    If the network request was started successfully, the function
+    will return true and the status of the post will change to
+    \c SocialNetwork::Busy.  Otherwise, the function will return
+    false.*/
+
+bool FacebookPostInterface::removeComment(const QString &commentIdentifier)
+{
+    if (!prepareAction()) {
+        return false;
+    }
+    return FacebookInterfacePrivate::runRemoveComment(socialNetwork(), this, commentIdentifier);
+}
+
 /*!
     \qmlproperty FacebookObjectReferenceInterface * FacebookPost::from
     Holds a reference to the user or profile which uploaded this post.
@@ -876,8 +952,7 @@ QDeclarativeListProperty<FacebookObjectReferenceInterface> FacebookPostInterface
 */
 QString FacebookPostInterface::message() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_MESSAGE).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_MESSAGE).toString();
 }
 
 /*!
@@ -900,8 +975,7 @@ QDeclarativeListProperty<FacebookNameTagInterface> FacebookPostInterface::messag
 */
 QUrl FacebookPostInterface::picture() const
 {
-    Q_D(const FacebookPostInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_POST_PICTURE).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_POST_PICTURE).toString().toLocal8Bit());
 }
 
 /*!
@@ -910,8 +984,7 @@ QUrl FacebookPostInterface::picture() const
 */
 QUrl FacebookPostInterface::link() const
 {
-    Q_D(const FacebookPostInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_POST_LINK).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_POST_LINK).toString().toLocal8Bit());
 }
 
 /*!
@@ -920,8 +993,7 @@ QUrl FacebookPostInterface::link() const
 */
 QString FacebookPostInterface::name() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_NAME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_NAME).toString();
 }
 
 /*!
@@ -930,8 +1002,7 @@ QString FacebookPostInterface::name() const
 */
 QString FacebookPostInterface::caption() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_CAPTION).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_CAPTION).toString();
 }
 
 /*!
@@ -940,8 +1011,7 @@ QString FacebookPostInterface::caption() const
 */
 QString FacebookPostInterface::description() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_DESCRIPTION).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_DESCRIPTION).toString();
 }
 
 /*!
@@ -950,8 +1020,7 @@ QString FacebookPostInterface::description() const
 */
 QUrl FacebookPostInterface::source() const
 {
-    Q_D(const FacebookPostInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_POST_SOURCE).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_POST_SOURCE).toString().toLocal8Bit());
 }
 
 /*!
@@ -974,8 +1043,7 @@ QDeclarativeListProperty<FacebookPostPropertyInterface> FacebookPostInterface::p
 */
 QUrl FacebookPostInterface::icon() const
 {
-    Q_D(const FacebookPostInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_POST_ICON).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_POST_ICON).toString().toLocal8Bit());
 }
 
 /*!
@@ -998,8 +1066,7 @@ QDeclarativeListProperty<FacebookPostActionInterface> FacebookPostInterface::act
 */
 QString FacebookPostInterface::postType() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_POSTTYPE).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_POSTTYPE).toString();
 }
 
 /*!
@@ -1008,8 +1075,7 @@ QString FacebookPostInterface::postType() const
 */
 QString FacebookPostInterface::story() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_STORY).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_STORY).toString();
 }
 
 /*!
@@ -1046,8 +1112,7 @@ QDeclarativeListProperty<FacebookObjectReferenceInterface> FacebookPostInterface
 */
 QString FacebookPostInterface::objectIdentifier() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_OBJECTIDENTIFIER).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_OBJECTIDENTIFIER).toString();
 }
 
 /*!
@@ -1066,8 +1131,7 @@ FacebookObjectReferenceInterface * FacebookPostInterface::application() const
 */
 QString FacebookPostInterface::createdTime() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_CREATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_CREATEDTIME).toString();
 }
 
 /*!
@@ -1076,8 +1140,7 @@ QString FacebookPostInterface::createdTime() const
 */
 QString FacebookPostInterface::updatedTime() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_UPDATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_UPDATEDTIME).toString();
 }
 
 /*!
@@ -1086,8 +1149,7 @@ QString FacebookPostInterface::updatedTime() const
 */
 int FacebookPostInterface::shares() const
 {
-    Q_D(const FacebookPostInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_POST_SHARES).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_POST_SHARES).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -1102,8 +1164,7 @@ int FacebookPostInterface::shares() const
 */
 bool FacebookPostInterface::hidden() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_HIDDEN).toString() == QLatin1String("true");
+    return data().value(FACEBOOK_ONTOLOGY_POST_HIDDEN).toString() == QLatin1String("true");
 }
 
 /*!
@@ -1112,8 +1173,7 @@ bool FacebookPostInterface::hidden() const
 */
 QString FacebookPostInterface::statusType() const
 {
-    Q_D(const FacebookPostInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_POST_STATUSTYPE).toString();
+    return data().value(FACEBOOK_ONTOLOGY_POST_STATUSTYPE).toString();
 }
 
 /*!
@@ -1146,3 +1206,11 @@ int FacebookPostInterface::commentsCount() const
     return d->commentsCount;
 }
 
+
+FacebookPostInterface::FacebookPostInterface(FacebookPostInterfacePrivate &dd, QObject *parent)
+    : IdentifiableContentItemInterface(dd, parent)
+{
+    Q_D(FacebookPostInterface);
+    d->from = new FacebookObjectReferenceInterface(this);
+    d->application = new FacebookObjectReferenceInterface(this);
+}

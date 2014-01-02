@@ -157,9 +157,12 @@ def generate(structure_file):
     header += "    int type() const;\n"
     
     if struct.identifiable:
+        # TODO: test
+        header += "#if 0\n"
         header += "    Q_INVOKABLE bool remove();\n"
         header += "    Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());\n"
         header += "\n"
+        header += "#endif\n"
         header += "    // Invokable API.\n"
         for method in struct.methods:
             header += "    Q_INVOKABLE bool " + method.name + "("
@@ -189,6 +192,8 @@ def generate(structure_file):
     for property in struct.interfaceProperties:
         propertyName = formattingtools.camelCase(formattingtools.split(property.name))
         header += "    void " + propertyName + "Changed();\n"
+    header += "protected:\n"
+    header += "    explicit " + className + "(" + className + "Private &dd, QObject *parent = 0);\n"
     header += "private:\n"
     header += "    Q_DECLARE_PRIVATE(" + className + ")\n"
     header += "};\n"
@@ -250,7 +255,10 @@ def generate(structure_file):
     private += "public:\n"
     private += "    explicit " + className + "Private(" + className + " *q);\n"
     if struct.identifiable:
+        # TODO: test
+        private += "#if 0\n"
         private += "    void finishedHandler();\n"
+        private += "#endif\n"
     private += "    void emitPropertyChangeSignals(const QVariantMap &oldData, \
 const QVariantMap &newData);\n"
 
@@ -343,6 +351,8 @@ const QVariantMap &newData);\n"
     source += "\n"
     
     if struct.identifiable:
+        # TODO test
+        source += "#if 0\n"
         source += "void " + className + "Private::finishedHandler()\n"
         source += "{\n"
         source += "// <<< finishedHandler\n"
@@ -353,6 +363,7 @@ const QVariantMap &newData);\n"
         source += "// >>> finishedHandler\n"
         source += "}"
         source += "\n"
+        source += "#endif\n"
     
     
     source += "void " + className
@@ -514,6 +525,8 @@ const QVariantMap &newData);\n"
     source += "}\n"
     source += "\n"
     if struct.identifiable:
+        # TODO: test
+        source += "#if 0\n"
         source += "/*! \\reimp */\n"
         source += "bool " + className +  "::remove()\n"
         source += "{\n"
@@ -538,12 +551,15 @@ const QVariantMap &newData);\n"
         source += "// >>> reload\n"
         source += "}\n"
         source += "\n"
+        source += "#endif\n"
     
     
     
+    # TODO: test
+    source += "#if 0\n"
+
     # Methods
     for method in struct.methods:
-        
         signature = "bool " + className + "::" + method.name + "("
         docSignature = "bool " + qmlClassName + "::" + method.name + "("
         parameterList = []
@@ -573,7 +589,46 @@ const QVariantMap &newData);\n"
         source += "// >>> " + method.name + "\n"
         source += "}\n"
     source += "\n"
+
+    source += "#endif\n"
+    
+    # TODO: remove previous tests when these methods are fully implemented
+    # Methods
+    for method in struct.methods:
+        signature = "bool " + className + "::" + method.name + "("
+        docSignature = "bool " + qmlClassName + "::" + method.name + "("
+        parameterList = []
+        for parameter in method.parameters:
+            parameterName = getParameterType(parameter)
+            if parameterName[-1] != "*" and parameterName[-1] != "&":
+                parameterName += " "
+            parameterName += parameter.name
+            parameterList.append(parameterName)
+        signature += ", ".join(parameterList)
+        signature += ")"
+        docSignature += ", ".join(parameterList)
+        docSignature += ")"
         
+        arguments = []
+        arguments.append("socialNetwork()")
+        arguments.append("this")
+        for parameter in method.parameters:
+            arguments.append(parameter.name)
+        
+        source += "/*!\n"
+        source += "    \\qmlmethod " + docSignature + "\n"
+        source += indent(method.doc, 1)
+        source += "*/\n"
+        source += "\n"
+        source += signature + "\n"
+        source += "{\n"
+        source += "    if (!prepareAction()) {\n"
+        source += "        return false;\n"
+        source += "    }\n"
+        source += "    return " + writerhelper.socialNetwork() + "InterfacePrivate::run"
+        source += method.name[0].upper() + method.name[1:] + "(" + ", ".join(arguments) + ");\n"
+        source += "}\n"
+    source += "\n"
     
     
     
@@ -590,10 +645,10 @@ const QVariantMap &newData);\n"
             source += " const"
         source += "\n"
         source += "{\n"
-        if not property.isList:
+        if not property.isList and property.custom:
             source += "    Q_D(const " + className + ");\n"
         if not property.custom:
-            line = "d->data().value(" 
+            line = "data().value("
             line += writerhelper.ontologyKey(splittedPropertyName, prefix) + ")"
             source += indent(typehelper.convert(type, line), 1) + "\n"
         else:
@@ -612,6 +667,20 @@ const QVariantMap &newData);\n"
     if len(struct.extraSource) > 0:
         source += indent(struct.extraPublic, 0)
         source += "\n"
+        
+    source += "\n"
+    source += className + "::" + className + "(" + className + "Private &dd, QObject *parent)\n"
+    if struct.identifiable:
+        source += "    : IdentifiableContentItemInterface(dd, parent)\n"
+    else:
+        source += "    : ContentItemInterface(dd, parent)\n"
+    source += "{\n"
+    if "constructor" in patcherDataSource["markers"]:
+        source += patcherDataSource["data"]["constructor"]
+    else:
+        source += "    // TODO Rerun generator scripts to copy the content\n"
+        source += "    // of the default constructor to the D-pointer constructor\n"
+    source += "}\n"
 
     try:
         f = open(className.lower() + ".cpp", "w")

@@ -41,6 +41,7 @@
 #include <QtNetwork/QSslError>
 
 #include "socialnetworkinterface.h"
+#include "filterinterface.h"
 
 #define NEMOQMLPLUGINS_SOCIAL_CONTENTITEMID QLatin1String("org.nemomobile.social.contentitem.id")
 
@@ -71,48 +72,65 @@ class IdentifiableContentItemInterface : public ContentItemInterface
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString identifier READ identifier WRITE setIdentifier NOTIFY identifierChanged)
+    Q_PROPERTY(QString identifier READ identifier NOTIFY identifierChanged)
+    Q_PROPERTY(FilterInterface * filter READ filter WRITE setFilter NOTIFY filterChanged)
     Q_PROPERTY(SocialNetworkInterface::Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(SocialNetworkInterface::ErrorType error READ error NOTIFY errorChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
-    Q_ENUMS(SocialNetworkInterface::Status)
-    Q_ENUMS(SocialNetworkInterface::ErrorType)
+    Q_PROPERTY(SocialNetworkInterface::Status actionStatus READ actionStatus
+               NOTIFY actionStatusChanged)
+    Q_PROPERTY(SocialNetworkInterface::ErrorType actionError READ actionError
+               NOTIFY actionErrorChanged)
+    Q_PROPERTY(QString actionErrorMessage READ actionErrorMessage NOTIFY actionErrorMessageChanged)
 
 public:
     explicit IdentifiableContentItemInterface(QObject *parent = 0);
 
-    // overrides.
+    // Overrides
     bool isIdentifiable() const;
 
-    // properties
+    // Properties
     QString identifier() const;
-    void setIdentifier(const QString &id);
-
+    FilterInterface * filter() const;
+    void setFilter(FilterInterface *filter);
     SocialNetworkInterface::Status status() const;
     SocialNetworkInterface::ErrorType error() const;
     QString errorMessage() const;
+    SocialNetworkInterface::Status actionStatus() const;
+    SocialNetworkInterface::ErrorType actionError() const;
+    QString actionErrorMessage() const;
 
-    // invokable api.
-    Q_INVOKABLE virtual bool remove();
-    Q_INVOKABLE virtual bool reload(const QStringList &whichFields = QStringList());
+    // Invokable API
+    Q_INVOKABLE bool load();
+
+    // Non QML API
+    void setData(const QVariantMap &data);
+    void setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage);
+    void setActionComplete();
+    void setActionError(SocialNetworkInterface::ErrorType actionError,
+                        const QString &actionErrorMessage);
+
 
 Q_SIGNALS:
+    void loaded(bool ok);
+    void actionComplete(bool ok);
     void responseReceived(const QVariantMap &data);
     void identifierChanged();
+    void filterChanged();
     void statusChanged();
     void errorChanged();
     void errorMessageChanged();
+    void actionStatusChanged();
+    void actionErrorChanged();
+    void actionErrorMessageChanged();
 
 protected:
+    bool prepareAction();
     explicit IdentifiableContentItemInterface(IdentifiableContentItemInterfacePrivate &dd,
                                               QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(IdentifiableContentItemInterface)
-    Q_PRIVATE_SLOT(d_func(), void finishedHandler())
-    Q_PRIVATE_SLOT(d_func(), void removeHandler())
-    Q_PRIVATE_SLOT(d_func(), void reloadHandler())
-    Q_PRIVATE_SLOT(d_func(), void errorHandler(QNetworkReply::NetworkError))
-    Q_PRIVATE_SLOT(d_func(), void sslErrorsHandler(const QList<QSslError>&))
+    Q_PRIVATE_SLOT(d_func(), void filterDestroyedHandler())
 };
 
 Q_DECLARE_METATYPE(IdentifiableContentItemInterface*)

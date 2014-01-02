@@ -74,6 +74,8 @@ Q_SIGNALS:
     void nameTagTypeChanged();
     void offsetChanged();
     void lengthChanged();
+protected:
+    explicit FacebookNameTagInterface(FacebookNameTagInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookNameTagInterface)
 };

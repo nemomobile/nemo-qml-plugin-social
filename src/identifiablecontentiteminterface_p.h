@@ -49,41 +49,29 @@ public:
     explicit IdentifiableContentItemInterfacePrivate(IdentifiableContentItemInterface *q);
     virtual ~IdentifiableContentItemInterfacePrivate();
 
-    QNetworkReply *reply(); // returns currentReply
-    void deleteReply();     // disconnect()s and then deleteLater()s currentReply, sets to null.  DOES NOT SET STATE.
-
-    // sets reply() - caller takes ownership and must call deleteReply()
-    bool request(RequestType requestType,
-                 const QString &objectIdentifier,
-                 const QString &extraPath = QString(),
-                 const QStringList &whichFields = QStringList(), // only valid for GET  requests
-                 const QVariantMap &postData = QVariantMap(),    // only valid for POST requests
-                 const QVariantMap &extraData = QVariantMap());  // social-network-specific.
-
     virtual void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
-    virtual void initializationComplete();
-
-    void connectFinishedAndErrors();
-    void connectErrors();
-
-    // Slots
-    virtual void finishedHandler();
-    virtual void removeHandler();
-    virtual void reloadHandler();
-    virtual void errorHandler(QNetworkReply::NetworkError networkError);
-    virtual void sslErrorsHandler(const QList<QSslError> &sslErrors);
+    void initializationIncomplete();
+    void initializationComplete();
 
     SocialNetworkInterface::Status status;
     SocialNetworkInterface::ErrorType error;
-    QString identifier;
     QString errorMessage;
+    SocialNetworkInterface::Status actionStatus;
+    SocialNetworkInterface::ErrorType actionError;
+    QString actionErrorMessage;
+    QString identifier;
+    FilterInterface *filter;
 
-    bool needsReload;
+//    bool needsLoad;
 
+protected:
+    // Slots
+    void socialNetworkDestroyedHandler();
 
 private:
+    // Slots
+    void filterDestroyedHandler();
     Q_DECLARE_PUBLIC(IdentifiableContentItemInterface)
-    QNetworkReply *currentReply; // may only be written to if status != Busy.  MUST be valid at all times, or zero.
 };
 
 #endif // IDENTIFIABLECONTENTITEMINTERFACE_P_H

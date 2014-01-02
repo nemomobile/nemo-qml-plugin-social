@@ -90,6 +90,9 @@ int FacebookPhotoImageInterface::type() const
     return FacebookInterface::PhotoImage;
 }
 
+#if 0
+
+#endif
 
 /*!
     \qmlproperty QUrl FacebookPhotoImage::source
@@ -97,8 +100,7 @@ int FacebookPhotoImageInterface::type() const
 */
 QUrl FacebookPhotoImageInterface::source() const
 {
-    Q_D(const FacebookPhotoImageInterface);
-    return QUrl::fromEncoded(d->data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGE_SOURCE).toString().toLocal8Bit());
+    return QUrl::fromEncoded(data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGE_SOURCE).toString().toLocal8Bit());
 }
 
 /*!
@@ -107,8 +109,7 @@ QUrl FacebookPhotoImageInterface::source() const
 */
 int FacebookPhotoImageInterface::width() const
 {
-    Q_D(const FacebookPhotoImageInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGE_WIDTH).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGE_WIDTH).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -123,8 +124,7 @@ int FacebookPhotoImageInterface::width() const
 */
 int FacebookPhotoImageInterface::height() const
 {
-    Q_D(const FacebookPhotoImageInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGE_HEIGHT).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_PHOTO_IMAGE_HEIGHT).toString();
     bool ok;
     int number = numberString.toInt(&ok);
     if (ok) {
@@ -133,3 +133,10 @@ int FacebookPhotoImageInterface::height() const
     return -1;
 }
 
+
+FacebookPhotoImageInterface::FacebookPhotoImageInterface(FacebookPhotoImageInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Rerun generator scripts to copy the content
+    // of the default constructor to the D-pointer constructor
+}

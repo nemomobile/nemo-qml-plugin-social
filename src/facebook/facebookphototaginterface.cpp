@@ -122,6 +122,9 @@ int FacebookPhotoTagInterface::type() const
     return FacebookInterface::PhotoTag;
 }
 
+#if 0
+
+#endif
 
 /*!
     \qmlproperty QString FacebookPhotoTag::userIdentifier
@@ -129,8 +132,7 @@ int FacebookPhotoTagInterface::type() const
 */
 QString FacebookPhotoTagInterface::userIdentifier() const
 {
-    Q_D(const FacebookPhotoTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_USERIDENTIFIER).toString();
+    return data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_USERIDENTIFIER).toString();
 }
 
 /*!
@@ -160,8 +162,7 @@ QString FacebookPhotoTagInterface::text() const
 */
 float FacebookPhotoTagInterface::x() const
 {
-    Q_D(const FacebookPhotoTagInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_X).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_X).toString();
     bool ok;
     float number = numberString.toFloat(&ok);
     if (ok) {
@@ -177,8 +178,7 @@ float FacebookPhotoTagInterface::x() const
 */
 float FacebookPhotoTagInterface::y() const
 {
-    Q_D(const FacebookPhotoTagInterface);
-    QString numberString = d->data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_Y).toString();
+    QString numberString = data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_Y).toString();
     bool ok;
     float number = numberString.toFloat(&ok);
     if (ok) {
@@ -193,7 +193,12 @@ float FacebookPhotoTagInterface::y() const
 */
 QString FacebookPhotoTagInterface::createdTime() const
 {
-    Q_D(const FacebookPhotoTagInterface);
-    return d->data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_CREATEDTIME).toString();
+    return data().value(FACEBOOK_ONTOLOGY_PHOTO_TAG_CREATEDTIME).toString();
 }
 
+
+FacebookPhotoTagInterface::FacebookPhotoTagInterface(FacebookPhotoTagInterfacePrivate &dd, QObject *parent)
+    : ContentItemInterface(dd, parent)
+{
+    // TODO Implement initialization of custom attributes if needed
+}

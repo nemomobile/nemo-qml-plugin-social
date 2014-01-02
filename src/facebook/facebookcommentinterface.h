@@ -60,9 +60,11 @@ public:
 
     // Overrides.
     int type() const;
+#if 0
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool reload(const QStringList &whichFields = QStringList());
 
+#endif
     // Invokable API.
     Q_INVOKABLE bool like();
     Q_INVOKABLE bool unlike();
@@ -85,6 +87,8 @@ Q_SIGNALS:
     void canCommentChanged();
     void commentCountChanged();
     void likedChanged();
+protected:
+    explicit FacebookCommentInterface(FacebookCommentInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookCommentInterface)
 };

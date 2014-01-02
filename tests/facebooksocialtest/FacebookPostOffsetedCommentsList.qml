@@ -39,36 +39,54 @@ Item {
     signal backClicked
     function populate() {
         // Jolla announce that the 1st batch is booked
-        var nodeId = "324048634313353_603842659667281"
-
-        if (currentIdentifier == nodeId) {
-            model.repopulate()
-            return
-        }
-
-        model.nodeIdentifier = nodeId
-        model.populate()
+        post.load()
+        model.clear()
         view.positionViewAtBeginning()
+    }
+
+    FacebookPost {
+        id: post
+        socialNetwork: facebook
+        filter: FacebookItemFilter {
+            fields: "id,likes,comments"
+            identifier: "324048634313353_603842659667281"
+        }
+        onLoaded: {
+            if (status == Facebook.Idle) {
+                // Compute the offset
+                var offset = Math.floor(post.commentsCount / model.filter.limit) * model.filter.limit
+                model.filter.offset = offset
+                model.load()
+            }
+        }
     }
 
     SocialNetworkModel {
         id: model
         socialNetwork: facebook
-        filters: [
-            FacebookCommentFilter {
-                retrieveMode: FacebookCommentFilter.RetrieveLatest
-                limit: 5
-            }
-        ]
+        filter: FacebookRelatedDataFilter {
+            identifier: "324048634313353_603842659667281"
+            connection: Facebook.Comments
+            limit: 5
+        }
+
+//        filters: [
+//            FacebookCommentFilter {
+//                retrieveMode: FacebookCommentFilter.RetrieveLatest
+//                limit: 5
+//            }
+//        ]
     }
 
     Text {
         id: topLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        text: model.node == null ? "... Loading ..."
-              : "Comments: " + (model.node.commentsCount == -1 ? "..." : model.node.commentsCount)
-              + "\nLikes: " + (model.node.likesCount == -1 ? "..." : model.node.likesCount)
+        text: post.status == Facebook.Busy || model.status == Facebook.Busy
+              ? "... Loading ..."
+              : (post.status == Facebook.Error || model.status == Facebook.Error
+                 ? "Error"
+                 : "Comments: " + post.commentsCount + "\nLikes: " + post.likesCount)
     }
 
     FacebookButton {

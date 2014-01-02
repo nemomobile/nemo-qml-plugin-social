@@ -40,7 +40,9 @@ class FacebookCommentInterfacePrivate: public IdentifiableContentItemInterfacePr
 {
 public:
     explicit FacebookCommentInterfacePrivate(FacebookCommentInterface *q);
+#if 0
     void finishedHandler();
+#endif
     void emitPropertyChangeSignals(const QVariantMap &oldData, const QVariantMap &newData);
     FacebookInterfacePrivate::FacebookAction action;
     FacebookObjectReferenceInterface *from;

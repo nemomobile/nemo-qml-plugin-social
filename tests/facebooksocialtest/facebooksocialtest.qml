@@ -132,14 +132,14 @@ Item {
         }
     }
 
-    ContentItemTypeFilter {
+    FacebookRelatedDataFilter {
         id: commentsFilter
-        type: Facebook.Comment
+        connection: Facebook.Comments
     }
 
-    ContentItemTypeFilter {
+    FacebookRelatedDataFilter {
         id: friendsFilter
-        type: Facebook.User
+        connection: Facebook.Friends
     }
 
     ListView {
@@ -208,24 +208,25 @@ Item {
                     if (model.which == -1) {
                         Qt.quit()
                     } else if (model.which == -2) {
-                        if(!portraitModel.retrieved) {
-                            portraitModel.populate()
+                        if(!portraitUser.asked) {
+                            portraitUser.load()
                             root.whichActive = -1
                         } else {
-                            portraitModel.displayPortraitUrl()
+                            portraitUser.displayPortraitUrl()
                         }
                     } else if(model.which == -3) {
-                        if (user.identifier == "me") {
+                        if (userFilter.identifier == "me") {
                             user.displayUser()
                             return
                         }
 
                         root.whichActive = -3
-                        user.identifier = "me"
+                        userFilter.identifier = "me"
+                        user.load()
                     } else if(model.which == -4) {
-                        if (!nsuffysModel.retrieved) {
+                        if (!nsuffysUser.asked) {
                             root.whichActive = -4
-                            nsuffysModel.populate()
+                            nsuffysUser.load()
                         }
                     } else {
                         makeActive(model.which, facebook.currentUserIdentifier)
@@ -240,22 +241,18 @@ Item {
         visible: whichActive == 7
         onBackClicked: back(0)
         onPostClicked: makeActive(8, postId)
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Post
-            }
-        ]
+        filter: FacebookRelatedDataFilter {
+            connection: Facebook.Feed
+        }
     }
 
     FacebookPostList {
         id: homeList
         visible: whichActive == 11
         onBackClicked: back(0)
-        filters: [
-            ContentItemTypeFilter {
-                type: Facebook.Home
-            }
-        ]
+        filter: FacebookRelatedDataFilter {
+            connection: Facebook.Home
+        }
     }
 
     FacebookPostCommentsList {
@@ -316,29 +313,27 @@ Item {
     SocialNetworkModel {
         id: filterDestructionTestModel
         socialNetwork: facebook
-
-        onStatusChanged: {
-            if (status == SocialNetwork.Invalid) {
-                console.debug("The status of the filter destruction test model is now Invalid")
-            }
-        }
+        onFilterChanged: console.debug("Current filter: " + filter)
     }
 
-    SocialNetworkModel {
-        id: portraitModel
-        property bool retrieved: false
-        function displayPortraitUrl() {
-            console.debug("User picture: " + portraitModel.node.picture.url)
+    FacebookUser {
+        id: portraitUser
+        socialNetwork: facebook
+        filter: FacebookItemFilter {
+            identifier: facebook.currentUserIdentifier
+            fields: "id,picture"
         }
 
-        socialNetwork: facebook
-        nodeIdentifier: facebook.currentUserIdentifier
-        filters: [ ContentItemTypeFilter { type: Facebook.UserPicture } ]
-        onStatusChanged: {
+        property bool asked: false
+        function displayPortraitUrl() {
+            console.debug("User picture: " + picture.url)
+        }
+
+        onLoaded: {
             if (status == Facebook.Idle) {
+                asked = true
                 displayPortraitUrl()
                 root.whichActive = 0
-                portraitModel.retrieved = true
             }
         }
     }
@@ -346,6 +341,11 @@ Item {
     FacebookUser {
         id: user
         socialNetwork: facebook
+        filter: FacebookItemFilter {
+            id: userFilter
+            fields: "id,name"
+        }
+
         function displayUser() {
             if (user.name != "") {
                 console.debug("Current user name: " + user.name)
@@ -356,19 +356,30 @@ Item {
             if (status == Facebook.Idle) {
                 displayUser()
                 root.whichActive = 0
+            } else if (status == Facebook.Error) {
+                console.debug("Error !")
+                root.whichActive = 0
             }
         }
     }
 
-    SocialNetworkModel {
-        id: nsuffysModel
-        property bool retrieved: false
+    FacebookUser {
+        id: nsuffysUser
         socialNetwork: facebook
-        nodeIdentifier: "1069515276"
-        onNodeChanged: {
-            if (node != null) {
-                console.debug("Test user retrieved: " + nsuffysModel.node.name)
-                nsuffysModel.retrieved = true
+        filter: FacebookItemFilter {
+            identifier: "1069515276"
+            fields: "id,name"
+        }
+
+        property bool asked: false
+
+        onLoaded: {
+            if (status == Facebook.Idle) {
+                asked = true
+                console.debug("Test user retrieved: " + nsuffysUser.name)
+                root.whichActive = 0
+            } else if (status == Facebook.Error) {
+                console.debug("Error !")
                 root.whichActive = 0
             }
         }
