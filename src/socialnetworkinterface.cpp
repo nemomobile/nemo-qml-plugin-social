@@ -278,11 +278,8 @@ void SocialNetworkInterfacePrivate::finishedHandler()
     FilterInterface *filter = replyToFilterMap.value(reply);
     QByteArray data = preprocessData(reply->readAll());
     if (reply->error() != QNetworkReply::NoError) {
-        QString errorMessage = networkErrorString(reply->error());
-        if (!data.isEmpty()) {
-            errorMessage.append(QString(" Downloaded data: %1").arg(QString(data)));
-        }
-        filter->performSetError(reply, SocialNetworkInterface::RequestError, errorMessage);
+        const ErrorData &errorData = getError(data, reply->error());
+        filter->performSetError(reply, errorData.first, errorData.second);
     } else {
         filter->performSetData(reply, data);
     }
@@ -310,11 +307,8 @@ void SocialNetworkInterfacePrivate::actionFinishedHandler()
 
     QByteArray data = reply->readAll();
     if (reply->error() != QNetworkReply::NoError) {
-        QString errorMessage = networkErrorString(reply->error());
-        if (!data.isEmpty()) {
-            errorMessage.append(QString(" Downloaded data: %1").arg(QString(data)));
-        }
-        item->setActionError(SocialNetworkInterface::RequestError, errorMessage);
+        const ErrorData &errorData = getError(data, reply->error());
+        item->setActionError(errorData.first, errorData.second);
     } else {
         performAction(item, properties);
     }
@@ -328,6 +322,18 @@ void SocialNetworkInterfacePrivate::actionFinishedHandler()
 QByteArray SocialNetworkInterfacePrivate::preprocessData(const QByteArray &data)
 {
     return data;
+}
+
+// Get called only after a download error
+// Can be reimplemented to return specific SN errors
+ErrorData SocialNetworkInterfacePrivate::getError(const QByteArray &data,
+                                                  QNetworkReply::NetworkError error)
+{
+    QString errorMessage = networkErrorString(error);
+    if (!data.isEmpty()) {
+        errorMessage.append(QString(" Downloaded data: %1").arg(QString(data)));
+    }
+    return ErrorData(SocialNetworkInterface::NetworkError, errorMessage);
 }
 
 void SocialNetworkInterfacePrivate::performAction(IdentifiableContentItemInterface *item,

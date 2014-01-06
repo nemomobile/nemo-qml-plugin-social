@@ -666,6 +666,30 @@ QByteArray FacebookInterfacePrivate::preprocessData(const QByteArray &data)
     return data;
 }
 
+ErrorData FacebookInterfacePrivate::getError(const QByteArray &data,
+                                             QNetworkReply::NetworkError error)
+{
+    bool ok = false;
+    QVariantMap dataMap = ContentItemInterfacePrivate::parseReplyData(data, &ok);
+    if (!ok) { // Failed to parse data, let caller manage
+        return SocialNetworkInterfacePrivate::getError(data, error);
+    }
+
+    if (!dataMap.contains("error")) {
+        return SocialNetworkInterfacePrivate::getError(data, error);
+    }
+
+    QVariantMap errorMap = dataMap.value("error").toMap();
+
+    QString code = errorMap.value("code").toString();
+    QString subCode = errorMap.value("error_subcode").toString();
+    QString type = errorMap.value("type").toString();
+    QString message = errorMap.value("message").toString();
+
+    QString errorMessage = QString("Code: %1\nSubcode: %2\nType: %3\nMessage: %4").arg(code, subCode, type, message);
+    return ErrorData(SocialNetworkInterface::SocialNetworkError, errorMessage);
+}
+
 void FacebookInterfacePrivate::performAction(IdentifiableContentItemInterface *item,
                                              const QVariantMap &properties)
 {

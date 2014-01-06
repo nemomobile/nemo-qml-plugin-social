@@ -230,6 +230,7 @@ public:
 
 protected:
     QByteArray preprocessData(const QByteArray &data);
+    ErrorData getError(const QByteArray &data, QNetworkReply::NetworkError error);
     void performAction(IdentifiableContentItemInterface *item,
                        const QVariantMap &properties);
     // Reimplemented

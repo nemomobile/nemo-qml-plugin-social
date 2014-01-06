@@ -104,7 +104,7 @@ void SocialNetworkModelInterfacePrivate::socialNetworkDestroyedHandler()
 void SocialNetworkModelInterfacePrivate::filterDestroyedHandler()
 {
     Q_Q(SocialNetworkModelInterface);
-    q->setError(SocialNetworkInterface::OtherError, "Filter is destroyed during request");
+    q->setError(SocialNetworkInterface::InternalError, "Filter is destroyed during request");
     q->setFilter(0);
 }
 

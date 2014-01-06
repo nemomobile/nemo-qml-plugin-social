@@ -229,7 +229,7 @@ bool FacebookRelatedDataFilterInterface::performSetModelDataImpl(SocialNetworkMo
     if (!ok) {
         QString errorMessage = QString(QLatin1String("Unable to parse downloaded data. "\
                                                      "Downloaded data: %1")).arg(QString(data));
-        model->setError(SocialNetworkInterface::DataUpdateError, errorMessage);
+        model->setError(SocialNetworkInterface::DataError, errorMessage);
         return false;
     }
 

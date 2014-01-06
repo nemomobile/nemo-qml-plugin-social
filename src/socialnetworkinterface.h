@@ -82,10 +82,15 @@ public:
 //        AccountError = 1,
 //        SignOnError = 2,
 //        BusyError = 3,
-        RequestError = 4,
-        DataUpdateError = 5,
-        OtherError = 6,
+//        RequestError = 4,
+//        DataUpdateError = 5,
+//        OtherError = 6,
 //        LastError = 255
+        NetworkError = 1, // Network error
+        DataError = 2, // Failed to process data coming from SN
+        SocialNetworkError = 3, // SN emitting an error
+        InternalError = 4 // Other nemo-social error
+
     };
     enum ContentType {
         NotInitialized = 0,

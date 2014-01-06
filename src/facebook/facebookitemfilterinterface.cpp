@@ -138,7 +138,7 @@ bool FacebookItemFilterInterface::performSetItemDataImpl(IdentifiableContentItem
     if (!ok) {
         QString errorMessage = QString(QLatin1String("Unable to parse downloaded data. "\
                                                      "Downloaded data: %1")).arg(QString(data));
-        item->setError(SocialNetworkInterface::DataUpdateError, errorMessage);
+        item->setError(SocialNetworkInterface::DataError, errorMessage);
         return false;
     }
 

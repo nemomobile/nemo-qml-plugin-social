@@ -57,6 +57,8 @@ class QNetworkAccessManager;
 
 //class SocialNetworkInterfacePrivate;
 
+typedef QPair<SocialNetworkInterface::ErrorType, QString> ErrorData;
+
 class ArbitraryRequestHandler : public QObject
 {
     Q_OBJECT
@@ -180,9 +182,12 @@ private:
 
 protected:
     virtual QByteArray preprocessData(const QByteArray &data);
+    // Reimplement to handle errors
+    virtual ErrorData getError(const QByteArray &data, QNetworkReply::NetworkError error);
+
+    // Reimplement to handle action
     virtual void performAction(IdentifiableContentItemInterface *item,
                                const QVariantMap &properties);
-    // Reimplement to handle action
 
 
     SocialNetworkInterface * const q_ptr;

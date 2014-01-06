@@ -131,7 +131,8 @@ void IdentifiableContentItemInterfacePrivate::socialNetworkDestroyedHandler()
 {
     Q_Q(IdentifiableContentItemInterface);
     if (actionStatus != SocialNetworkInterface::Idle) {
-        q->setActionError(SocialNetworkInterface::OtherError, "SocialNetwork is destroyed during request");
+        q->setActionError(SocialNetworkInterface::InternalError,
+                          "SocialNetwork is destroyed during request");
     }
     ContentItemInterfacePrivate::socialNetworkDestroyedHandler();
 }
@@ -139,7 +140,7 @@ void IdentifiableContentItemInterfacePrivate::socialNetworkDestroyedHandler()
 void IdentifiableContentItemInterfacePrivate::filterDestroyedHandler()
 {
     Q_Q(IdentifiableContentItemInterface);
-    q->setError(SocialNetworkInterface::OtherError, "Filter is destroyed during request");
+    q->setError(SocialNetworkInterface::InternalError, "Filter is destroyed during request");
     q->setFilter(0);
 }
 

@@ -75,7 +75,7 @@ void FilterInterfacePrivate::socialNetworkDestroyedHandler(QObject *object)
     Q_Q(FilterInterface);
     if (sniToHandlesMap.contains(object)) {
         foreach (QObject *handle, sniToHandlesMap.values(object)) {
-            q->performSetError(handle, SocialNetworkInterface::OtherError,
+            q->performSetError(handle, SocialNetworkInterface::InternalError,
                                "SocialNetwork is destroyed during request");
         }
     }

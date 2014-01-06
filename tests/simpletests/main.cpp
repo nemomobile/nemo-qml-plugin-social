@@ -534,7 +534,7 @@ private slots:
         }
 
         if (icii->status() == SocialNetworkInterface::Error) {
-            QCOMPARE(icii->error(), SocialNetworkInterface::RequestError);
+            QCOMPARE(icii->error(), SocialNetworkInterface::NetworkError);
         }
 
         icii->deleteLater();
