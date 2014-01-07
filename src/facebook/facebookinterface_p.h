@@ -102,7 +102,7 @@ public:
     // and also get the path in the API.
     static inline void typeAndPath(FacebookInterface::ConnectionType connection,
                                    FacebookInterface::ContentItemType &contentType,
-                                   QString &path)
+                                   QString &path, QMap<QString, QString> &extraArguments)
     {
         switch (connection) {
             case FacebookInterface::Albums:
@@ -131,6 +131,7 @@ public:
                 break;
             case FacebookInterface::Notifications:
                 path = QLatin1String("notifications");
+                extraArguments.insert("include_read", "1");
                 contentType = FacebookInterface::Notification;
                 break;
             case FacebookInterface::Photos:

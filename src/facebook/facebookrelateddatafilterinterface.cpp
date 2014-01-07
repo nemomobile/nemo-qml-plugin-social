@@ -172,7 +172,8 @@ bool FacebookRelatedDataFilterInterface::performLoadRequestImpl(QObject *item,
     FacebookInterface::ContentItemType contentType = FacebookInterface::Unknown;
     QString path;
 
-    FacebookInterfacePrivate::typeAndPath(d->connection, contentType, path);
+    QMap<QString, QString> extraArguments;
+    FacebookInterfacePrivate::typeAndPath(d->connection, contentType, path, extraArguments);
     if (contentType == FacebookInterface::Unknown) {
         return false;
     }
@@ -186,6 +187,10 @@ bool FacebookRelatedDataFilterInterface::performLoadRequestImpl(QObject *item,
 
     if (d->offset > 0 && loadType == FilterInterface::Load) {
         arguments.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_OFFSET, QString::number(d->offset));
+    }
+
+    for (QMap<QString, QString>::iterator i = extraArguments.begin(); i != extraArguments.end(); ++i) {
+        arguments.insert(i.key(), i.value());
     }
 
     // We use extra parameters if needed
