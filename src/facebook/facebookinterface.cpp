@@ -111,6 +111,9 @@ QNetworkReply * FacebookInterfacePrivate::performRequest(const QString &identifi
     QString trueFields = makeFields(graph, fields, arguments);
 
     queryItems.append(qMakePair<QString, QString>(FACEBOOK_ONTOLOGY_METADATA_FIELDS, trueFields));
+    if (!locale.isEmpty()) {
+        queryItems.append(qMakePair<QString, QString>("locale", locale));
+    }
 
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
@@ -2133,6 +2136,21 @@ QString FacebookInterface::currentUserIdentifier() const
     Q_D(const FacebookInterface);
     // returns the object identifier associated with the "me" node, if loaded.
     return d->currentUserIdentifier;
+}
+
+QString FacebookInterface::locale() const
+{
+    Q_D(const FacebookInterface);
+    return d->locale;
+}
+
+void FacebookInterface::setLocale(const QString &locale)
+{
+    Q_D(FacebookInterface);
+    if (d->locale != locale) {
+        d->locale = locale;
+        emit localeChanged();
+    }
 }
 
 QObject * FacebookInterface::get(FilterInterface *filter, const QString &identifier,

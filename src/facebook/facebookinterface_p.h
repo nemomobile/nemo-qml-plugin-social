@@ -92,6 +92,7 @@ public:
 
     QString accessToken;
     QString currentUserIdentifier;
+    QString locale;
 
     // Build "fields" argument
     static QString makeFields(const QString &path, const QString &fields,

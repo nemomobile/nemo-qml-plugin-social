@@ -55,6 +55,7 @@ class FacebookInterface : public SocialNetworkInterface
     Q_PROPERTY(QString accessToken READ accessToken WRITE setAccessToken NOTIFY accessTokenChanged)
     Q_PROPERTY(QString currentUserIdentifier READ currentUserIdentifier
                NOTIFY currentUserIdentifierChanged)
+    Q_PROPERTY(QString locale READ locale WRITE setLocale NOTIFY localeChanged)
 
     Q_ENUMS(ContentItemType)
     Q_ENUMS(ConnectionType)
@@ -105,6 +106,8 @@ public:
     QString accessToken() const;
     void setAccessToken(const QString &token);
     QString currentUserIdentifier() const;
+    QString locale() const;
+    void setLocale(const QString &locale);
 
     // Non QML API
     QObject * get(FilterInterface *filter, const QString &identifier,
@@ -115,6 +118,7 @@ public:
 Q_SIGNALS:
     void accessTokenChanged();
     void currentUserIdentifierChanged();
+    void localeChanged();
 private:
     Q_DECLARE_PRIVATE(FacebookInterface)
 };
