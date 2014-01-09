@@ -75,6 +75,7 @@ protected:
     bool performSetModelDataImpl(SocialNetworkModelInterface *model,
                                  SocialNetworkInterface *socialNetwork, const QByteArray &data,
                                  LoadType loadType, const QVariantMap &properties);
+    virtual bool isDataAcceptable(const QVariantMap &data);
 private:
     Q_DECLARE_PRIVATE(FacebookRelatedDataFilterInterface)
 };

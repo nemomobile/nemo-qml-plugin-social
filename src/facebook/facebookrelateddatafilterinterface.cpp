@@ -262,8 +262,11 @@ bool FacebookRelatedDataFilterInterface::performSetModelDataImpl(SocialNetworkMo
     QList<ContentItemInterface *> modelData;
 
     foreach (const QVariant &dataEntry, dataList) {
-        modelData.append(FacebookInterfacePrivate::createItem(contentType, dataEntry.toMap(),
-                                                              socialNetwork, model));
+        QVariantMap dataMap = dataEntry.toMap();
+        if (isDataAcceptable(dataMap)) {
+            modelData.append(FacebookInterfacePrivate::createItem(contentType, dataMap,
+                                                                  socialNetwork, model));
+        }
     }
 
 
@@ -422,5 +425,11 @@ bool FacebookRelatedDataFilterInterface::performSetModelDataImpl(SocialNetworkMo
         break;
     }
 
+    return true;
+}
+
+bool FacebookRelatedDataFilterInterface::isDataAcceptable(const QVariantMap &data)
+{
+    Q_UNUSED(data)
     return true;
 }
