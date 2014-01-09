@@ -215,6 +215,11 @@ bool FilterInterface::performSetError(QObject *handle, SocialNetworkInterface::E
     return true;
 }
 
+QString FilterInterface::dataSection(const QVariantMap &data)
+{
+    return QString();
+}
+
 bool FilterInterface::performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
                                              LoadType loadType)
 {

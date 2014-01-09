@@ -49,6 +49,7 @@ public:
     int offset;
     QString identifier;
     FacebookInterface::ConnectionType connection;
+    QString sectionField;
 };
 
 FacebookRelatedDataFilterInterfacePrivate::FacebookRelatedDataFilterInterfacePrivate(FacebookRelatedDataFilterInterface *q)
@@ -139,6 +140,21 @@ void FacebookRelatedDataFilterInterface::setConnection(FacebookInterface::Connec
     }
 }
 
+QString FacebookRelatedDataFilterInterface::sectionField() const
+{
+    Q_D(const FacebookRelatedDataFilterInterface);
+    return d->sectionField;
+}
+
+void FacebookRelatedDataFilterInterface::setSectionField(const QString &sectionField)
+{
+    Q_D(FacebookRelatedDataFilterInterface);
+    if (d->sectionField != sectionField) {
+        d->sectionField = sectionField;
+        emit sectionFieldChanged();
+    }
+}
+
 bool FacebookRelatedDataFilterInterface::isAcceptable(QObject *item,
                                                       SocialNetworkInterface *socialNetwork) const
 {
@@ -153,6 +169,17 @@ bool FacebookRelatedDataFilterInterface::isAcceptable(QObject *item,
 
     return true;
 }
+
+QString FacebookRelatedDataFilterInterface::dataSection(const QVariantMap &data)
+{
+    Q_D(FacebookRelatedDataFilterInterface);
+    if (d->sectionField.isEmpty()) {
+        return QString();
+    }
+
+    return data.value(d->sectionField).toString();
+}
+
 
 bool FacebookRelatedDataFilterInterface::performLoadRequestImpl(QObject *item,
                                                                 SocialNetworkInterface *socialNetwork,

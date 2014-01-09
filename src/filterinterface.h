@@ -62,6 +62,9 @@ public:
     bool performSetData(QObject *handle, const QByteArray &data);
     bool performSetError(QObject *handle, SocialNetworkInterface::ErrorType error,
                          const QString &errorMessage);
+
+    // Used by SNMI
+    virtual QString dataSection(const QVariantMap &data);
 protected:
     virtual bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
                                         LoadType loadType);

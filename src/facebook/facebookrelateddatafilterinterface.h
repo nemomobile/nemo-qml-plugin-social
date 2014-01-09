@@ -45,6 +45,7 @@ class FacebookRelatedDataFilterInterface : public FilterInterface
     Q_PROPERTY(int offset READ offset WRITE setOffset NOTIFY offsetChanged)
     Q_PROPERTY(FacebookInterface::ConnectionType connection READ connection WRITE setConnection
                NOTIFY connectionChanged)
+    Q_PROPERTY(QString sectionField READ sectionField WRITE setSectionField NOTIFY sectionFieldChanged)
 public:
     explicit FacebookRelatedDataFilterInterface(QObject *parent = 0);
 
@@ -59,16 +60,23 @@ public:
     void setOffset(int offset);
     FacebookInterface::ConnectionType connection() const;
     void setConnection(FacebookInterface::ConnectionType connection);
+    QString sectionField() const;
+    void setSectionField(const QString &sectionField);
 
     // Non QML API
     // Used by items
     bool isAcceptable(QObject *item, SocialNetworkInterface *socialNetwork) const;
+
+    // Non QML API
+    // Used by SNMI
+    QString dataSection(const QVariantMap &data);
 Q_SIGNALS:
     void identifierChanged();
     void fieldsChanged();
     void limitChanged();
     void offsetChanged();
     void connectionChanged();
+    void sectionFieldChanged();
 protected:
     bool performLoadRequestImpl(QObject *item, SocialNetworkInterface *socialNetwork,
                                 LoadType loadType);

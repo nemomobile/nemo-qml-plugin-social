@@ -416,6 +416,8 @@ QVariant SocialNetworkModelInterface::data(const QModelIndex &index, int role) c
 
 //    CacheEntry::Ptr cacheEntry = d->modelData.at(index.row());
 
+    ContentItemInterface *item = d->modelData.at(index.row());
+
     switch (role) {
     // We break item creation flow here: items are automatically created
     // TODO: we need to get this from the cache
@@ -433,13 +435,16 @@ QVariant SocialNetworkModelInterface::data(const QModelIndex &index, int role) c
 //            if (cacheEntry->item()) {
 //                return QVariant::fromValue(cacheEntry->item());
 //            }
-            return QVariant::fromValue(d->modelData.at(index.row()));
+            return QVariant::fromValue(item);
 //            return QVariant::fromValue(d->socialNetwork->d_func()->createItem(cacheEntry));
         }
-//        case SectionRole: {
-//            return d->socialNetwork->d_func()->dataSection(cacheEntry->data().value(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE).toInt(),
-//                                                           cacheEntry->data());
-//        }
+        case SectionRole: {
+            if (d->filter) {
+                return d->filter->dataSection(item->data());
+            }
+
+            return QVariant();
+        }
         default: {
             return QVariant();
         }
