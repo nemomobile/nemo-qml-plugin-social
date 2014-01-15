@@ -119,6 +119,8 @@ Q_SIGNALS:
     void accessTokenChanged();
     void currentUserIdentifierChanged();
     void localeChanged();
+protected:
+    explicit FacebookInterface(FacebookInterfacePrivate &dd, QObject *parent = 0);
 private:
     Q_DECLARE_PRIVATE(FacebookInterface)
 };

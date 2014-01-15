@@ -2110,6 +2110,11 @@ FacebookInterface::FacebookInterface(QObject *parent)
 {
 }
 
+FacebookInterface::FacebookInterface(FacebookInterfacePrivate &dd, QObject *parent)
+    : SocialNetworkInterface(dd, parent)
+{
+}
+
 
 /*!
     \qmlproperty QString Facebook::accessToken
