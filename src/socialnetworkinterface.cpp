@@ -310,7 +310,7 @@ void SocialNetworkInterfacePrivate::actionFinishedHandler()
         const ErrorData &errorData = getError(data, reply->error());
         item->setActionError(errorData.first, errorData.second);
     } else {
-        performAction(item, properties);
+        performAction(item, data, properties);
     }
 
     replyToItemMap.remove(reply);
@@ -337,6 +337,7 @@ ErrorData SocialNetworkInterfacePrivate::getError(const QByteArray &data,
 }
 
 void SocialNetworkInterfacePrivate::performAction(IdentifiableContentItemInterface *item,
+                                                  const QByteArray &data,
                                                   const QVariantMap &properties)
 {
     // This function is not implemented, and will leave the
@@ -344,6 +345,7 @@ void SocialNetworkInterfacePrivate::performAction(IdentifiableContentItemInterfa
     // IdentifiableContentItemInterface::setActionComplete or
     // IdentifiableContentItemInterface::setError to set the loading status
     Q_UNUSED(item)
+    Q_UNUSED(data)
     Q_UNUSED(properties)
 }
 

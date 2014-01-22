@@ -186,7 +186,7 @@ protected:
     virtual ErrorData getError(const QByteArray &data, QNetworkReply::NetworkError error);
 
     // Reimplement to handle action
-    virtual void performAction(IdentifiableContentItemInterface *item,
+    virtual void performAction(IdentifiableContentItemInterface *item, const QByteArray &data,
                                const QVariantMap &properties);
 
 

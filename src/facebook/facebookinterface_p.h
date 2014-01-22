@@ -234,6 +234,7 @@ protected:
     QByteArray preprocessData(const QByteArray &data);
     ErrorData getError(const QByteArray &data, QNetworkReply::NetworkError error);
     void performAction(IdentifiableContentItemInterface *item,
+                       const QByteArray &data,
                        const QVariantMap &properties);
     // Reimplemented
 //    void populateDataForNode(Node::Ptr node);

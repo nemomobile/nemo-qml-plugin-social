@@ -694,8 +694,16 @@ ErrorData FacebookInterfacePrivate::getError(const QByteArray &data,
 }
 
 void FacebookInterfacePrivate::performAction(IdentifiableContentItemInterface *item,
+                                             const QByteArray &data,
                                              const QVariantMap &properties)
 {
+    // If Facebook returned "false", this means that the action failed
+    if (data == "false") {
+        item->setError(SocialNetworkInterface::SocialNetworkError,
+                       QLatin1String("Facebook informed that action failed"));
+        return;
+    }
+
     int action = properties.value(ACTION_KEY).toInt();
     switch (action) {
     case LikeAction: {
@@ -784,6 +792,8 @@ void FacebookInterfacePrivate::performAction(IdentifiableContentItemInterface *i
 
             item->setData(data);
         }
+        break;
+    default:
         break;
     }
 
