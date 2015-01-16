@@ -601,9 +601,9 @@ QUrl FacebookInterfacePrivate::requestUrl(const QString &objectId, const QString
     returnedUrl.setScheme("https");
     returnedUrl.setHost("graph.facebook.com");
     if (extraPath.isEmpty())
-        returnedUrl.setPath(QLatin1String("/") + objectId);
+        returnedUrl.setPath(QLatin1String("/v2.2/") + objectId);
     else
-        returnedUrl.setPath(QLatin1String("/") + objectId + QLatin1String("/") + extraPath);
+        returnedUrl.setPath(QLatin1String("/v2.2/") + objectId + QLatin1String("/") + extraPath);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QUrlQuery query;
     query.setQueryItems(queryItems);
@@ -626,7 +626,7 @@ QNetworkReply * FacebookInterfacePrivate::uploadImage(const QString &objectId,
     // the implementation code for this function is taken from the transfer engine
     QNetworkRequest request;
     QUrl url("https://graph.facebook.com");
-    QString path = objectId;
+    QString path = "v2.2/" + objectId;
     if (!extraPath.isEmpty()) {
         path += QLatin1String("/") + extraPath;
     }
