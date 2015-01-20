@@ -452,7 +452,9 @@ void SocialNetworkModelInterface::setSocialNetwork(SocialNetworkInterface *socia
         }
 
         d->socialNetwork = socialNetwork;
-        d->socialNetwork->d_func()->addModel(this);
+        if (d->socialNetwork) {
+            d->socialNetwork->d_func()->addModel(this);
+        }
         emit socialNetworkChanged();
     }
 }

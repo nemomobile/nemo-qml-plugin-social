@@ -45,7 +45,7 @@ public:
     SocialNetworkInterface::ErrorType error;
     QString errorMessage;
 
-    SocialNetworkInterface *socialNetwork;
+    QPointer<SocialNetworkInterface> socialNetwork;
     QString nodeIdentifier;
     int nodeType;
     IdentifiableContentItemInterface *node;
