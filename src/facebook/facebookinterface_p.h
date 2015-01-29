@@ -75,8 +75,8 @@ public:
     QString currentUserIdentifier;
 protected:
     // Reimplemented
-    void populateDataForNode(Node::Ptr node);
-    void populateRelatedDataforNode(Node::Ptr node);
+    void populateDataForNode(CacheNode::Ptr node);
+    void populateRelatedDataforNode(CacheNode::Ptr node);
     bool validateCacheEntryForNode(CacheEntry::ConstPtr cacheEntry);
     QString dataSection(int type, const QVariantMap &data) const;
     ContentItemInterface * contentItemFromData(const QVariantMap &data, QObject *parent = 0) const;
@@ -86,27 +86,27 @@ protected:
                                 const QVariantMap &data, const QVariantMap &extraData);
     QNetworkReply * deleteRequest(const QString &objectIdentifier, const QString &extraPath,
                                   const QVariantMap &extraData);
-    void handleFinished(Node::Ptr node, QNetworkReply *reply);
+    void handleFinished(CacheNode::Ptr node, QNetworkReply *reply);
 
 private:
     QUrl requestUrl(const QString &objectId, const QString &extraPath,
                     const QStringList &whichFields, const QVariantMap &extraData);
     QNetworkReply * uploadImage(const QString &objectId, const QString &extraPath,
                                 const QVariantMap &data, const QVariantMap &extraData);
-    void handlePopulateNode(Node::Ptr node, const QVariantMap &responseData);
-    void handlePopulateRelatedData(Node::Ptr node, const QVariantMap &relatedData,
+    void handlePopulateNode(CacheNode::Ptr node, const QVariantMap &responseData);
+    void handlePopulateRelatedData(CacheNode::Ptr node, const QVariantMap &relatedData,
                                    const QUrl &requestUrl);
     void setCurrentUserIdentifier(const QString &meId);
-    bool checkNodeType(Node::Ptr node);
-    bool checkIfNeedAdditionalLoading(Node::Ptr node);
-    inline bool tryAddCacheEntryFromData(NodePrivate::Status nodeStatus,
+    bool checkNodeType(CacheNode::Ptr node);
+    bool checkIfNeedAdditionalLoading(CacheNode::Ptr node);
+    inline bool tryAddCacheEntryFromData(CacheNodePrivate::Status nodeStatus,
                                          const QVariantMap &relatedData,
                                          const QString &requestPath, int type,
                                          const QString &typeName, CacheEntry::List &list,
                                          QVariantMap &extraInfo);
     inline QString createField(int type, const QString &connection,
                                const RequestFieldsMap &requestFiledsMap);
-    inline QVariantMap makeCursorExtraData(NodePrivate::Status insertionMode,
+    inline QVariantMap makeCursorExtraData(CacheNodePrivate::Status insertionMode,
                                            const QVariantMap &oldExtraData,
                                            const QVariantMap &cursorsMap);
     Q_DECLARE_PUBLIC(FacebookInterface)

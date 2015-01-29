@@ -95,7 +95,7 @@ public:
     void setSocialNetwork(SocialNetworkInterface *socialNetwork);
 
     // Invokable api
-    Q_INVOKABLE IdentifiableContentItemInterface *asIdentifiable();
+    Q_INVOKABLE IdentifiableContentItemInterface * asIdentifiable();
 
 Q_SIGNALS:
     void socialNetworkChanged();

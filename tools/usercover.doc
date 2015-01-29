@@ -1,0 +1,8 @@
+\inqmlmodule org.nemomobile.social 1
+\brief A FacebookUserCover represents the cover image for an FacebookUser
+
+FacebookUser is a specialized ContentItem that is used to represent
+the cover image for a FacebookUser.
+
+\sa{ContentItem}
+\sa{FacebookUser}

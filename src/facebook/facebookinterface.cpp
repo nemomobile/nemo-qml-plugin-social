@@ -77,7 +77,7 @@ FacebookInterfacePrivate::FacebookInterfacePrivate(FacebookInterface *q)
 {
 }
 
-void FacebookInterfacePrivate::populateDataForNode(Node::Ptr node)
+void FacebookInterfacePrivate::populateDataForNode(CacheNode::Ptr node)
 {
     // We are trying to get the current user identifier at the same time
     // Of cause, we do that if we are not already getting the "me" as a node
@@ -94,7 +94,7 @@ void FacebookInterfacePrivate::populateDataForNode(Node::Ptr node)
     setReply(node, getRequest(node->identifier(), QString(), QStringList(), QVariantMap()));
 }
 
-void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
+void FacebookInterfacePrivate::populateRelatedDataforNode(CacheNode::Ptr node)
 {
     const QString &identifier = node->identifier();
     const QSet<FilterInterface *> &filters = node->filters();
@@ -119,7 +119,7 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
         // An empty filter should not create an error
         // Actually, nothing should be loaded in the node and
         // the request should be terminated
-        setStatus(node, NodePrivate::Idle);
+        setStatus(node, CacheNodePrivate::Idle);
         return;
     }
 
@@ -137,7 +137,7 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
     // Create paging request
     RequestFieldsMap requestFieldsMap;
     switch (node->status()) {
-        case NodePrivate::LoadingRelatedDataAppending: {
+        case CacheNodePrivate::LoadingRelatedDataAppending: {
             QVariantMap extraMap = node->extraInfo().value(NODE_EXTRA_PAGING_NEXT_KEY).toMap();
 
             foreach (QString key, extraMap.keys()) {
@@ -153,7 +153,7 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
             }
         }
         break;
-        case NodePrivate::LoadingRelatedDataPrepending: {
+        case CacheNodePrivate::LoadingRelatedDataPrepending: {
             QVariantMap extraMap = node->extraInfo().value(NODE_EXTRA_PAGING_PREVIOUS_KEY).toMap();
 
             foreach (QString key, extraMap.keys()) {
@@ -214,8 +214,8 @@ void FacebookInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
                 connectionFields.insert(type, limitEntry);
 
                 // If we are prepending or appending, we don't need offset
-                if (node->status() != NodePrivate::LoadingRelatedDataAppending
-                    && node->status() != NodePrivate::LoadingRelatedDataPrepending) {
+                if (node->status() != CacheNodePrivate::LoadingRelatedDataAppending
+                    && node->status() != CacheNodePrivate::LoadingRelatedDataPrepending) {
 
                     switch (facebookCommentFilterInterface->retrieveMode()) {
                         case FacebookCommentFilterInterface::RetrieveOffset:
@@ -533,7 +533,7 @@ QNetworkReply * FacebookInterfacePrivate::deleteRequest(const QString &objectIde
     return networkAccessManager->deleteResource(request);
 }
 
-void FacebookInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *reply)
+void FacebookInterfacePrivate::handleFinished(CacheNode::Ptr node, QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
     QUrl requestUrl = reply->request().url();
@@ -566,13 +566,13 @@ void FacebookInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *rep
     }
 
     switch (node->status()) {
-        case NodePrivate::LoadingNodeData:{
+        case CacheNodePrivate::LoadingNodeData:{
             handlePopulateNode(node, responseData);
         }
         break;
-        case NodePrivate::LoadingRelatedDataReplacing:
-        case NodePrivate::LoadingRelatedDataPrepending:
-        case NodePrivate::LoadingRelatedDataAppending: {
+        case CacheNodePrivate::LoadingRelatedDataReplacing:
+        case CacheNodePrivate::LoadingRelatedDataPrepending:
+        case CacheNodePrivate::LoadingRelatedDataAppending: {
             handlePopulateRelatedData(node, responseData, requestUrl);
         }
         break;
@@ -689,7 +689,8 @@ QNetworkReply * FacebookInterfacePrivate::uploadImage(const QString &objectId,
     return networkAccessManager->post(request, postData);
 }
 
-void FacebookInterfacePrivate::handlePopulateNode(Node::Ptr node, const QVariantMap &responseData)
+void FacebookInterfacePrivate::handlePopulateNode(CacheNode::Ptr node,
+                                                  const QVariantMap &responseData)
 {
     Q_Q(FacebookInterface);
     if (node->extraInfo().contains(PERFORM_ADDITIONAL_LOADING)) {
@@ -786,11 +787,11 @@ void FacebookInterfacePrivate::handlePopulateNode(Node::Ptr node, const QVariant
     updateModelNode(node);
 
     // Performing a replace
-    node->setStatus(NodePrivate::LoadingRelatedDataReplacing);
+    node->setStatus(CacheNodePrivate::LoadingRelatedDataReplacing);
     populateRelatedDataforNode(node);
 }
 
-void FacebookInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
+void FacebookInterfacePrivate::handlePopulateRelatedData(CacheNode::Ptr node,
                                                          const QVariantMap &relatedData,
                                                          const QUrl &requestUrl)
 {
@@ -903,7 +904,7 @@ void FacebookInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
     updateModelHavePreviousAndNext(node, havePreviousRelatedData, haveNextRelatedData);
     updateModelRelatedData(node, relatedContent);
 
-    setStatus(node, NodePrivate::Idle);
+    setStatus(node, CacheNodePrivate::Idle);
 }
 
 void FacebookInterfacePrivate::setCurrentUserIdentifier(const QString &meId)
@@ -917,9 +918,8 @@ void FacebookInterfacePrivate::setCurrentUserIdentifier(const QString &meId)
     }
 }
 
-
 // Returns if a loading should be performed
-bool FacebookInterfacePrivate::checkNodeType(Node::Ptr node)
+bool FacebookInterfacePrivate::checkNodeType(CacheNode::Ptr node)
 {
     QVariantMap data = node->cacheEntry()->data();
     if (!data.contains(NEMOQMLPLUGINS_SOCIAL_CONTENTITEMTYPE)) {
@@ -967,7 +967,7 @@ bool FacebookInterfacePrivate::checkNodeType(Node::Ptr node)
     return false;
 }
 
-bool FacebookInterfacePrivate::checkIfNeedAdditionalLoading(Node::Ptr node)
+bool FacebookInterfacePrivate::checkIfNeedAdditionalLoading(CacheNode::Ptr node)
 {
     if (node->extraInfo().contains(PERFORM_ADDITIONAL_LOADING)) {
         QVariantMap extraInfo = node->extraInfo();
@@ -1008,7 +1008,7 @@ bool FacebookInterfacePrivate::checkIfNeedAdditionalLoading(Node::Ptr node)
     return false;
 }
 
-bool FacebookInterfacePrivate::tryAddCacheEntryFromData(NodePrivate::Status nodeStatus,
+bool FacebookInterfacePrivate::tryAddCacheEntryFromData(CacheNodePrivate::Status nodeStatus,
                                                         const QVariantMap &relatedData,
                                                         const QString &requestPath,
                                                         int type,
@@ -1193,14 +1193,14 @@ bool FacebookInterfacePrivate::tryAddCacheEntryFromData(NodePrivate::Status node
         // Otherwise, let's guess previous and next in paging
         if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_PREVIOUS)) {
             hasPrevious = true;
-            if (nodeStatus == NodePrivate::LoadingRelatedDataPrepending && list.isEmpty()) {
+            if (nodeStatus == CacheNodePrivate::LoadingRelatedDataPrepending && list.isEmpty()) {
                 hasPrevious = false;
             }
         }
 
         if (pagingMap.contains(FACEBOOK_ONTOLOGY_METADATA_PAGING_NEXT)) {
             hasNext = true;
-            if (nodeStatus == NodePrivate::LoadingRelatedDataAppending && list.isEmpty()) {
+            if (nodeStatus == CacheNodePrivate::LoadingRelatedDataAppending && list.isEmpty()) {
                 hasNext = false;
             }
         }
@@ -1264,13 +1264,13 @@ QString FacebookInterfacePrivate::createField(int type, const QString &connectio
     return field;
 }
 
-QVariantMap FacebookInterfacePrivate::makeCursorExtraData(NodePrivate::Status insertionMode,
+QVariantMap FacebookInterfacePrivate::makeCursorExtraData(CacheNodePrivate::Status insertionMode,
                                                           const QVariantMap &oldExtraData,
                                                           const QVariantMap &cursorsMap)
 {
-    if (insertionMode != NodePrivate::LoadingRelatedDataReplacing
-        && insertionMode != NodePrivate::LoadingRelatedDataPrepending
-        && insertionMode != NodePrivate::LoadingRelatedDataAppending) {
+    if (insertionMode != CacheNodePrivate::LoadingRelatedDataReplacing
+        && insertionMode != CacheNodePrivate::LoadingRelatedDataPrepending
+        && insertionMode != CacheNodePrivate::LoadingRelatedDataAppending) {
         return QVariantMap();
     }
 
@@ -1278,8 +1278,8 @@ QVariantMap FacebookInterfacePrivate::makeCursorExtraData(NodePrivate::Status in
     QVariantMap paging = oldExtraData.value(FACEBOOK_ONTOLOGY_METADATA_PAGING).toMap();
 
     // In case we are prepending, we should keep the old "next" entry
-    if (insertionMode == NodePrivate::LoadingRelatedDataReplacing
-        || insertionMode == NodePrivate::LoadingRelatedDataPrepending) {
+    if (insertionMode == CacheNodePrivate::LoadingRelatedDataReplacing
+        || insertionMode == CacheNodePrivate::LoadingRelatedDataPrepending) {
 
         QVariantMap previous;
         previous.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_BEFORE,
@@ -1291,8 +1291,8 @@ QVariantMap FacebookInterfacePrivate::makeCursorExtraData(NodePrivate::Status in
     }
 
     // In case we are appending, we should keep the old "previous" entry
-    if (insertionMode == NodePrivate::LoadingRelatedDataReplacing
-        || insertionMode == NodePrivate::LoadingRelatedDataAppending) {
+    if (insertionMode == CacheNodePrivate::LoadingRelatedDataReplacing
+        || insertionMode == CacheNodePrivate::LoadingRelatedDataAppending) {
 
         QVariantMap next;
         next.insert(FACEBOOK_ONTOLOGY_METADATA_PAGING_CURSORS_AFTER,
@@ -1333,56 +1333,64 @@ QVariantMap FacebookInterfacePrivate::makeCursorExtraData(NodePrivate::Status in
 
     Item {
         id: root
-        width: 400
-        height: 800
-
-        Flickable {
-            anchors.top: parent.verticalCenter
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-
-            ListView {
-                model: fb
-                anchors.fill: parent
-                delegate: Label { text: "id: " + contentItemIdentifier }
-            }
-        }
 
         Facebook {
-            id: fb
-            accessToken: "your access token"    // you must supply a valid access token
-            nodeIdentifier: "10150146071791729" // some valid Facebook album id.
+            id: facebook
+            accessToken: "your access token"    // You must supply a valid access token.
+        }
+
+        SocialNetworkInterface {
+            id: facebookModel
+            socialNetwork: facebook
+            nodeIdentifier: "10150146071791729" // Some valid Facebook album id.
             filters: [ ContentItemTypeFilter { type: Facebook.Photo } ]
         }
 
-        FacebookPhoto {
-            id: fbph
-            socialNetwork: fb
-            identifier: "10150146071966729"     // some valid Facebook Photo fbid
-        }
-
-        Image {
-            id: img
-            anchors.top: parent.top
-            anchors.bottom: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.right: parent.right
-            source: fbph.source
-            onStatusChanged: {
-                if (status == Image.Ready) {
-                    // could upload a comment with:
-                    fbph.uploadComment("I really like this photo!")
-                    // could like the photo with:
-                    fbph.like()
-                    // or unlike it with:
-                    fbph.unlike()
-                }
-            }
+        ListView {
+            model: facebookModel
+            anchors.fill: parent
+            delegate: Label { text: "id: " + contentItemIdentifier }
         }
 
         Component.onCompleted: {
-            fb.populate()
+            facebookModel.populate()
+        }
+    }
+    \endqml
+
+    Another example, showing the manipulation of a single photo
+
+    \qml
+    import QtQuick 1.1
+    import org.nemomobile.social 1.0
+
+    Item {
+        id: root
+        Facebook {
+            id: facebook
+            accessToken: "your access token"    // You must supply a valid access token.
+        }
+
+        FacebookPhoto {
+            id: facebookPhoto
+            socialNetwork: facebook
+            identifier: "1234567890"     // Some valid Facebook Photo Facebook id
+        }
+
+        Image {
+            id: image
+            anchors.fill: parent
+            source: facebookPhoto.source
+            onStatusChanged: {
+                if (status == Image.Ready) {
+                    // Could upload a comment with:
+                    facebookPhoto.uploadComment("I really like this photo!")
+                    // Could like the photo with:
+                    facebookPhoto.like()
+                    // Or unlike it with:
+                    facebookPhoto.unlike()
+                }
+            }
         }
     }
     \endqml

@@ -147,7 +147,7 @@ QNetworkRequest TwitterInterfacePrivate::networkRequest(const QString &extraPath
     return request;
 }
 
-void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
+void TwitterInterfacePrivate::handlePopulateRelatedData(CacheNode::Ptr node,
                                                         const QVariant &relatedData,
                                                         const QUrl &requestUrl)
 {
@@ -200,7 +200,7 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
             nodeExtra.insert(TWITTER_ONTOLOGY_METADATA_CONVERSATIONNEXT_CURSOR, firstId);
             node->setExtraInfo(nodeExtra);
         }
-        setStatus(node, NodePrivate::Idle);
+        setStatus(node, CacheNodePrivate::Idle);
         return;
     }
 
@@ -315,7 +315,7 @@ void TwitterInterfacePrivate::handlePopulateRelatedData(Node::Ptr node,
     }
 
     updateModelHavePreviousAndNext(node, havePreviousRelatedData, haveNextRelatedData);
-    setStatus(node, NodePrivate::Idle);
+    setStatus(node, CacheNodePrivate::Idle);
 }
 
 RequestInfo TwitterInterfacePrivate::requestUserInfo(const QString &identifier)
@@ -341,7 +341,7 @@ RequestInfo  TwitterInterfacePrivate::requestTweetInfo(const QString &identifier
 }
 
 /*! \reimp */
-void TwitterInterfacePrivate::populateDataForNode(Node::Ptr node)
+void TwitterInterfacePrivate::populateDataForNode(CacheNode::Ptr node)
 {
     RequestInfo requestInfo;
     switch (node->type()) {
@@ -366,7 +366,7 @@ void TwitterInterfacePrivate::populateDataForNode(Node::Ptr node)
 }
 
 /*! \reimp */
-void TwitterInterfacePrivate::populateRelatedDataforNode(Node::Ptr node)
+void TwitterInterfacePrivate::populateRelatedDataforNode(CacheNode::Ptr node)
 {
     if (!performRelatedDataRequest(node, node->identifier(), node->filters().toList())) {
         setError(node, SocialNetworkInterface::DataUpdateError,
@@ -538,7 +538,7 @@ int TwitterInterfacePrivate::guessType(const QString &identifier, int type,
 }
 
 /*! \internal */
-void TwitterInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *reply)
+void TwitterInterfacePrivate::handleFinished(CacheNode::Ptr node, QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
     QUrl requestUrl = reply->request().url();
@@ -555,7 +555,7 @@ void TwitterInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *repl
 
 
     switch (node->status()) {
-        case NodePrivate::LoadingNodeData:{
+        case CacheNodePrivate::LoadingNodeData:{
             QVariantMap responseDataMap = responseData.toMap();
             // Create a cache entry associated to the retrieved data
             QString identifier;
@@ -569,13 +569,13 @@ void TwitterInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *repl
             updateModelNode(node);
 
             // Performing a replace
-            node->setStatus(NodePrivate::LoadingRelatedDataReplacing);
+            node->setStatus(CacheNodePrivate::LoadingRelatedDataReplacing);
             populateRelatedDataforNode(node);
         }
         break;
-        case NodePrivate::LoadingRelatedDataReplacing:
-        case NodePrivate::LoadingRelatedDataPrepending:
-        case NodePrivate::LoadingRelatedDataAppending: {
+        case CacheNodePrivate::LoadingRelatedDataReplacing:
+        case CacheNodePrivate::LoadingRelatedDataPrepending:
+        case CacheNodePrivate::LoadingRelatedDataAppending: {
             handlePopulateRelatedData(node, responseData, requestUrl);
         }
         break;
@@ -584,7 +584,8 @@ void TwitterInterfacePrivate::handleFinished(Node::Ptr node, QNetworkReply *repl
     }
 }
 
-bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QString &identifier,
+bool TwitterInterfacePrivate::performRelatedDataRequest(CacheNode::Ptr node,
+                                                        const QString &identifier,
                                                         const QList<FilterInterface *> &filters)
 {
     // We first cast filters to known filters
@@ -603,7 +604,7 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
     }
 
     if (castedFilters.isEmpty()) {
-        setStatus(node, NodePrivate::Idle);
+        setStatus(node, CacheNodePrivate::Idle);
         return true;
     }
 
@@ -634,7 +635,7 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
         extraPath = TWITTER_ONTOLOGY_CONNECTION_STATUSES_HOME_TIMELINE;
         QString limitingIdentifier = identifier;
         if (nodeExtraInfo.contains(TWITTER_ONTOLOGY_METADATA_CONVERSATIONNEXT_CURSOR)
-            && node->status() == NodePrivate::LoadingRelatedDataAppending) {
+            && node->status() == CacheNodePrivate::LoadingRelatedDataAppending) {
             limitingIdentifier = nodeExtraInfo.value(TWITTER_ONTOLOGY_METADATA_CONVERSATIONNEXT_CURSOR).toString();
         }
         extraData.insert(TWITTER_ONTOLOGY_CONNECTION_SINCE_ID_KEY, limitingIdentifier);
@@ -645,7 +646,7 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
 
     // If we have cursors, we add them
     switch (node->status()) {
-        case NodePrivate::LoadingRelatedDataAppending: {
+        case CacheNodePrivate::LoadingRelatedDataAppending: {
             QVariantMap extraMap = node->extraInfo().value(NODE_EXTRA_PAGING_NEXT_KEY).toMap();
             qDebug() << extraMap;
 
@@ -656,7 +657,7 @@ bool TwitterInterfacePrivate::performRelatedDataRequest(Node::Ptr node, const QS
             }
         }
         break;
-        case NodePrivate::LoadingRelatedDataPrepending: {
+        case CacheNodePrivate::LoadingRelatedDataPrepending: {
             QVariantMap extraMap = node->extraInfo().value(NODE_EXTRA_PAGING_PREVIOUS_KEY).toMap();
 
             qDebug() << extraMap;

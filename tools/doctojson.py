@@ -29,27 +29,45 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 
 import argparse 
+import json
 
-def generate(doc):
+def generate(doc, jsonFile):
     try:
         f = open(doc)
     except:
         print "Failed to open " + doc
         return
-    splittedDoc = []
+    formattedDoc = ""
     for line in f:
-        parsedLine = line.replace("\\", "\\\\").replace("\n", "").replace("\"", "\\\"")
-        splittedDoc.append(parsedLine)
+        formattedDoc += line
     f.close()
     
-    print "\\n".join(splittedDoc)
+    try:
+        f = open(jsonFile)
+    except:
+        print "Failed to open " + jsonFile
+        return
+    data = json.load(f)
+    f.close()
     
+    data["doc"] = formattedDoc
+    try:
+        f = open(jsonFile, 'w')
+    except:
+        print "Failed to open " + jsonFile
+        return
+    
+    json.dump(data, f, indent = 4, separators=(',', ': '))
+    f.close()
 
 # Main
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Doc to JSON')
     parser.add_argument('doc_file', metavar='doc_file', type=str,
-                        help="""Document file""")
+                        help="""Documentation file""")
+    parser.add_argument('json_file', metavar='json_file', type=str,
+                        help="""JSON file""")
     args = parser.parse_args()
     doc_file = args.doc_file
-    generate(doc_file)
+    json_file = args.json_file
+    generate(doc_file, json_file)

@@ -362,49 +362,14 @@ void FacebookUserInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
 /*!
     \qmltype FacebookUser
     \instantiates FacebookUserInterface
-    l" user id
-            filters: [ ContentItemTypeFilter { type: Facebook.Album } ]
-        }
-    }
-    \endqml
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookUser represents a user from the Facebook OpenGraph API
     
-    A FacebookUser may also be used "directly" by clients, in order to
-    view specific information about the user or upload a new album.
-    An example of direct usage of the FacebookUser type is as follows:
+    FacebookUser is a specialized IdentifiableContentItem that is used
+    to hold data that represents a user in the Facebook OpenGraph API.
     
-    \qml
-    import QtQuick 1.1
-    import org.nemomobile.social 1.0
+    \sa{IdentifiableContentItem}
     
-    Item {
-        id: root
-        width: 400
-        height: 800
-    
-        Facebook {
-            id: fb
-            accessToken: "your access token" // you must supply a valid access token
-        }
-    
-        FacebookUser {
-            id: fbu
-            socialNetwork: fb
-            identifier: "me" // some valid Facebook User fbid
-    
-            onStatusChanged: {
-                if (status == SocialNetwork.Idle) {
-                    // creates a new album, into which photos can be uploaded
-                    uploadAlbum("World Cup Photos", "Photos taken at the world cup football event")
-                }
-            }
-        }
-    
-        Text {
-            anchors.fill: parent
-            text: fbu.name // "name" field from the user's profile
-        }
-    }
-    \endqml
 */
 FacebookUserInterface::FacebookUserInterface(QObject *parent)
     : IdentifiableContentItemInterface(*(new FacebookUserInterfacePrivate(this)), parent)
@@ -572,7 +537,7 @@ bool FacebookUserInterface::removeAlbum(const QString &albumIdentifier)
 }
 
 /*!
-    \qmlproperty QString FacebookUser::name
+    \qmlproperty string FacebookUser::name
     Holds the full name of the user.
 */
 QString FacebookUserInterface::name() const
@@ -582,7 +547,7 @@ QString FacebookUserInterface::name() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::firstName
+    \qmlproperty string FacebookUser::firstName
     Holds the first name of the user.
 */
 QString FacebookUserInterface::firstName() const
@@ -592,7 +557,7 @@ QString FacebookUserInterface::firstName() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::middleName
+    \qmlproperty string FacebookUser::middleName
     Holds the middle name of the user.
 */
 QString FacebookUserInterface::middleName() const
@@ -602,7 +567,7 @@ QString FacebookUserInterface::middleName() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::lastName
+    \qmlproperty string FacebookUser::lastName
     Holds the last name of the user.
 */
 QString FacebookUserInterface::lastName() const
@@ -612,8 +577,13 @@ QString FacebookUserInterface::lastName() const
 }
 
 /*!
-    \qmlproperty FacebookUserInterface::Gender FacebookUser::gender
-    Holds the gender of the user.
+    \qmlproperty enumeration FacebookUser::gender
+    Holds the gender of the user. The gender can be one of:
+    \list
+    \li FacebookUser.UnknownGender
+    \li FacebookUser.Male
+    \li FacebookUser.Female
+    \endlist
 */
 FacebookUserInterface::Gender FacebookUserInterface::gender() const
 {
@@ -622,7 +592,7 @@ FacebookUserInterface::Gender FacebookUserInterface::gender() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::locale
+    \qmlproperty string FacebookUser::locale
     Holds the locale of the user.
 */
 QString FacebookUserInterface::locale() const
@@ -632,7 +602,7 @@ QString FacebookUserInterface::locale() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookUser::link
+    \qmlproperty url FacebookUser::link
     Holds a link to the profile of the user.
 */
 QUrl FacebookUserInterface::link() const
@@ -642,8 +612,8 @@ QUrl FacebookUserInterface::link() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::username
-    Holds the username of the user.
+    \qmlproperty string FacebookUser::username
+    Holds the userName of the user.
 */
 QString FacebookUserInterface::username() const
 {
@@ -652,7 +622,7 @@ QString FacebookUserInterface::username() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::thirdPartyIdentifier
+    \qmlproperty string FacebookUser::thirdPartyIdentifier
     Holds the third party identifier of the user.
 */
 QString FacebookUserInterface::thirdPartyIdentifier() const
@@ -689,7 +659,7 @@ float FacebookUserInterface::timezone() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::updatedTime
+    \qmlproperty string FacebookUser::updatedTime
     Holds the last-update time of the user as an ISO8601-formatted string.
 */
 QString FacebookUserInterface::updatedTime() const
@@ -709,7 +679,7 @@ bool FacebookUserInterface::verified() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::bio
+    \qmlproperty string FacebookUser::bio
     Holds the biographical details of the user.
 */
 QString FacebookUserInterface::bio() const
@@ -719,7 +689,7 @@ QString FacebookUserInterface::bio() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::birthday
+    \qmlproperty string FacebookUser::birthday
     Holds the birthday of the user in MM/dd/YYYY format.
 */
 QString FacebookUserInterface::birthday() const
@@ -729,7 +699,7 @@ QString FacebookUserInterface::birthday() const
 }
 
 /*!
-    \qmlproperty FacebookUserCoverInterface * FacebookUser::cover
+    \qmlproperty FacebookUserCover FacebookUser::cover
     Holds the cover of the user.
 */
 FacebookUserCoverInterface * FacebookUserInterface::cover() const
@@ -739,7 +709,7 @@ FacebookUserCoverInterface * FacebookUserInterface::cover() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::email
+    \qmlproperty string FacebookUser::email
     Holds the email address of the user.
 */
 QString FacebookUserInterface::email() const
@@ -749,7 +719,7 @@ QString FacebookUserInterface::email() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookUser::hometown
+    \qmlproperty FacebookObjectReference FacebookUser::hometown
     Holds a reference to the place object which is the user's home town.
 */
 FacebookObjectReferenceInterface * FacebookUserInterface::hometown() const
@@ -759,9 +729,10 @@ FacebookObjectReferenceInterface * FacebookUserInterface::hometown() const
 }
 
 /*!
-    \qmlproperty FacebookUserInterface::Genders FacebookUser::interestedIn
+    \qmlproperty enumeration FacebookUser::interestedIn
     Holds a list of the user's personal gender preferences in the
-    context of relationships.
+    context of relationships. The list if a
+    combinaison of FacebookUser.Male and FacebookUser.Female.
 */
 FacebookUserInterface::Genders FacebookUserInterface::interestedIn() const
 {
@@ -770,7 +741,7 @@ FacebookUserInterface::Genders FacebookUserInterface::interestedIn() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookUser::location
+    \qmlproperty FacebookObjectReference FacebookUser::location
     Holds a reference to the place object which is the user's current domicile location.
 */
 FacebookObjectReferenceInterface * FacebookUserInterface::location() const
@@ -780,7 +751,7 @@ FacebookObjectReferenceInterface * FacebookUserInterface::location() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::political
+    \qmlproperty string FacebookUser::political
     Holds the political views which the user identifies with.
 */
 QString FacebookUserInterface::political() const
@@ -790,7 +761,7 @@ QString FacebookUserInterface::political() const
 }
 
 /*!
-    \qmlproperty FacebookUserPictureInterface * FacebookUser::picture
+    \qmlproperty FacebookUserPicture FacebookUser::picture
     Holds a reference to the picture associated with the user.
 */
 FacebookUserPictureInterface * FacebookUserInterface::picture() const
@@ -800,7 +771,7 @@ FacebookUserPictureInterface * FacebookUserInterface::picture() const
 }
 
 /*!
-    \qmlproperty QString FacebookUser::quotes
+    \qmlproperty string FacebookUser::quotes
     Holds some of the user's favourite quotes.
 */
 QString FacebookUserInterface::quotes() const
@@ -810,8 +781,22 @@ QString FacebookUserInterface::quotes() const
 }
 
 /*!
-    \qmlproperty FacebookUserInterface::RelationshipStatus FacebookUser::relationshipStatus
-    Holds the current relationship status of the user.
+    \qmlproperty enumeration FacebookUser::relationshipStatus
+    Holds the current relationship status of the user. The relationship status can be one of:
+    \list
+    \li FacebookUser.UnknownRelationshipStatus
+    \li FacebookUser.Single
+    \li FacebookUser.InARelationship
+    \li FacebookUser.Engaged
+    \li FacebookUser.Married
+    \li FacebookUser.ItsComplicated
+    \li FacebookUser.InAnOpenRelationship
+    \li FacebookUser.Widowed
+    \li FacebookUser.Separated
+    \li FacebookUser.Divorced
+    \li FacebookUser.InACivilUnion
+    \li FacebookUser.InADomesticPartnership
+    \endlist
 */
 FacebookUserInterface::RelationshipStatus FacebookUserInterface::relationshipStatus() const
 {
@@ -820,7 +805,7 @@ FacebookUserInterface::RelationshipStatus FacebookUserInterface::relationshipSta
 }
 
 /*!
-    \qmlproperty QString FacebookUser::religion
+    \qmlproperty string FacebookUser::religion
     Holds the religious views which the user identifies with.
 */
 QString FacebookUserInterface::religion() const
@@ -830,7 +815,7 @@ QString FacebookUserInterface::religion() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookUser::significantOther
+    \qmlproperty FacebookObjectReference FacebookUser::significantOther
     Holds a reference to the person object which is listed as the user's
     significant other (spouse or partner).
 */
@@ -841,7 +826,7 @@ FacebookObjectReferenceInterface * FacebookUserInterface::significantOther() con
 }
 
 /*!
-    \qmlproperty QUrl FacebookUser::website
+    \qmlproperty url FacebookUser::website
     Holds a link the user's website.
 */
 QUrl FacebookUserInterface::website() const

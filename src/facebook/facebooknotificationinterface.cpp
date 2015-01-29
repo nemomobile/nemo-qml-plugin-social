@@ -145,48 +145,14 @@ void FacebookNotificationInterfacePrivate::emitPropertyChangeSignals(const QVari
 /*!
     \qmltype FacebookNotification
     \instantiates FacebookNotificationInterface
-     contentItem.title } // notification messages
-            }
-        }
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookNotification represents a notification from the Facebook OpenGraph API
     
-        Facebook {
-            id: fb
-            accessToken: "your access token"    // you must supply a valid access token
-            nodeIdentifier: "me"                // the "me" user is a "special" user id
-            filters: [ ContentItemTypeFilter { type: Facebook.Notification; limit: 5 } ]
-        }
-    }
-    \endqml
+    FacebookNotification is a specialized IdentifiableContentItem that is used
+    to hold data that represents a notification in the Facebook OpenGraph API.
     
-    A FacebookNotification may also be used "directly" by clients, in order to
-    view details about the notification.
+    \sa{IdentifiableContentItem}
     
-    \qml
-    import QtQuick 1.1
-    import org.nemomobile.social 1.0
-    
-    Item {
-        id: root
-        width: 400
-        height: 800
-    
-        Facebook {
-            id: fb
-            accessToken: "your access token"    // you must supply a valid access token
-        }
-    
-        FacebookNotification {
-            id: fbn
-            socialNetwork: fb
-            identifier: "notif_12345678_987654321"     // some valid Facebook Notification fbid
-        }
-    
-        Text {
-            anchors.fill: parent
-            text: fbn.title + " --> was created: " + fbn.createdTime
-        }
-    }
-    \endqml
 */
 FacebookNotificationInterface::FacebookNotificationInterface(QObject *parent)
     : IdentifiableContentItemInterface(*(new FacebookNotificationInterfacePrivate(this)), parent)
@@ -223,7 +189,7 @@ bool FacebookNotificationInterface::reload(const QStringList &whichFields)
 
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookNotification::from
+    \qmlproperty FacebookObjectReference FacebookNotification::from
     Holds a reference to the person or profile whose action triggered the notification.
 */
 FacebookObjectReferenceInterface * FacebookNotificationInterface::from() const
@@ -233,7 +199,7 @@ FacebookObjectReferenceInterface * FacebookNotificationInterface::from() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookNotification::to
+    \qmlproperty FacebookObjectReference FacebookNotification::to
     Holds a reference to the person or profile to whom the notification was posted.
 */
 FacebookObjectReferenceInterface * FacebookNotificationInterface::to() const
@@ -243,7 +209,7 @@ FacebookObjectReferenceInterface * FacebookNotificationInterface::to() const
 }
 
 /*!
-    \qmlproperty FacebookObjectReferenceInterface * FacebookNotification::application
+    \qmlproperty FacebookObjectReference FacebookNotification::application
     Holds a reference to the application which posted the notification.
 */
 FacebookObjectReferenceInterface * FacebookNotificationInterface::application() const
@@ -253,7 +219,7 @@ FacebookObjectReferenceInterface * FacebookNotificationInterface::application() 
 }
 
 /*!
-    \qmlproperty QString FacebookNotification::createdTime
+    \qmlproperty string FacebookNotification::createdTime
     Holds the creation time of the notification in an ISO8601-formatted string.
 */
 QString FacebookNotificationInterface::createdTime() const
@@ -263,7 +229,7 @@ QString FacebookNotificationInterface::createdTime() const
 }
 
 /*!
-    \qmlproperty QString FacebookNotification::updatedTime
+    \qmlproperty string FacebookNotification::updatedTime
     Holds the update time of the notification in an ISO8601-formatted string.
 */
 QString FacebookNotificationInterface::updatedTime() const
@@ -273,7 +239,7 @@ QString FacebookNotificationInterface::updatedTime() const
 }
 
 /*!
-    \qmlproperty QString FacebookNotification::title
+    \qmlproperty string FacebookNotification::title
     Holds the title (message) of the notification.
 */
 QString FacebookNotificationInterface::title() const
@@ -283,7 +249,7 @@ QString FacebookNotificationInterface::title() const
 }
 
 /*!
-    \qmlproperty QUrl FacebookNotification::link
+    \qmlproperty url FacebookNotification::link
     Holds a link to the original content item about which the notification was posted.
 */
 QUrl FacebookNotificationInterface::link() const

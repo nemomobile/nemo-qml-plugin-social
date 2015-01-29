@@ -73,7 +73,16 @@ void FacebookPostPropertyInterfacePrivate::emitPropertyChangeSignals(const QVari
 /*!
     \qmltype FacebookPostProperty
     \instantiates FacebookPostPropertyInterface
-    An entry representing a property for a post
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookPostProperty represents an property of a FacebookPost
+    
+    FacebookPostProperty is a specialized ContentItem that is used to represent
+    a non-standard property of a FacebookPost, that is often related to the media 
+    that is attached to the post.
+    
+    \sa{ContentItem}
+    \sa{FacebookPost}
+    
 */
 FacebookPostPropertyInterface::FacebookPostPropertyInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookPostPropertyInterfacePrivate(this)), parent)
@@ -88,7 +97,7 @@ int FacebookPostPropertyInterface::type() const
 
 
 /*!
-    \qmlproperty QString FacebookPostProperty::name
+    \qmlproperty string FacebookPostProperty::name
     Holds the name of the property
 */
 QString FacebookPostPropertyInterface::name() const
@@ -98,7 +107,7 @@ QString FacebookPostPropertyInterface::name() const
 }
 
 /*!
-    \qmlproperty QString FacebookPostProperty::text
+    \qmlproperty string FacebookPostProperty::text
     Holds the text contained in the property
 */
 QString FacebookPostPropertyInterface::text() const

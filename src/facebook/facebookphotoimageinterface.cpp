@@ -77,7 +77,18 @@ void FacebookPhotoImageInterfacePrivate::emitPropertyChangeSignals(const QVarian
 /*!
     \qmltype FacebookPhotoImage
     \instantiates FacebookPhotoImageInterface
-    An entry representing a image size for a photo
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookPhotoImage represents the informations about the resolution of 
+    a FacbeookPhoto.
+    
+    FacebookPhotoImage is a specialized ContentItem that is used to hold informations 
+    about the resolution of a FacebookPhoto. The FacebookPhoto type has a property \c images 
+    which provides a list of FacebookPhotoImage instances which each contain information 
+    about an image of a different resolution.
+    
+    \sa{ContentItem}
+    \sa{FacebookPhoto}
+    
 */
 FacebookPhotoImageInterface::FacebookPhotoImageInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookPhotoImageInterfacePrivate(this)), parent)
@@ -92,7 +103,7 @@ int FacebookPhotoImageInterface::type() const
 
 
 /*!
-    \qmlproperty QUrl FacebookPhotoImage::source
+    \qmlproperty url FacebookPhotoImage::source
     Holds the source of the image
 */
 QUrl FacebookPhotoImageInterface::source() const

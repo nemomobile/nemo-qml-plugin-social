@@ -1,124 +1,125 @@
 {
-    "name": "photo",
-    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookPhoto represents a Photo object from the Facebook OpenGraph API\n\nEvery FacebookPhoto has a unique identifier, and thus a photo may be\nset as the \\c node (or central content item) in the Facebook\nadapter.  The content items related to a photo include various\nlikes and comments.\n\nAn example of usage of a FacebookPhoto as the node in a Facebook\nmodel is as follows:\n\n\\qml\nimport QtQuick 1.1\nimport org.nemomobile.social 1.0\n\nItem {\n    id: root\n    width: 400\n    height: 800\n\n    Flickable {\n        anchors.top: parent.verticalCenter\n        anchors.bottom: parent.bottom\n        anchors.left: parent.left\n        anchors.right: parent.right\n\n        ListView {\n            model: fb\n            anchors.fill: parent\n            delegate: Label { text: \"id: \" + contentItemIdentifier } // Comment ids\n        }\n    }\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\"    // you must supply a valid access token\n        nodeIdentifier: \"10150146071966729\" // some valid Facebook photo id.\n        filters: [ ContentItemTypeFilter { type: Facebook.Comment } ]\n    }\n\n    Component.onCompleted: {\n        fb.populate()\n    }\n}\n\\endqml\n\nA FacebookPhoto may also be used \"directly\" by clients, in order to\nupload comments, or like the photo.  An example of direct\nusage of the FacebookPhoto type is as follows:\n\n\\qml\nimport QtQuick 1.1\nimport org.nemomobile.social 1.0\n\nItem {\n    id: root\n    width: 400\n    height: 800\n\n    Facebook {\n        id: fb\n        accessToken: \"your access token\"    // you must supply a valid access token\n    }\n\n    FacebookPhoto {\n        id: fbph\n        socialNetwork: fb\n        identifier: \"10150146071966729\"     // some valid Facebook Photo fbid\n\n        onStatusChanged: {\n            if (status == SocialNetwork.Idle) {\n                // could comment on the photo\n                fbph.uploadComment(\"I really like this photo!\")\n                // could like the photo\n                fbph.like()\n                // could unlike the photo\n                fbph.unlike()\n            }\n        }\n    }\n\n    Image {\n        anchors.fill: parent\n        source: fbph.source\n    }\n}\n\\endqml",
-    "identifiable": true,
     "extra_private_p": "int pendingTagToRemoveIndex;",
+    "name": "photo",
+    "identifiable": true,
+    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookPhoto represents a photo from the Facebook OpenGraph API\n\nFacebookPhoto is a specialized IdentifiableContentItem that is used\nto hold data that represents a photo in the Facebook OpenGraph API.\n\n\\sa{IdentifiableContentItem}\n",
     "properties": [
         {
-            "name": "from",
-            "type": "FacebookObjectReferenceInterface",
             "doc": "Holds a reference to the user or profile which uploaded this photo.",
-            "is_pointer": true
+            "is_pointer": true,
+            "name": "from",
+            "type": "FacebookObjectReferenceInterface"
         },
         {
-            "name": "tags",
-            "type": "FacebookPhotoTagInterface",
             "doc": "Holds the tags which have been uploaded for this photo",
+            "type": "FacebookPhotoTagInterface",
+            "name": "tags",
             "is_list": true
         },
         {
-            "name": "name",
+            "doc": "Holds the name (caption) of the photo",
             "type": "QString",
-            "doc": "Holds the name (caption) of the photo"
+            "name": "name"
         },
         {
-            "name": "name_tags",
-            "type": "FacebookNameTagInterface",
             "doc": "Holds the names of various tagged entities",
+            "type": "FacebookNameTagInterface",
+            "name": "name_tags",
             "is_list": true
         },
         {
-            "name": "icon",
+            "doc": "Holds a url to the icon for the photo",
             "type": "QUrl",
-            "doc": "Holds a url to the icon for the photo"
+            "name": "icon"
         },
         {
-            "name": "picture",
+            "doc": "Holds a url to the picture for the photo",
             "type": "QUrl",
-            "doc": "Holds a url to the picture for the photo"
+            "name": "picture"
         },
         {
-            "name": "source",
+            "doc": "Holds a url to the source for the photo, full size",
             "type": "QUrl",
-            "doc": "Holds a url to the source for the photo, full size"
+            "name": "source"
         },
         {
-            "name": "height",
+            "doc": "Holds the height of the photo",
             "type": "int",
-            "doc": "Holds the height of the photo"
+            "name": "height"
         },
         {
-            "name": "width", 
+            "doc": "Holds the width of the photo",
             "type": "int",
-            "doc": "Holds the width of the photo"
+            "name": "width"
         },
         {
-            "name": "images",
-            "type": "FacebookPhotoImageInterface",
             "doc": "Holds links to and metadata about scaled versions of the photo",
+            "type": "FacebookPhotoImageInterface",
+            "name": "images",
             "is_list": true
         },
         {
-            "name": "link",
+            "doc": "Holds a url to the photo which may be used as an external link.\nNote that this link url contains the album identifier embedded\nwithin it.",
             "type": "QUrl",
-            "doc": "Holds a url to the photo which may be used as an external link.\nNote that this link url contains the album identifier embedded\nwithin it."
+            "name": "link"
         },
         {
-            "name": "place",
+            "doc": "Holds information about the place associated with the photo.\nNote: this property will change in the future to return\nan object reference or location reference. (TODO)",
             "type": "QVariantMap",
-            "doc": "Holds information about the place associated with the photo.\nNote: this property will change in the future to return\nan object reference or location reference. (TODO)"
+            "name": "place"
         },
         {
-            "name": "created_time",
+            "doc": "Holds the creation time of the photo in an ISO8601-formatted string.",
             "type": "QString",
-            "doc": "Holds the creation time of the photo in an ISO8601-formatted string."
+            "name": "created_time"
         },
         {
-            "name": "updated_time",
+            "doc": "Holds the last-update time of the photo in an ISO8601-formatted string.",
             "type": "QString",
-            "doc": "Holds the last-update time of the photo in an ISO8601-formatted string."
+            "name": "updated_time"
         },
         {
-            "name": "liked",
+            "doc": "Whether the photo has been liked by the current user.",
+            "is_ontology": false,
             "type": "bool",
-            "custom": true,
-            "is_ontology": false,
-            "doc": "Whether the photo has been liked by the current user."
+            "name": "liked",
+            "custom": true
         },
         {
+            "doc": "The number of likes on this photo.",
+            "is_ontology": false,
+            "type": "int",
             "name": "likes_count",
-            "type": "int",
-            "custom": true,
-            "is_ontology": false,
-            "doc": "The number of likes on this photo."
+            "custom": true
         },
         {
-            "name": "comments_count",
-            "type": "int",
-            "custom": true,
+            "doc": "The number of likes on this photo.",
             "is_ontology": false,
-            "doc": "The number of likes on this photo."
+            "type": "int",
+            "name": "comments_count",
+            "custom": true
         }
     ],
     "methods": [
         {
+            "doc": "Initiates a \"like\" operation on the photo.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "like",
-            "parameters": [],
-            "doc": "Initiates a \"like\" operation on the photo.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            "parameters": []
         },
         {
+            "doc": "Initiates a \"delete like\" operation on the photo.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "unlike",
-            "parameters": [],
-            "doc": "Initiates a \"delete like\" operation on the photo.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            "parameters": []
         },
         {
+            "doc": "Initiates a \"tag user\" operation on the photo.  The user specified\nby the given \\a userId will be tagged into the photo at the position\nspecified by the given \\a xOffset and \\a yOffset.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.",
             "name": "tagUser",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "userId",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "userId"
                 },
                 {
                     "type": "float",
@@ -128,29 +129,29 @@
                     "type": "float",
                     "name": "yOffset"
                 }
-            ],
-            "doc": "Initiates a \"tag user\" operation on the photo.  The user specified\nby the given \\a userId will be tagged into the photo at the position\nspecified by the given \\a xOffset and \\a yOffset.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted."
+            ]
         },
         {
+            "doc": "Initiates a \"delete tag\" operation on the tag which tags the\nuser specified by the given \\a userId into the photo.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "untagUser",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "userId",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "userId"
                 }
-            ],
-            "doc": "Initiates a \"delete tag\" operation on the tag which tags the\nuser specified by the given \\a userId into the photo.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            ]
         },
         {
+            "doc": "Initiates a \"tag text\" operation on the photo.  The position\nspecified by the given \\a xOffset and \\a yOffset will be tagged\nwith the specified \\a text.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.",
             "name": "tagText",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "text",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "text"
                 },
                 {
                     "type": "float",
@@ -160,44 +161,43 @@
                     "type": "float",
                     "name": "yOffset"
                 }
-            ],
-            "doc": "Initiates a \"tag text\" operation on the photo.  The position\nspecified by the given \\a xOffset and \\a yOffset will be tagged\nwith the specified \\a text.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted."
+            ]
         },
         {
+            "doc": "Initiates a \"delete tag\" operation on the tag specified by\nthe given text.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "untagText",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "text",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "text"
                 }
-            ],
-            "doc": "Initiates a \"delete tag\" operation on the tag specified by\nthe given text.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            ]
         },
         {
+            "doc": "Initiates a \"post comment\" operation on the photo.  The comment\nwill contain the specified \\a message.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded comment.",
             "name": "uploadComment",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "message",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "message"
                 }
-            ],
-            "doc": "Initiates a \"post comment\" operation on the photo.  The comment\nwill contain the specified \\a message.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.\n\nOnce the network request completes, the \\c responseReceived()\nsignal will be emitted.  The \\c data parameter of the signal\nwill contain the \\c id of the newly uploaded comment."
+            ]
         },
         {
+            "doc": "Initiates a \"delete comment\" operation on the comment specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse.",
             "name": "removeComment",
             "parameters": [
                 {
-                    "type": "QString",
-                    "name": "commentIdentifier",
                     "is_const": true,
-                    "is_reference": true
+                    "is_reference": true,
+                    "type": "QString",
+                    "name": "commentIdentifier"
                 }
-            ],
-            "doc": "Initiates a \"delete comment\" operation on the comment specified by\nthe given \\a identifier.\n\nIf the network request was started successfully, the function\nwill return true and the status of the photo will change to\n\\c SocialNetwork::Busy.  Otherwise, the function will return\nfalse."
+            ]
         }
     ]
 }

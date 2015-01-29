@@ -73,7 +73,14 @@ void FacebookLikeInterfacePrivate::emitPropertyChangeSignals(const QVariantMap &
 /*!
     \qmltype FacebookLike
     \instantiates FacebookLikeInterface
-    An entry representing a like
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookLike represents a like from the Facebook OpenGraph API
+    
+    FacebookLike is a specialized ContentItem that is used
+    to hold data that represents a like in the Facebook OpenGraph API.
+    
+    \sa{ContentItem} 
+    
 */
 FacebookLikeInterface::FacebookLikeInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookLikeInterfacePrivate(this)), parent)
@@ -88,7 +95,7 @@ int FacebookLikeInterface::type() const
 
 
 /*!
-    \qmlproperty QString FacebookLike::userIdentifier
+    \qmlproperty string FacebookLike::userIdentifier
     Holds the identifier of the user who liked an entry
 */
 QString FacebookLikeInterface::userIdentifier() const
@@ -98,7 +105,7 @@ QString FacebookLikeInterface::userIdentifier() const
 }
 
 /*!
-    \qmlproperty QString FacebookLike::userName
+    \qmlproperty string FacebookLike::userName
     Holds the name of the user who liked an entry
 */
 QString FacebookLikeInterface::userName() const

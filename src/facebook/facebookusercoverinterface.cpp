@@ -78,7 +78,15 @@ void FacebookUserCoverInterfacePrivate::emitPropertyChangeSignals(const QVariant
 /*!
     \qmltype FacebookUserCover
     \instantiates FacebookUserCoverInterface
-    The cover of an user
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookUserCover represents the cover image for an FacebookUser
+    
+    FacebookUser is a specialized ContentItem that is used to represent
+    the cover image for a FacebookUser.
+    
+    \sa{ContentItem}
+    \sa{FacebookUser}
+    
 */
 FacebookUserCoverInterface::FacebookUserCoverInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookUserCoverInterfacePrivate(this)), parent)
@@ -93,7 +101,7 @@ int FacebookUserCoverInterface::type() const
 
 
 /*!
-    \qmlproperty QString FacebookUserCover::photoIdentifier
+    \qmlproperty string FacebookUserCover::photoIdentifier
     Holds the identifier of the cover photo
 */
 QString FacebookUserCoverInterface::photoIdentifier() const
@@ -103,7 +111,7 @@ QString FacebookUserCoverInterface::photoIdentifier() const
 }
 
 /*!
-    \qmlproperty QString FacebookUserCover::source
+    \qmlproperty string FacebookUserCover::source
     Holds an URL to the photo
 */
 QString FacebookUserCoverInterface::source() const

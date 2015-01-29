@@ -86,7 +86,20 @@ void FacebookNameTagInterfacePrivate::emitPropertyChangeSignals(const QVariantMa
 /*!
     \qmltype FacebookNameTag
     \instantiates FacebookNameTagInterface
-    An entry representing a name tag
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookNameTag represents an name tag in the Facebook OpenGraph API
+    
+    FacebookNameTag is a specialized ContentItem that is used to hold data that 
+    represents a name tag in the Facebook OpenGraph API. A name tag is a small
+    entity that contains information to locate a link to an user in some text.
+    
+    An example of a name tag, taken from \l {https://blog.facebook.com/blog.php?post=109765592130} {Facebook blog}
+    
+    \image nametag.jpg "A name tag"
+    
+    
+    \sa{ContentItem} 
+    
 */
 FacebookNameTagInterface::FacebookNameTagInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookNameTagInterfacePrivate(this)), parent)
@@ -101,7 +114,7 @@ int FacebookNameTagInterface::type() const
 
 
 /*!
-    \qmlproperty QString FacebookNameTag::userIdentifier
+    \qmlproperty string FacebookNameTag::userIdentifier
     Holds the identifier of the tagged entity
 */
 QString FacebookNameTagInterface::userIdentifier() const
@@ -111,7 +124,7 @@ QString FacebookNameTagInterface::userIdentifier() const
 }
 
 /*!
-    \qmlproperty QString FacebookNameTag::userName
+    \qmlproperty string FacebookNameTag::userName
     Holds the name of the tagged entity
 */
 QString FacebookNameTagInterface::userName() const
@@ -121,7 +134,7 @@ QString FacebookNameTagInterface::userName() const
 }
 
 /*!
-    \qmlproperty QString FacebookNameTag::nameTagType
+    \qmlproperty string FacebookNameTag::nameTagType
     Holds the type of the taggeed entity
 */
 QString FacebookNameTagInterface::nameTagType() const

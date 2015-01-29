@@ -1,17 +1,17 @@
 {
-    "name": "post_property",
-    "doc": "An entry representing a property for a post",
     "identifiable": false,
+    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookPostProperty represents an property of a FacebookPost\n\nFacebookPostProperty is a specialized ContentItem that is used to represent\na non-standard property of a FacebookPost, that is often related to the media \nthat is attached to the post.\n\n\\sa{ContentItem}\n\\sa{FacebookPost}\n",
+    "name": "post_property",
     "properties": [
         {
-            "name": "name",
+            "doc": "Holds the name of the property",
             "type": "QString",
-            "doc": "Holds the name of the property"
+            "name": "name"
         },
         {
-            "name": "text",
+            "doc": "Holds the text contained in the property",
             "type": "QString",
-            "doc": "Holds the text contained in the property"
+            "name": "text"
         }
     ]
 }

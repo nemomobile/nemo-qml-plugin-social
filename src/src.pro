@@ -49,4 +49,4 @@ HEADERS += \
 include(facebook/facebook.pri)
 include(twitter/twitter.pri)
 
-OTHER_FILES += qmldir social.qdoc social.qdocconf
+OTHER_FILES += qmldir social.qdoc social.qdocconf caching.qdoc

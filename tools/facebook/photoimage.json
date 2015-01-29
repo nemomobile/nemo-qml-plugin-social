@@ -1,22 +1,22 @@
 {
-    "name": "photo_image",
-    "doc": "An entry representing a image size for a photo",
     "identifiable": false,
+    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookPhotoImage represents the informations about the resolution of \na FacbeookPhoto.\n\nFacebookPhotoImage is a specialized ContentItem that is used to hold informations \nabout the resolution of a FacebookPhoto. The FacebookPhoto type has a property \\c images \nwhich provides a list of FacebookPhotoImage instances which each contain information \nabout an image of a different resolution.\n\n\\sa{ContentItem}\n\\sa{FacebookPhoto}\n",
+    "name": "photo_image",
     "properties": [
         {
-            "name": "source",
+            "doc": "Holds the source of the image",
             "type": "QUrl",
-            "doc": "Holds the source of the image"
+            "name": "source"
         },
         {
-            "name": "width",
+            "doc": "Holds the width of the image",
             "type": "int",
-            "doc": "Holds the width of the image"
+            "name": "width"
         },
         {
-            "name": "height",
+            "doc": "Holds the height of the image",
             "type": "int",
-            "doc": "Holds the height of the image"
+            "name": "height"
         }
     ]
 }

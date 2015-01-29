@@ -73,7 +73,17 @@ void FacebookPostActionInterfacePrivate::emitPropertyChangeSignals(const QVarian
 /*!
     \qmltype FacebookPostAction
     \instantiates FacebookPostActionInterface
-    An entry representing a action for a post
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookPostAction represents an action that can be done on a
+    FacebookPost
+    
+    FacebookPostAction is a specialized ContentItem that is used to represent
+    a generic or customized action that can be done on a FacebookPost, like
+    "like", "comment", or "play this game".
+    
+    \sa{ContentItem}
+    \sa{FacebookPost}
+    
 */
 FacebookPostActionInterface::FacebookPostActionInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookPostActionInterfacePrivate(this)), parent)
@@ -88,7 +98,7 @@ int FacebookPostActionInterface::type() const
 
 
 /*!
-    \qmlproperty QString FacebookPostAction::name
+    \qmlproperty string FacebookPostAction::name
     Holds the name of the action
 */
 QString FacebookPostActionInterface::name() const
@@ -98,7 +108,7 @@ QString FacebookPostActionInterface::name() const
 }
 
 /*!
-    \qmlproperty QString FacebookPostAction::link
+    \qmlproperty string FacebookPostAction::link
     Holds the link used to perform the action
 */
 QString FacebookPostActionInterface::link() const

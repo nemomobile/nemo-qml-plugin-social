@@ -90,8 +90,6 @@ public:
     bool operator!=(const CacheEntry &other) const;
     bool isNull() const;
     int refcount() const;
-    void ref();
-    void deref();
     QString identifier() const;
     QVariantMap data() const;
     void setData(const QVariantMap &data);
@@ -101,6 +99,11 @@ public:
     const IdentifiableContentItemInterface * identifiableItem() const;
     IdentifiableContentItemInterface * identifiableItem();
     void deleteItem();
+private:
+    void ref();
+    void deref();
+    friend class CacheNode;
+    friend class SocialNetworkInterfacePrivate;
 protected:
     QScopedPointer<CacheEntryPrivate> d_ptr;
 private:
@@ -114,7 +117,7 @@ private:
 
 bool operator==(CacheEntry::Ptr cacheEntry1, CacheEntry::Ptr cacheEntry2);
 
-struct NodePrivate
+struct CacheNodePrivate
 {
     enum Status {
         Initializing,
@@ -126,8 +129,8 @@ struct NodePrivate
         Error,
         Invalid
     };
-    explicit NodePrivate();
-    virtual ~NodePrivate();
+    explicit CacheNodePrivate();
+    virtual ~CacheNodePrivate();
     // The identifier associated to the node
     // It might be different from the one associated to the cache entry
     QString identifier;
@@ -154,18 +157,18 @@ struct NodePrivate
     QString errorMessage;
 };
 
-class Node
+class CacheNode
 {
 public:
-    typedef QSharedPointer<Node> Ptr;
-    typedef QSharedPointer<const Node> ConstPtr;
+    typedef QSharedPointer<CacheNode> Ptr;
+    typedef QSharedPointer<const CacheNode> ConstPtr;
     typedef QList<Ptr> List;
-    static Node::Ptr create();
-    static Node::Ptr create(const QString &identifier, int type,
+    static CacheNode::Ptr create();
+    static CacheNode::Ptr create(const QString &identifier, int type,
                             const QSet<FilterInterface *> &filters);
-    virtual ~Node();
-    bool operator==(const Node &other) const;
-    bool operator!=(const Node &other) const;
+    virtual ~CacheNode();
+    bool operator==(const CacheNode &other) const;
+    bool operator!=(const CacheNode &other) const;
     bool isNull() const;
     QString identifier() const;
     int type() const;
@@ -180,23 +183,23 @@ public:
     void setHavePreviousAndNext(bool hasPrevious, bool hasNext);
     QVariantMap extraInfo() const;
     void setExtraInfo(const QVariantMap &extraInfo);
-    NodePrivate::Status status() const;
-    void setStatus(NodePrivate::Status status);
+    CacheNodePrivate::Status status() const;
+    void setStatus(CacheNodePrivate::Status status);
     SocialNetworkInterface::ErrorType error() const;
     QString errorMessage() const;
     void setError(SocialNetworkInterface::ErrorType error, const QString &errorMessage);
 
 protected:
-    QScopedPointer<NodePrivate> d_ptr;
+    QScopedPointer<CacheNodePrivate> d_ptr;
 private:
-    explicit Node();
-    explicit Node(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
-    Q_DISABLE_COPY(Node)
-    Q_DECLARE_PRIVATE(Node)
+    explicit CacheNode();
+    explicit CacheNode(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
+    Q_DISABLE_COPY(CacheNode)
+    Q_DECLARE_PRIVATE(CacheNode)
     friend class SocialNetworkInterfacePrivate;
 };
 
-bool operator==(Node::Ptr node1, Node::Ptr node2);
+bool operator==(CacheNode::Ptr node1, CacheNode::Ptr node2);
 
 class ArbitraryRequestHandler : public QObject
 {
@@ -238,8 +241,8 @@ public:
 
 protected:
     // Functions to be reimplemented
-    virtual void populateDataForNode(Node::Ptr node);
-    virtual void populateRelatedDataforNode(Node::Ptr node);
+    virtual void populateDataForNode(CacheNode::Ptr node);
+    virtual void populateRelatedDataforNode(CacheNode::Ptr node);
     virtual bool validateCacheEntryForNode(CacheEntry::ConstPtr cacheEntry);
     virtual QString dataSection(int type, const QVariantMap &data) const;
     virtual ContentItemInterface * contentItemFromData(const QVariantMap &data,
@@ -257,26 +260,26 @@ protected:
                           const QSet<FilterInterface *> &filters);
 
     // Handlers, implement if needed
-    virtual void handleFinished(Node::Ptr node, QNetworkReply *reply);
-    virtual void handleError(Node::Ptr node, QNetworkReply *reply,
+    virtual void handleFinished(CacheNode::Ptr node, QNetworkReply *reply);
+    virtual void handleError(CacheNode::Ptr node, QNetworkReply *reply,
                              QNetworkReply::NetworkError networkError);
-    virtual void handleSslError(Node::Ptr node, QNetworkReply *reply,
+    virtual void handleSslError(CacheNode::Ptr node, QNetworkReply *reply,
                                 const QList<QSslError> &sslErrors);
 
     // Helper functions
-    void setReply(Node::Ptr node, QNetworkReply *reply);
-    void setStatus(Node::Ptr node, NodePrivate::Status status);
-    void setError(Node::Ptr node, SocialNetworkInterface::ErrorType error,
+    void setReply(CacheNode::Ptr node, QNetworkReply *reply);
+    void setStatus(CacheNode::Ptr node, CacheNodePrivate::Status status);
+    void setError(CacheNode::Ptr node, SocialNetworkInterface::ErrorType error,
                   const QString &errorMessage);
     void deleteReply(QNetworkReply *reply);
-    void updateModelNode(Node::Ptr node);
-    void updateModelRelatedData(Node::Ptr node, const CacheEntry::List &relatedData);
-    void updateModelHavePreviousAndNext(Node::Ptr node, bool havePrevious, bool haveNext);
+    void updateModelNode(CacheNode::Ptr node);
+    void updateModelRelatedData(CacheNode::Ptr node, const CacheEntry::List &relatedData);
+    void updateModelHavePreviousAndNext(CacheNode::Ptr node, bool havePrevious, bool haveNext);
     CacheEntry::Ptr createCacheEntry(const QVariantMap &data,
                                      const QString &nodeIdentifier = QString());
     static void setNodeExtraPaging(QVariantMap &nodeExtra,
                                    const QVariantMap &previousExtra, const QVariantMap &nextExtra,
-                                   NodePrivate::Status insertionMode);
+                                   CacheNodePrivate::Status insertionMode);
 
     // Aliases map
     QMap<QString, QString> aliases;
@@ -303,14 +306,15 @@ private:
     // Implementation details
     inline bool matches(const QString &identifier, int type, const QSet<FilterInterface *> &filters,
                         SocialNetworkModelInterface *model);
-    inline bool matches(Node::ConstPtr node, SocialNetworkModelInterface *model);
-    inline static SocialNetworkInterface::Status correspondingStatus(NodePrivate::Status status);
-    Node::Ptr getOrCreateNode(const QString &identifier, int type,
+    inline bool matches(CacheNode::ConstPtr node, SocialNetworkModelInterface *model);
+    inline static SocialNetworkInterface::Status correspondingStatus(CacheNodePrivate::Status status);
+    CacheNode::Ptr getOrCreateNode(const QString &identifier, int type,
                               const QSet<FilterInterface *> &filters);
-    Node::Ptr getNode(const QString &identifier, int type, const QSet<FilterInterface *> &filters);
+    CacheNode::Ptr getNode(const QString &identifier, int type,
+                           const QSet<FilterInterface *> &filters);
     void checkDoomedNodes();
     void checkCacheEntryRefcount(CacheEntry::Ptr entry);
-    void deleteNode(Node::Ptr node);
+    void deleteNode(CacheNode::Ptr node);
 
 protected:
     QNetworkAccessManager *networkAccessManager;
@@ -319,42 +323,14 @@ private:
     // Attributes
     bool initialized;
     QHash<QString, CacheEntry::Ptr> cache;
-    Node::List nodes;
+    CacheNode::List cacheNodes;
     QList<SocialNetworkModelInterface *> models;
-    QMap<QNetworkReply *, Node::Ptr> replyToNodeMap;
+    QMap<QNetworkReply *, CacheNode::Ptr> replyToNodeMap;
 
     // Arbitrary request handler
     ArbitraryRequestHandler *arbitraryRequestHandler;
-
-    // Testing functions
-    // TODO XXX: remove them !
-//#ifdef ENABLE_TESTS
-//    inline QStack<Node> publicNodeStack() const
-//    {
-//        return nodeStack;
-//    }
-//    inline QHash<QString, CacheEntry> publicCache() const
-//    {
-//        return cache;
-//    }
-//    inline void publicSetFilters(const QList<FilterInterface *> &newFilters)
-//    {
-//        filters = newFilters;
-//    }
-//    inline QList<FilterInterface *> publicFilters() const
-//    {
-//        return filters;
-//    }
-//    inline void publicDeleteLastNode()
-//    {
-//        deleteLastNode();
-//    }
-
-//#endif
 private:
     Q_DECLARE_PUBLIC(SocialNetworkInterface)
 };
-
-//Q_DECLARE_OPERATORS_FOR_FLAGS(SocialNetworkInterfacePrivate::RelatedDataPagingFlags)
 
 #endif // SOCIALNETWORKINTERFACE_P_H

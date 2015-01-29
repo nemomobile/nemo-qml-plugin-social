@@ -160,18 +160,23 @@ void ContentItemInterfacePrivate::socialNetworkInitializedChangedHandler()
     \inqmlmodule org.nemomobile.social 1
     \brief A ContentItem represents a data object in a social network graph
 
-    All data in a social network graph is represented as a content item
-    in the SocialNetwork graph abstraction.  A particular content item
-    may be either identifiable (that is, have a unique identifier in the
-    social network) or non-identifiable (that is, be anonymous in the
-    social network).  An identifiable content item may be used as the
-    \c node in a SocialNetwork, but a non-identifiable content item may not.
+    All entities in a social network graph are represented by the ContentItem
+    component.  A particular ContentItem may be either identifiable (that is,
+    have a unique identifier in the social network) or non-identifiable (that
+    is, be anonymous in the social network). An identifiable content item may
+    be used as the \c node in a SocialNetworkModel, but a non-identifiable
+    content item may not.
 
     Every ContentItem exposes some data retrieved from the social network.
     Each specific implementation of the SocialNetwork interface should also
     provide specific implementations derived from the ContentItem interface
     which provide convenience API for accessing properties or performing
-    operations on particular content item types (e.g., photographs).
+    operations on particular content item types.
+
+    A ContentItem is usually constructed via a request done using a
+    SocialNetworkModel. Its subclasses, like IdentifiableContentItem
+    can also be constructed directly using a SocialNetwork that is
+    provided to \l socialNetwork, and setting more properties.
 */
 
 ContentItemInterface::ContentItemInterface(QObject *parent)
@@ -202,10 +207,14 @@ void ContentItemInterface::componentComplete()
 }
 
 /*!
-    \qmlproperty SocialNetwork *ContentItem::socialNetwork
-    Holds the social network from which this content item was obtained.
-    If the content item was constructed directly by a client, the client
-    must define the social network during initialization.
+    \qmlproperty SocialNetwork ContentItem::socialNetwork
+
+    This property must be defined by the client if they wish to construct
+    a ContentItem directly. It holds the SocialNetwork component to use to
+    create this ContentItem.
+
+    This property should be set before setting identifier when
+    creating a ContentItem directly.
 */
 SocialNetworkInterface *ContentItemInterface::socialNetwork() const
 {
@@ -235,7 +244,8 @@ void ContentItemInterface::setSocialNetwork(SocialNetworkInterface *socialNetwor
 }
 
 /*!
-    \qmlproperty int ContentItem::type
+    \qmlproperty enumeration ContentItem::type
+
     Holds the type of the content item.  Every implementation of
     the SocialNetwork interface will define its own specific
     types.
@@ -247,6 +257,7 @@ int ContentItemInterface::type() const
 
 /*!
     \qmlproperty QVariantMap ContentItem::data
+
     Holds the underlying data exposed by the ContentItem.
     Note that this data may be formatted differently to how
     it is exposed in the ContentItem-derived-type's API, as it
@@ -260,7 +271,8 @@ QVariantMap ContentItemInterface::data() const
 }
 
 /*!
-    \qmlmethod bool ContentItem::isIdentifiable() const
+    \qmlproperty bool ContentItem::identifiable() const
+
     Returns true if the content item has a unique identifier
     in the social network from which it was retrieved, otherwise
     returns false.
@@ -271,11 +283,12 @@ bool ContentItemInterface::isIdentifiable() const
 }
 
 /*!
-    \qmlmethod IdentifiableContentItem *ContentItem::asIdentifiable()
+    \qmlmethod IdentifiableContentItem ContentItem::asIdentifiable()
+
     Returns the ContentItem as an IdentifiableContentItem if it is
     identifiable, otherwise returns null.
 */
-IdentifiableContentItemInterface *ContentItemInterface::asIdentifiable()
+IdentifiableContentItemInterface * ContentItemInterface::asIdentifiable()
 {
     return qobject_cast<IdentifiableContentItemInterface*>(this);
 }

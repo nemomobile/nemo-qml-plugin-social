@@ -1,18 +1,18 @@
 {
-    "name": "like",
-    "doc": "An entry representing a like",
     "identifiable": false,
+    "doc": "\\inqmlmodule org.nemomobile.social 1\n\\brief A FacebookLike represents a like from the Facebook OpenGraph API\n\nFacebookLike is a specialized ContentItem that is used\nto hold data that represents a like in the Facebook OpenGraph API.\n\n\\sa{ContentItem} \n",
+    "name": "like",
     "properties": [
         {
-            "name": "id",
             "alias": "user_identifier",
             "type": "QString",
+            "name": "id",
             "doc": "Holds the identifier of the user who liked an entry"
         },
         {
-            "name": "name",
             "alias": "user_name",
             "type": "QString",
+            "name": "name",
             "doc": "Holds the name of the user who liked an entry"
         }
     ]

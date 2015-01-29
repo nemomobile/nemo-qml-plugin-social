@@ -106,7 +106,15 @@ void FacebookPhotoTagInterfacePrivate::emitPropertyChangeSignals(const QVariantM
 /*!
     \qmltype FacebookPhotoTag
     \instantiates FacebookPhotoTagInterface
-    An entry representing a tag
+    \inqmlmodule org.nemomobile.social 1
+    \brief A FacebookPhotoTag represents a tag posted on a FacebookPhoto
+    
+    FacebookPhotoTag is a specialized ContentItem that is used to represent
+    a tag posted on a FacebookPhoto.
+    
+    \sa{ContentItem}
+    \sa{FacebookPhoto}
+    
 */
 FacebookPhotoTagInterface::FacebookPhotoTagInterface(QObject *parent)
     : ContentItemInterface(*(new FacebookPhotoTagInterfacePrivate(this)), parent)
@@ -124,7 +132,7 @@ int FacebookPhotoTagInterface::type() const
 
 
 /*!
-    \qmlproperty QString FacebookPhotoTag::userIdentifier
+    \qmlproperty string FacebookPhotoTag::userIdentifier
     Holds the identifier of the tagged entity
 */
 QString FacebookPhotoTagInterface::userIdentifier() const
@@ -134,7 +142,7 @@ QString FacebookPhotoTagInterface::userIdentifier() const
 }
 
 /*!
-    \qmlproperty QString FacebookPhotoTag::userName
+    \qmlproperty string FacebookPhotoTag::userName
     Holds the name of the tagged entity
 */
 QString FacebookPhotoTagInterface::userName() const
@@ -144,7 +152,7 @@ QString FacebookPhotoTagInterface::userName() const
 }
 
 /*!
-    \qmlproperty QString FacebookPhotoTag::text
+    \qmlproperty string FacebookPhotoTag::text
     Holds text that is used to tag something
 */
 QString FacebookPhotoTagInterface::text() const
@@ -188,7 +196,7 @@ float FacebookPhotoTagInterface::y() const
 }
 
 /*!
-    \qmlproperty QString FacebookPhotoTag::createdTime
+    \qmlproperty string FacebookPhotoTag::createdTime
     Holds the creation time of the tag in an ISO8601-formatted string.
 */
 QString FacebookPhotoTagInterface::createdTime() const
