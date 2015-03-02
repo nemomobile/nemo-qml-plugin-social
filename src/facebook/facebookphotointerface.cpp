@@ -72,7 +72,7 @@ void FacebookPhotoInterfacePrivate::finishedHandler()
         case FacebookInterfacePrivate::TagAction:        // flow
         case FacebookInterfacePrivate::DeleteTagAction:  // flow
         case FacebookInterfacePrivate::DeleteCommentAction: {
-            if (replyData == QString(QLatin1String("true"))) {
+            if (responseData.value(QLatin1String("success")).toBool()) {
                 status = SocialNetworkInterface::Idle;
                 if (action == FacebookInterfacePrivate::LikeAction) {
                     liked = true;

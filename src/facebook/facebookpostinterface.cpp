@@ -69,7 +69,7 @@ void FacebookPostInterfacePrivate::finishedHandler()
         case FacebookInterfacePrivate::LikeAction:        // flow down.
         case FacebookInterfacePrivate::DeleteLikeAction:  // flow down.
         case FacebookInterfacePrivate::DeleteCommentAction: {
-            if (replyData == QString(QLatin1String("true"))) {
+            if (responseData.value(QLatin1String("success")).toBool()) {
                 status = SocialNetworkInterface::Idle;
                 if (action == FacebookInterfacePrivate::LikeAction) {
                     liked = true;

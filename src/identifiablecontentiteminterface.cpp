@@ -247,7 +247,7 @@ void IdentifiableContentItemInterfacePrivate::removeHandler()
         return;
     }
 
-    // Default just checks to see if the response is the text "true".
+    // Default just checks to see if the response's "success" field is true.
     // If it is, this handler deletes the reply(), sets the status to invalid.
     // If it isn't, this handler deletes the reply(), sets the status to error,
     // and emits responseReceived() with the given data.
@@ -257,7 +257,7 @@ void IdentifiableContentItemInterfacePrivate::removeHandler()
     QVariantMap responseData = ContentItemInterfacePrivate::parseReplyData(replyData, &ok);
     if (!ok)
         responseData.insert("response", replyData);
-    if (replyData == QString(QLatin1String("true"))) {
+    if (responseData.value(QLatin1String("success")).toBool()) {
         status = SocialNetworkInterface::Invalid; // We have been removed, so we are now invalid.
         emit q->statusChanged();
         emit q->responseReceived(responseData);
