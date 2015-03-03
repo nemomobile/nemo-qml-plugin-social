@@ -66,7 +66,7 @@ void FacebookCommentInterfacePrivate::finishedHandler()
 
     if (action == FacebookInterfacePrivate::LikeAction || action == FacebookInterfacePrivate::DeleteLikeAction) {
         // user initiated a "like" or "unlike" request.
-        if (replyData == QString(QLatin1String("true"))) {
+        if (responseData.value(QLatin1String("success")).toBool()) {
             status = SocialNetworkInterface::Idle;
             liked = (action == FacebookInterfacePrivate::LikeAction);
             emit q->statusChanged();

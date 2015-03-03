@@ -85,7 +85,7 @@ void FacebookUserInterfacePrivate::finishedHandler()
     switch (action) {
         case FacebookInterfacePrivate::DeletePhotoAction: // flow down.
         case FacebookInterfacePrivate::DeleteAlbumAction: {
-            if (replyData == QString(QLatin1String("true"))) {
+            if (responseData.value(QLatin1String("success")).toBool()) {
                 status = SocialNetworkInterface::Idle;
                 emit q->statusChanged();
                 emit q->responseReceived(responseData);
