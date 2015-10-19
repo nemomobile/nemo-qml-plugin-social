@@ -1,7 +1,0 @@
-\inqmlmodule org.nemomobile.social 1
-\brief A FacebookPhoto represents a photo from the Facebook OpenGraph API
-
-FacebookPhoto is a specialized IdentifiableContentItem that is used
-to hold data that represents a photo in the Facebook OpenGraph API.
-
-\sa{IdentifiableContentItem}

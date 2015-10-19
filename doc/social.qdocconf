@@ -1,9 +1,0 @@
-project = Nemo Mobile social network QML Adapters
-description = QML adapters to allow applications to interact with social networks in their QML applications
-outputdir   = html
-outputformats = HTML
-headerdirs  = ../src ../src/facebook/
-sourcedirs  = .. ../src/facebook/
-sources.fileextensions = "*.cpp *.qdoc *.qml"
-headers.fileextensions = "*.h"
-imagedirs = images

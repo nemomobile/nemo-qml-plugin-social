@@ -1,8 +1,0 @@
-\inqmlmodule org.nemomobile.social 1
-\brief A FacebookPhotoTag represents a tag posted on a FacebookPhoto
-
-FacebookPhotoTag is a specialized ContentItem that is used to represent
-a tag posted on a FacebookPhoto.
-
-\sa{ContentItem}
-\sa{FacebookPhoto}

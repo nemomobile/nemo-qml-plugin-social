@@ -1,7 +1,0 @@
-\inqmlmodule org.nemomobile.social 1
-\brief A FacebookPost represents a post from the Facebook OpenGraph API
-
-FacebookPost is a specialized IdentifiableContentItem that is used
-to hold data that represents a post in the Facebook OpenGraph API.
-
-\sa{IdentifiableContentItem}

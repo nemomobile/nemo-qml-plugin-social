@@ -1,7 +1,0 @@
-\inqmlmodule org.nemomobile.social 1
-\brief A FacebookComment represents a comment from the Facebook OpenGraph API
-
-FacebookComment is a specialized IdentifiableContentItem that is used
-to hold data that represents a comment in the Facebook OpenGraph API.
-
-\sa{IdentifiableContentItem}

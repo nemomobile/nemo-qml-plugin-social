@@ -1,7 +1,0 @@
-\inqmlmodule org.nemomobile.social 1
-\brief A FacebookAlbum represents an album from the Facebook OpenGraph API
-
-FacebookAlbum is a specialized IdentifiableContentItem that is used
-to hold data that represents an album in the Facebook OpenGraph API.
-
-\sa{IdentifiableContentItem}
